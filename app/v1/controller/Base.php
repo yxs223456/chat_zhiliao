@@ -12,6 +12,11 @@ use app\BaseController;
 use app\common\AppException;
 use app\common\helper\Redis;
 use app\common\model\UserModel;
+use app\common\transformer\TransformerAbstract;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use think\facade\Db;
 
 class Base extends BaseController

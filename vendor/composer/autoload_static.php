@@ -51,6 +51,10 @@ class ComposerStaticInit455113819cbc4c66cae2333d13f21cd0
             'Symfony\\Component\\VarDumper\\' => 28,
             'Stringy\\' => 8,
         ),
+        'R' => 
+        array (
+            'RongCloud\\' => 10,
+        ),
         'P' => 
         array (
             'Psr\\SimpleCache\\' => 16,
@@ -138,6 +142,10 @@ class ComposerStaticInit455113819cbc4c66cae2333d13f21cd0
         'Stringy\\' => 
         array (
             0 => __DIR__ . '/..' . '/danielstjules/stringy/src',
+        ),
+        'RongCloud\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/rongcloud/php-sdk/RongCloud',
         ),
         'Psr\\SimpleCache\\' => 
         array (

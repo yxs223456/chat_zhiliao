@@ -9,6 +9,7 @@
 namespace app\v1\controller;
 
 use app\BaseController;
+use app\common\helper\WeChatWork;
 
 class RongCloudCallback extends BaseController
 {
@@ -17,6 +18,7 @@ class RongCloudCallback extends BaseController
      */
     public function rtcCallback()
     {
+        return WeChatWork::sendMessageToUser("测试消息");
         $request = $this->request->getContent();
         $requestArray = json_decode($request, true);
         if (!$requestArray || !is_array($requestArray) || empty($requestArray["appKey"])) {

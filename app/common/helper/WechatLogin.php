@@ -11,7 +11,7 @@ use think\facade\Log;
  * Date: 2020/4/27
  * Time: 下午6:12
  */
-class ThirdLogin
+class WechatLogin
 {
     private static $object = null;
     private static $driver = '';
@@ -38,7 +38,7 @@ class ThirdLogin
      * 创建实例
      *
      * @param string $driver (wxapp|wxh5)
-     * @return ThirdLogin|null
+     * @return WechatLogin|null
      */
     public static function getObject($driver = "wxapp")
     {

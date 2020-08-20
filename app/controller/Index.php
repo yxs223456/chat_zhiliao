@@ -2,12 +2,11 @@
 namespace app\controller;
 
 use app\BaseController;
-use app\common\helper\WeChatWork;
 
 class Index extends BaseController
 {
     public function index()
     {
-       return WeChatWork::sendMessageToUser("测试消息");
+        throw new \Exception("正式环境异常测试");
     }
 }

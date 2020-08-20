@@ -2,6 +2,7 @@
 namespace app;
 
 use app\common\AppException;
+use app\common\helper\WeChatWork;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\exception\Handle;
@@ -59,19 +60,37 @@ class ExceptionHandle extends Handle
                 "msg" => $e->getMessage(),
             ]);
         } else if (config("app.app_environment") == 1) {
-            $log = [
-                "method" => $request->method(),
-                "header" => $request->header(),
-                "content" => $request->getContent(),
-                "input" => $request->getInput(),
-                "api" => $request->server("REDIRECT_URL"),
-                "ip" => $request->ip(),
-                "file" => $e->getFile(),
-                "line" => $e->getLine(),
-                "code" => $e->getCode(),
-                "message" => $e->getMessage()
-            ];
-            Log::write(json_encode($log), "error");
+            try {
+                $log = [
+                    "message" => $e->getMessage(),
+                    "content" => $request->getContent(),
+                    "header" => $request->header(),
+                    "method" => $request->method(),
+                    "input" => $request->getInput(),
+                    "api" => $request->server("REDIRECT_URL"),
+                    "ip" => $request->ip(),
+                    "file" => $e->getFile(),
+                    "line" => $e->getLine(),
+                    "code" => $e->getCode(),
+                ];
+                Log::write(json_encode($log), "error");
+                $weChatWorkString = "";
+                foreach ($log as $key=>$value) {
+                    if ($key == "header") {
+                        $valueStr = "";
+                        foreach ($value as $headerKey => $headerValue) {
+                            $valueStr .= "\n    " . $headerKey . ":$headerValue";
+                        }
+                        $value = $valueStr;
+                    } elseif (is_array($value)) {
+                        $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+                    }
+                    $weChatWorkString .= $key . ":" . $value . "\n";
+                }
+                $weChatWorkString = substr($weChatWorkString, 0 , -1);
+                WeChatWork::sendMessageToUser($weChatWorkString);
+            } catch (Throwable $newE) {
+            }
             if ($e instanceof HttpException) {
                 return json([
                     "code" => 404,

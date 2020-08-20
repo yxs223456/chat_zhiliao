@@ -1,6 +1,18 @@
 <?php
 define("REDIS_KEY_PREFIX", "chat_zhiliao:");
+//企业微信access_token
+function getWeChatWorkAccessToken(\Redis $redis)
+{
+    $key = REDIS_KEY_PREFIX . "weChatWorkAccessToken";
+    return $redis->get($key);
+}
 
+//缓存企业微信access_token
+function setWeChatWorkAccessToken($accessToken, $expire, \Redis $redis)
+{
+    $key = REDIS_KEY_PREFIX . "weChatWorkAccessToken";
+    $redis->setex($key, $expire, $accessToken);
+}
 
 // 邮件发送纪录，缓存有效期6小时
 function setMailSendExp($key, \Redis $redis)

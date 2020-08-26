@@ -9,13 +9,12 @@
 namespace app\command;
 
 use app\common\helper\Redis;
-use app\common\helper\SendMail;
 use app\common\helper\WeChatWork;
 use think\facade\Db;
 
 trait CommandTrait
 {
-    private $maxAllowTime = 600;            //PHP脚本单次运行时间上限
+    private $maxAllowTime = 30;            //PHP脚本单次运行时间上限
     private $maxAllowMemory = 104857600;    //分配给当前 PHP 脚本的最大允许内存量 100M
 
     public function sendWeChatWorkMessage($message, $user = null)

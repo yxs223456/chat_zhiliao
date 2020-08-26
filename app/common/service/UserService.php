@@ -4,8 +4,8 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\Constant;
-use app\common\enum\DbDataIsDeleteEnum;
 use app\common\enum\SmsSceneEnum;
+use app\common\enum\UserSexEnum;
 use app\common\helper\Redis;
 use app\common\helper\AliSms;
 use app\common\helper\RongCloudApp;
@@ -18,9 +18,6 @@ use think\facade\Log;
 class UserService extends Base
 {
 
-    const SMS_CODE_LOGIN = 1;
-    const PASSWORD_LOGIN = 2;
-
     /**
      * 发送短信验证码
      *
@@ -32,8 +29,8 @@ class UserService extends Base
      */
     public function sendVerifyCode($mobile, $areaCode, $scene)
     {
-        $code = mt_rand(100000, 999999);
-        $param = array('code' => $code);
+        $verifyCode = mt_rand(100000, 999999);
+        $param = array('code' => $verifyCode);
 
         // 调用接口使用的参数 国内不加区号，国外港澳台加区号
         if ($areaCode == 86) {
@@ -54,7 +51,7 @@ class UserService extends Base
 
         // 保存redis
         $redis = Redis::factory();
-        setSmsCode(['phone' => $apiMobile, 'code' => $code, 'scene' => $scene], $redis);
+        setSmsCode(['phone' => $apiMobile, 'code' => $verifyCode, 'scene' => $scene], $redis);
 
         // 触发限制抛异常
         if (isset($re["Code"]) && $re["Code"] != "OK") {
@@ -80,21 +77,33 @@ class UserService extends Base
         if ($user == null) {
             $returnData = $this->registerByPhone($areaCode, $mobile, $userNumber);
         } else {
-            $returnData = $this->dologin($areaCode, $mobile, $verifyCode, UserService::SMS_CODE_LOGIN);
+            $returnData = $this->doLogin($user->toArray());
         }
         return $returnData;
     }
 
-    /**
-     * 用户注册
-     *
-     * @param $areaCode string 手机区号
-     * @param $mobile string 手机号
-     * @param $inviteUserNumber string 用户编号
-     * @return mixed
-     * @throws AppException
-     */
-    public function registerByPhone($areaCode, $mobile, $inviteUserNumber)
+    //用户登录
+    private function doLogin($user)
+    {
+        //修改用户token
+        $oldToken = $user["token"];
+        $user["token"] = getRandomString();
+        Db::name("user")
+            ->where("id", $user["id"])
+            ->update(["token"=> $user["token"]]);
+
+        // 缓存用户登陆信息
+        cacheUserInfoByToken($user, Redis::factory(), $oldToken);
+
+        return [
+            "user_number" => $user["user_number"],
+            "token" => $user["token"],
+            "sex" => $user["sex"],
+        ];
+    }
+
+    //用户通过手机号注册
+    private function registerByPhone($areaCode, $mobile, $inviteUserNumber)
     {
         //判断用户是否存在
         $userModel = new UserModel();
@@ -131,6 +140,7 @@ class UserService extends Base
                 "mobile_phone" => $mobile,
                 "user_number" => $userNumber,
                 "token" => $userToken,
+                "sex" => UserSexEnum::UNKNOWN,
             ];
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
@@ -153,7 +163,15 @@ class UserService extends Base
 
         // 缓存用户登陆信息
         cacheUserInfoByToken($newUser, Redis::factory());
-        return $this->formatUserData($user->uuid,1);
+        if ($parent) {
+            $this->registerCallback($newUser["id"]);
+        }
+
+        return [
+            "user_number" => $newUser["user_number"],
+            "token" => $newUser["token"],
+            "sex" => $newUser["sex"],
+        ];
     }
 
     private function registerAfter($newUser, $parent, $rongCloudToken)
@@ -187,55 +205,17 @@ class UserService extends Base
         ];
         Db::name("user_community")->insert($userCommunityData);
 
+        // tmp_user_register_callback 表
         if ($parent) {
-            // todo 有上级用户后续处理
+            Db::name("tmp_user_register_callback")->insert([
+                "u_id" => $newUser["id"],
+            ]);
         }
     }
 
-    /**
-     * 获取用户信息
-     *
-     * @param $uuid
-     * @return array
-     */
-    public function getInfo($uuid)
+    private function registerCallback($userId)
     {
-        return Db::name("user")->alias('b')
-            ->leftJoin("user_wallet w", "b.uuid = w.user_uuid")
-            ->leftJoin("user_diamond_coin_wallet d", "d.user_uuid=b.uuid")
-            ->field("b.uuid,b.account,b.nickname,b.avatar,b.area_code,b.phone,b.email,b.status,b.user_level,
-            b.invite_code,b.token,b.password,b.trade_password,b.line,
-            w.balance,w.address,
-            d.liquidity_diamond_coin,d.locked_diamond_coin")
-            ->where("b.uuid", $uuid)
-            ->where("b.is_delete", DbDataIsDeleteEnum::NO)
-            ->find();
-    }
-
-    /**
-     * 格式化用户登陆注册返回数据
-     *
-     * @param string $userUuid
-     * @param int $firstLogin
-     * @return array
-     */
-    public function formatUserData($userUuid, $firstLogin = 0)
-    {
-        $user = $this->getInfo($userUuid);
-        $data = [
-            "uuid" => $user["uuid"] ?? "",
-            "account" => empty($user["account"]) ? "用户" : hideUserPhone($user['account']),
-            "avatar" => $user["avatar"] ?? "",
-            "area_code" => $user["area_code"] ?? "",
-            "phone" => $user["phone"] ?? "",
-            "email" => $user["email"] ?? "",
-            "user_level" => $user["user_level"] ?? 0,
-            "invite_code" => $user["invite_code"] ?? "",
-            "token" => $user["token"] ?? "",
-            "address" => $user["address"] ?? "",
-            "first_login" => (int)$firstLogin
-        ];
-        return $data;
+        userAddParentCallbackProduce($userId);
     }
 
     private function createUserNumber($length = 10)

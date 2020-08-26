@@ -17,6 +17,8 @@ class RongCloudCallback extends BaseController
      */
     public function rtcCallback()
     {
+        userRegisterCallbackProduce(3);
+        return;
         $request = $this->request->getContent();
         $requestArray = json_decode($request, true);
         if (!$requestArray || !is_array($requestArray) || empty($requestArray["appKey"])) {

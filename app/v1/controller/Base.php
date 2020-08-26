@@ -10,6 +10,7 @@ namespace app\v1\controller;
 
 use app\BaseController;
 use app\common\AppException;
+use app\common\enum\UserSexEnum;
 use app\common\helper\Redis;
 use app\common\model\UserModel;
 use app\common\transformer\TransformerAbstract;
@@ -79,7 +80,7 @@ class Base extends BaseController
         } else {
             $redis = Redis::factory();
             $cacheUser = getUserInfoByToken($token, $redis);
-            if (empty($cacheUser['uuid'])) {
+            if (empty($cacheUser['id'])) {
                 $model = new UserModel();
                 $userModel = $model->findByToken($token);
                 if (!$userModel) {
@@ -102,10 +103,12 @@ class Base extends BaseController
 
     protected function getUser()
     {
-        if ($GLOBALS['isLogin']) {
-            return true;
+        if (!$GLOBALS['isLogin'] || !isset($this->query["user"]["sex"])) {
+            throw AppException::factory(AppException::USER_NOT_LOGIN);
         }
-        throw AppException::factory(AppException::USER_NOT_LOGIN);
+        if ($this->query["user"]["sex"] == UserSexEnum::UNKNOWN) {
+            throw AppException::factory(AppException::USER_SEX_UNKNOWN);
+        }
     }
 
     /**

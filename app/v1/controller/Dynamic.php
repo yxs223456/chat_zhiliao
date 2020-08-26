@@ -11,6 +11,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\DynamicService;
+use app\v1\transformer\dynamic\PersonalTransformer;
 
 class Dynamic extends Base
 {
@@ -94,7 +95,9 @@ class Dynamic extends Base
 
         $service = new DynamicService();
         list($dynamic, $userInfo, $dynamicCount) = $service->personal($startId, $pageSize, $userId);
-        return $this->jsonResponse($dynamic);
+        return $this->jsonResponse($dynamic, new PersonalTransformer(
+            ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount, 'userId' => $this->query["user"]["id"]]
+        ));
     }
 
     /**********************************************公共动态接口开始****************************************************/

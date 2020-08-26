@@ -100,22 +100,23 @@ class DynamicService extends Base
         $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
 
         if (empty($dynamics)) {
-            return $ret;
+            return array_values($ret);
         }
         $ret["dynamic"] = $dynamics;
 
+        // 获取动态用户数据
         $userInfo = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
             ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday")
-            ->whereIn("u.id", array_column($dynamics, 'u_id'))
-            ->select()->toArray();
+            ->where("u.id", $userId)
+            ->find();
         $ret["userInfo"] = $userInfo;
 
         $dynamicCount = Db::name("dynamic_count")
-            ->whereIn("user_dynamic_id", array_column($dynamics, 'id'))
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
             ->select()->toArray();
         $ret["dynamicCount"] = $dynamicCount;
 
-        return $ret;
+        return array_values($ret);
     }
 }

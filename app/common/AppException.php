@@ -20,6 +20,9 @@ class AppException extends \Exception
     const USER_VERIFY_CODE_ERR = [2004, "验证码错误"];
     const USER_USER_NUMBER_NOT_EXISTS = [2005, "用户编号不存在"];
 
+    const USER_DYNAMIC_CONTENT_EMPTY = [3001, "动态内容不能为空"];
+    const USER_DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];
+
     public static function factory($errConst, $message = "")
     {
         $code = $errConst[0];

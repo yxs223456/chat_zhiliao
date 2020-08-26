@@ -10,7 +10,7 @@ namespace app\v1\controller;
 
 
 use app\common\AppException;
-use app\common\service\UserDynamicService;
+use app\common\service\DynamicService;
 
 class Dynamic extends Base
 {
@@ -92,8 +92,9 @@ class Dynamic extends Base
             $userId = $this->query["user"]["id"];
         }
 
-        $service = new UserDynamicService();
-        return $this->jsonResponse($service->personal($startId, $pageSize, $userId));
+        $service = new DynamicService();
+        list($dynamic, $userInfo, $dynamicCount) = $service->personal($startId, $pageSize, $userId);
+        return $this->jsonResponse($dynamic);
     }
 
     /**********************************************公共动态接口开始****************************************************/
@@ -114,11 +115,11 @@ class Dynamic extends Base
         $content = $request["content"] ?? "";
         $source = $request["source"] ?? [];
 
-        if (empty($content)) {
+        if (empty($content) && empty($source)) {
             throw AppException::factory(AppException::USER_DYNAMIC_CONTENT_EMPTY);
         }
         $user = $this->query["user"];
-        $service = new UserDynamicService();
+        $service = new DynamicService();
         $service->post($content, $source, $user);
         return $this->jsonResponse(new \stdClass());
     }
@@ -139,7 +140,7 @@ class Dynamic extends Base
             throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
         }
 
-        $service = new UserDynamicService();
+        $service = new DynamicService();
         $service->delete($id, $user);
         return $this->jsonResponse(new \stdClass());
     }

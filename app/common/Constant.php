@@ -10,6 +10,9 @@ namespace app\common;
 
 class Constant
 {
-    //提现手续费比例
+    // 默认头像
+    const USER_DEFAULT_PORTRAIT = "";
+
+    // 提现手续费比例
     const WITHDRAW_POUNDAGE_RATE = 0.01;
 }

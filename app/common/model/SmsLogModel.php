@@ -18,16 +18,16 @@ class SmsLogModel extends Base
      * @param $responseData
      * @return bool
      */
-    public function sendCodeMS($areaCode, $mobile, $msgContent, $responseData)
+    public function sendCodeMS($areaCode, $mobile, $msgContent, $responseData, $scene)
     {
         $data = [];
         $data['area_code'] = $areaCode;
         $data['phone'] = $mobile;
+        $data['scene'] = $scene;
         $data['content'] = json_encode($msgContent);
         $data['return_data'] = json_encode($responseData);
         $data['code'] = isset($msgContent['code']) ? $msgContent['code'] : "";
         $data['ip'] = request()->ip();
-        $data['create_time'] = time();
         return $this->data($data)->save();
     }
 

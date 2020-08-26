@@ -3,6 +3,7 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
+use app\common\enum\SmsSceneEnum;
 use app\common\helper\Redis;
 use app\common\service\UserService;
 
@@ -10,7 +11,7 @@ class User extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
-            "except" => "sendSms,codeLogin,passLogin",
+            "except" => "sendVerifyCode,codeLogin",
         ]
     ];
 
@@ -20,19 +21,18 @@ class User extends Base
      * @return \think\response\Json
      * @throws AppException
      */
-    public function sendSms()
+    public function sendVerifyCode()
     {
         $request = $this->query["content"];
         $mobile = $request["mobile"] ?? "";
-        if (!checkIsMobile($mobile)) {
-            throw AppException::factory(AppException::USER_MOBILE_ERR);
-        }
+        $areaCode = $request["area_code"] ? $request["area_code"] : "86";
+        $scene = $request["scene"] ? $request["scene"] : SmsSceneEnum::LOGIN;
 
         $us = new UserService();
-        $re = $us->sendSms($mobile);
+        $re = $us->sendVerifyCode($mobile, $areaCode, $scene);
 
         if (empty($re)) {
-            throw AppException::factory(AppException::USER_SMS_ERR);
+            throw AppException::factory(AppException::USER_SEND_SMS_ERR);
         }
 
         return $this->jsonResponse(new \stdClass());
@@ -47,34 +47,21 @@ class User extends Base
     public function codeLogin()
     {
         $request = $this->query["content"];
-        $areaCode = $request["areaCode"] ?? "";
         $mobile = $request["mobile"] ?? "";
-        $smsCode = $request["smsCode"] ?? "123456";
-        $inviteCode = $request["code"] ?? "";
+        $areaCode = $request["area_code"] ? $request["area_code"] : "86";
+        $verifyCode = $request["verify_code"] ?? null;
+        $inviteUserNumber = $request["invite_user_number"] ?? "";
 
-        if (!checkIsPhone($mobile) || empty($smsCode) || empty($areaCode)) {
-            throw AppException::factory(AppException::COM_PARAMS_INVALID);
+        if (empty($mobile) || $verifyCode === null || empty($areaCode)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (!checkInt($areaCode, false)) {
-            throw AppException::factory(AppException::USER_AREA_CODE_ERR);
-        }
-
-        $apiMobile = $mobile;
-        if ($areaCode != 86) {
-            $apiMobile = $areaCode . $mobile;
-        }
-
-        $cacheCode = getSmsCode($apiMobile, Redis::factory());
-        if ($cacheCode != $smsCode) {
-            throw AppException::factory(AppException::USER_CODE_ERR);
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        if ($us->checkPhoneExists($areaCode, $mobile)) {
-            $ret = $us->dologin($areaCode, $mobile, $smsCode, UserService::SMS_CODE_LOGIN);
-        } else {
-            $ret = $us->register($areaCode, $mobile, $inviteCode);
-        }
+        $ret = $us->codeLogin($areaCode, $mobile, $verifyCode, $inviteUserNumber);
+
         return $this->jsonResponse($ret);
     }
 }

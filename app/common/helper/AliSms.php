@@ -11,6 +11,7 @@ namespace app\common\helper;
 use AlibabaCloud\Client\AlibabaCloud;
 use AlibabaCloud\Client\Exception\ClientException;
 use AlibabaCloud\Client\Exception\ServerException;
+use app\common\enum\SmsSceneEnum;
 use think\facade\Log;
 
 /**
@@ -20,10 +21,6 @@ use think\facade\Log;
  */
 class AliSms
 {
-    // 用户注册模版
-    const CODE_TEMPLATE = "SMS_197870801";
-    // 用户注册国际模版
-    const CODE_INTERNATIONAL_TEMPLATE = "SMS_197870779";
     // 用户注册签名
     const CODE_SIGN = "一克拉商城";
 
@@ -34,8 +31,11 @@ class AliSms
 
     // 模版数组
     private static $TYPE_LIST_TO_TEMPLATE = [
-        self::TYPE_CHINA => self::CODE_TEMPLATE,
-        self::TYPE_INTERNATIONAL => self::CODE_INTERNATIONAL_TEMPLATE
+        // 用户注册模版
+        SmsSceneEnum::LOGIN => [
+            self::TYPE_CHINA => "SMS_197870801",
+            self::TYPE_INTERNATIONAL => "SMS_197870779",
+        ],
     ];
 
     /**
@@ -54,7 +54,7 @@ class AliSms
             ->asDefaultClient();
     }
 
-    public static function sendSms($mobile, $param = array(), &$response = array(), $type = self::TYPE_CHINA)
+    public static function sendSms($mobile, $scene, $param = array(), &$response = array(), $type = self::TYPE_CHINA)
     {
         try {
             self::getAcsClient();
@@ -64,7 +64,7 @@ class AliSms
                     'RegionId' => "cn-hangzhou",
                     'PhoneNumbers' => $mobile,
                     'SignName' => self::CODE_SIGN,
-                    'TemplateCode' => self::getTemplate($type),
+                    'TemplateCode' => self::getTemplate($type, $scene),
                 ]
             ];
             if (!empty($param)) {
@@ -97,11 +97,12 @@ class AliSms
     /**
      * 获取模版类型，默认国内
      *
+     * @param $scene
      * @param $type
      * @return mixed|string
      */
-    private static function getTemplate($type)
+    private static function getTemplate($scene, $type)
     {
-        return isset(self::$TYPE_LIST_TO_TEMPLATE[$type]) ? self::$TYPE_LIST_TO_TEMPLATE[$type] : self::CODE_TEMPLATE;
+        return self::$TYPE_LIST_TO_TEMPLATE[$scene][$type];
     }
 }

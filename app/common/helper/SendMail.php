@@ -19,7 +19,6 @@ class SendMail
     {
         $mail = new PHPMailer(true);
         $config = config("account.qq");
-        empty($to) && $to = $config["to"];
 
         try {
             //Server settings
@@ -42,7 +41,7 @@ class SendMail
             // Content
             $mail->isHTML(true);                                  // Set email format to HTML
             $mail->Subject = $subject;
-            $mail->Body = self::html($content);
+            $mail->Body = $content;
             $mail->AltBody = 'diamond store alert';
 
             $res = $mail->send();
@@ -51,24 +50,7 @@ class SendMail
             }
         } catch (\Throwable $e) {
             Log::error("Message could not be sent. Mailer Error: ".$e->getMessage());
+            throw $e;
         }
-    }
-
-    /**
-     * 格式话json输出
-     *
-     * @param $content
-     * @return string
-     */
-    protected static function html($content) {
-        $html = "<body><table style='font-size:11px;color:#333333;border-width: 1px;border-color: #999999;border-collapse: collapse;'>";
-        foreach ($content as $key => $value) {
-            $html .= "<tr>
-                <td  style='border-width: 1px;padding: 8px;border-style: solid;border-color: #999999;'>" . $key . "</td>
-                <td  style='border-width: 1px;padding: 8px;border-style: solid;border-color: #999999;'>" . $value . "</td>
-                </tr>";
-        }
-        $html .= "</table></body>";
-        return $html;
     }
 }

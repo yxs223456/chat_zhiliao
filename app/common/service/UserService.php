@@ -3,15 +3,17 @@
 namespace app\common\service;
 
 use app\common\AppException;
+use app\common\Constant;
 use app\common\enum\DbDataIsDeleteEnum;
+use app\common\enum\SmsSceneEnum;
 use app\common\helper\Redis;
 use app\common\helper\AliSms;
+use app\common\helper\RongCloudApp;
 use app\common\model\SmsLogModel;
+use app\common\model\UserCommunityModel;
 use app\common\model\UserModel;
-use think\Exception;
 use think\facade\Db;
 use think\facade\Log;
-
 
 class UserService extends Base
 {
@@ -22,42 +24,65 @@ class UserService extends Base
     /**
      * 发送短信验证码
      *
-     * @param $mobile
-     * @param $areaCode int 区号
+     * @param $mobile   string  手机号
+     * @param $areaCode int     区号
+     * @param $scene    int     短信使用场景
      * @return array
      * @throws AppException
      */
-    public function sendSms($mobile, $areaCode = 86)
+    public function sendVerifyCode($mobile, $areaCode, $scene)
     {
-        $code = rand(100000, 999999);
+        $code = mt_rand(100000, 999999);
         $param = array('code' => $code);
 
         // 调用接口使用的参数 国内不加区号，国外港澳台加区号
-        $apiMobile = $mobile;
-        $templateType = AliSms::TYPE_CHINA;
-        if ($areaCode != 86) {
+        if ($areaCode == 86) {
+            $apiMobile = $mobile;
+            $templateType = AliSms::TYPE_CHINA;
+        } else {
             $apiMobile = $areaCode . $mobile;
             $templateType = AliSms::TYPE_INTERNATIONAL;
         }
 
-        $re = AliSms::sendSms($apiMobile, $param, $response, $templateType);
+        $re = AliSms::sendSms($apiMobile, $scene, $param, $response, $templateType);
 
         // 记录所有发送短信返回成功和失败
         $sms = new SmsLogModel();
-        if (!$sms->sendCodeMS($areaCode, $mobile, $param, $response)) {
+        if (!$sms->sendCodeMS($areaCode, $mobile, $param, $response, $scene)) {
             Log::error("手机号" . $mobile . "短信log写入错误 ：" . json_encode($param) . json_encode($response));
         }
 
         // 保存redis
         $redis = Redis::factory();
-        setSmsCode(array('phone' => $apiMobile, 'code' => $code), $redis);
+        setSmsCode(['phone' => $apiMobile, 'code' => $code, 'scene' => $scene], $redis);
 
         // 触发限制抛异常
         if (isset($re["Code"]) && $re["Code"] != "OK") {
-            throw AppException::factory(AppException::USER_MESSAGE);
+            throw AppException::factory(AppException::USER_SEND_SMS_LIMIT);
         }
 
         return $re;
+    }
+
+    public function codeLogin($areaCode, $mobile, $verifyCode, $userNumber)
+    {
+        $apiMobile = $areaCode == 86 ? $mobile : $areaCode . $mobile;
+
+        $redis = Redis::factory();
+        $cacheCode = getSmsCode($apiMobile, SmsSceneEnum::LOGIN, $redis);
+        if ($cacheCode != $verifyCode) {
+            throw AppException::factory(AppException::USER_VERIFY_CODE_ERR);
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->findByMobilePhone($mobile);
+
+        if ($user == null) {
+            $returnData = $this->registerByPhone($areaCode, $mobile, $userNumber);
+        } else {
+            $returnData = $this->dologin($areaCode, $mobile, $verifyCode, UserService::SMS_CODE_LOGIN);
+        }
+        return $returnData;
     }
 
     /**
@@ -65,85 +90,106 @@ class UserService extends Base
      *
      * @param $areaCode string 手机区号
      * @param $mobile string 手机号
-     * @param $inviteCode string 邀请码
+     * @param $inviteUserNumber string 用户编号
      * @return mixed
      * @throws AppException
      */
-    public function register($areaCode, $mobile, $inviteCode)
+    public function registerByPhone($areaCode, $mobile, $inviteUserNumber)
     {
+        //判断用户是否存在
+        $userModel = new UserModel();
+        if (!empty($inviteUserNumber)) {
+            $parent = $userModel->findById($inviteUserNumber);
+            if (empty($parent)) {
+                throw AppException::factory(AppException::USER_USER_NUMBER_NOT_EXISTS);
+            }
+            $userCommunityModel = new UserCommunityModel();
+            $parentCommunity = $userCommunityModel->findByUId($parent["id"]);
+            $parent = $parent->toArray();
+            $parent["p_id_path"] = $parentCommunity["p_id_path"];
+        } else {
+            $parent = null;
+        }
+
+        // 创建融云用户
+        $userNumber = $this->createUserNumber(6);
+        $nickname = "用户" . $userNumber;
+        $portrait = Constant::USER_DEFAULT_PORTRAIT;
+        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
+        if (!empty($rongCloudResponse["token"])) {
+            $rongCloudToken = $rongCloudResponse["token"];
+        } else {
+            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
+        }
+
+        Db::startTrans();
         try {
-            Db::startTrans();
+            // user表
+            $userToken = getRandomString();
+            $newUser = [
+                "mobile_phone_area" => $areaCode,
+                "mobile_phone" => $mobile,
+                "user_number" => $userNumber,
+                "token" => $userToken,
+            ];
+            $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
-            $user = new UserModel();
-            $userUuid = getRandomString(8);
-            $user->uuid = $userUuid;
-            $user->account = $mobile;
-            $user->area_code = $areaCode;
-            $user->phone = $mobile;
-            $user->last_time = date('Y-m-d H:i:s');
-            $user->last_ip = request()->ip();
-            $user->token = getRandomString();
-            $user->invite_code = createInviteCode(10);
-            $user->create_date = date("Y-m-d");
-            $user->last_login_time = time();
-            $user->last_active_time = time();
+            // user_info 表
+            $userInfoData = [
+                "u_id" => $newUser["id"],
+                "portrait" => $portrait,
+                "nickname" => $nickname,
+            ];
+            Db::name("user_info")->insert($userInfoData);
 
-            if (!empty($inviteCode)) {
-                $pUser = Db::name("user_base")->where("invite_code", $inviteCode)->find();
-                if (empty($pUser)) {
-                    throw AppException::factory(AppException::USER_INVITE_CODE_NOT_EXISTS);
-                }
-
-                $user->p_uuid = $pUser["uuid"];
-                $user->parent_uuid_path = $pUser["parent_uuid_path"] . ($pUser["parent_uuid_path"]?",":"") . $pUser["uuid"];
-
-                //上级统计表添加一条数据
-                Db::name("tmp_user_add_parent_callback")->insert([
-                    "user_uuid" => $userUuid,
-                    "create_time" => time(),
-                    "update_time" => time(),
-                ]);
-
-            }
-
-            // 添加user_base
-            if (!$user->save()) {
-                throw new AppException(json_encode($user->toArray()));
-            }
-
-            // 添加user_descendant
-            $data = array();
-            $data['user_uuid'] = $user->uuid;
-            $data["create_time"] = time();
-            $data['update_time'] = time();
-            $ret = Db::name("user_descendant")->insertGetId($data);
-            if (empty($ret)) {
-                throw new AppException("db error user_descendant 创建失败");
-            }
-
-            // 创建钻石币钱包
-            $walletCoin = array();
-            $walletCoin["user_uuid"] = $user->uuid;
-            $walletCoin["create_time"] = time();
-            $walletCoin["update_time"] = time();
-            $ret = Db::name("user_diamond_coin_wallet")->insertGetId($walletCoin);
-            if (empty($ret)) {
-                throw new AppException("db error 钻石币钱包创建失败");
-            }
+            // 后续处理
+            $this->registerAfter($newUser, $parent, $rongCloudToken);
 
             Db::commit();
-        } catch (Exception $e) {
-            Log::error("[] : " . $e->getMessage());
-            throw AppException::factory(AppException::USER_REGISTER_ERR);
         } catch (\Throwable $e) {
-            Log::error("[用户注册失败] ： " . $e->getMessage());
             Db::rollback();
-            throw AppException::factory(AppException::USER_REGISTER_ERR);
+            throw $e;
         }
 
         // 缓存用户登陆信息
-        cacheUserInfoByToken($user->toArray(), Redis::factory());
+        cacheUserInfoByToken($newUser, Redis::factory());
         return $this->formatUserData($user->uuid,1);
+    }
+
+    private function registerAfter($newUser, $parent, $rongCloudToken)
+    {
+        // user_rc_info 表
+        $userRcInfoData = [
+            "u_id" => $newUser["id"],
+            "rc_user_id" => $newUser["user_number"],
+            "token" => $rongCloudToken,
+            "token_expire" => 0,
+        ];
+        Db::name("user_rc_info")->insert($userRcInfoData);
+
+        // user_invite_reward 表
+        $userInviteRewardData = [
+            "u_id" => $newUser["id"],
+        ];
+        Db::name("user_invite_reward")->insert($userInviteRewardData);
+
+        // user_wallet 表
+        $userWalletData = [
+            "u_id" => $newUser["id"],
+        ];
+        Db::name("user_wallet")->insert($userWalletData);
+
+        // user_community表
+        $userCommunityData = [
+            "u_id" => $newUser["id"],
+            "p_id" => $parent ? $parent["id"] : 0,
+            "p_id_path" => $parent ? $parent["p_id_path"] . $parent["id"] : "",
+        ];
+        Db::name("user_community")->insert($userCommunityData);
+
+        if ($parent) {
+            // todo 有上级用户后续处理
+        }
     }
 
     /**
@@ -190,5 +236,22 @@ class UserService extends Base
             "first_login" => (int)$firstLogin
         ];
         return $data;
+    }
+
+    private function createUserNumber($length = 10)
+    {
+        //32个字符
+        $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $userModel = new UserModel();
+
+        do {
+            $str = '';
+            for ($i = 0; $i < $length; $i++) {
+                $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+            }
+            $user = $userModel->findByUserNumber($str);
+        } while($user);
+
+        return $str;
     }
 }

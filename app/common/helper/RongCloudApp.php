@@ -6,6 +6,8 @@
  * Time: 14:53
  */
 
+namespace app\common\helper;
+
 use RongCloud\RongCloud;
 
 /**

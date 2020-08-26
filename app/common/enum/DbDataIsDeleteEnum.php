@@ -9,16 +9,20 @@ namespace app\common\enum;
 
 /**
  * 数据库数据是否被删除
- * Class DbDataIsDeleteEnum
- * @package app\common\enum
  */
 class DbDataIsDeleteEnum
 {
     use EnumTrait;
 
-    const YES = 1;
-    const YES_DSC = "被删除";
-
     const NO = 0;
-    const NO_DESC = "有效";
+    const YES = 1;
+
+    protected static $desc = [
+        self::NO => [
+            "cn" => "有效",
+        ],
+        self::YES => [
+            "cn" => "被删除",
+        ],
+    ];
 }

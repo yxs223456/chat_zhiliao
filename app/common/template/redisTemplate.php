@@ -55,17 +55,17 @@ function getUserInfoByToken($token, Redis $redis)
 // 缓存短信验证码
 function setSmsCode(array $data, Redis $redis)
 {
-    $key = REDIS_KEY_PREFIX . "verifycode:" . $data['phone'];
-    $redis->set($key, $data['code'], 300);
+    $key = REDIS_KEY_PREFIX . "verifyCode:" . $data["scene"] . ":" .$data['phone'];
+    $redis->set($key, $data['code'], 1800);
 }
 
 // 获取短信验证码
-function getSmsCode($phone, Redis $redis)
+function getSmsCode($phone, $scene, Redis $redis)
 {
     if (empty($phone)) {
         return '';
     }
-    $key = REDIS_KEY_PREFIX . "verifycode:$phone";
+    $key = REDIS_KEY_PREFIX . "verifyCode:" . $scene . ":" . $phone;
     return $redis->get($key);
 }
 

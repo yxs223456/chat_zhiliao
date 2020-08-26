@@ -17,4 +17,9 @@ class UserModel extends Base
     {
         return $this->where("token", $token)->find();
     }
+
+    public function findByMobilePhone($mobilePhone)
+    {
+        return $this->where("mobile_phone", $mobilePhone)->find();
+    }
 }

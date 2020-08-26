@@ -175,38 +175,6 @@ function hideInternationalPhone($phone)
     return $phone;
 }
 
-function diamondCoinFormat($diamondCoin)
-{
-    if ($diamondCoin == 0) {
-        $format = "0.00";
-    } else {
-        $format = rtrim(rtrim(number_format($diamondCoin, 2), 0), ".");
-    }
-    return $format;
-}
-
-function usdtFormat($usdt)
-{
-    if ($usdt == 0) {
-        $format = "0.00";
-    } else {
-        $format = rtrim(rtrim(number_format(trim($usdt, 0), 2), 0), ".");
-    }
-    return $format;
-}
-
-function createInviteCode($length = 10)
-{
-    //32个字符
-    $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-
-    $str = '';
-    for ($i = 0; $i < $length; $i++) {
-        $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
-    }
-    return $str;
-}
-
 // 验证交易密码 必须包含大写，小写字母和数字，不少于8位
 function checkTradePass($tradePass)
 {

@@ -51,6 +51,13 @@ class WeChatWork
     {
         $accessToken = self::getAccessToken();
         $url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" . $accessToken;
+        if (is_array($user)) {
+            if (count($user) == 1) {
+                $user = $user[0];
+            } else {
+                $user = implode("|", $user);
+            }
+        }
         $requestData = [
             "touser" => $user ? $user : implode("|", self::$user),
             "msgtype" => "text",

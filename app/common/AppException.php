@@ -15,8 +15,10 @@ class AppException extends \Exception
 
     const USER_NOT_LOGIN = [2000, "请先登录"];
     const USER_MOBILE_ERR = [2001, "请输入正确的手机号"];
-    const USER_MESSAGE = [2002, "短信触发小时级流控"];
-    const USER_SMS_ERR = [2003, "短信发送失败"];
+    const USER_SEND_SMS_LIMIT = [2002, "短信触发小时级流控"];
+    const USER_SEND_SMS_ERR = [2003, "短信发送失败"];
+    const USER_VERIFY_CODE_ERR = [2004, "验证码错误"];
+    const USER_USER_NUMBER_NOT_EXISTS = [2005, "用户编号不存在"];
 
     public static function factory($errConst, $message = "")
     {

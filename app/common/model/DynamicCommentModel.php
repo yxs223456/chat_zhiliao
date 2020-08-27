@@ -9,9 +9,9 @@
 namespace app\common\model;
 
 
-class UserDynamicModel extends Base
+class DynamicCommentModel extends Base
 {
-    protected $table = 'user_dynamic';
+    protected $table = 'dynamic_comment';
 
     protected $pk = 'id';
 }

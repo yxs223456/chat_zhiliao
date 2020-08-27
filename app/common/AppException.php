@@ -21,7 +21,7 @@ class AppException extends \Exception
     const USER_USER_NUMBER_NOT_EXISTS = [2005, "用户编号不存在"];
     const USER_SEX_UNKNOWN = [2006, "请选择性别"];
 
-    const USER_DYNAMIC_CONTENT_EMPTY = [3001, "动态内容不能为空"];
+    const USER_DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const USER_DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];
 
     public static function factory($errConst, $message = "")

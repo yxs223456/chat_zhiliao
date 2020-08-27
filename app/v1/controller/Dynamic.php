@@ -11,6 +11,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\DynamicService;
+use app\v1\transformer\dynamic\InfoTransformer;
 use app\v1\transformer\dynamic\PersonalTransformer;
 
 class Dynamic extends Base
@@ -66,16 +67,22 @@ class Dynamic extends Base
     }
 
     /**
-     * 注意评论数据排序问题
+     * 动态详情
+     *
+     * @return \think\response\Json
+     * @throws AppException
      */
     public function info()
     {
+        $request = $this->query["content"];
+        $id = $request["id"] ?? 0;
+        if (empty($id)) {
+            throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+        }
 
-    }
-
-    public function report()
-    {
-
+        $user = $this->query["user"];
+        $service = new DynamicService();
+        return $this->jsonResponse($service->info($id), new InfoTransformer($user));
     }
 
     /**
@@ -145,6 +152,27 @@ class Dynamic extends Base
 
         $service = new DynamicService();
         $service->delete($id, $user);
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 举报动态
+     *
+     * @return \think\response\Json
+     * @throws AppException
+     */
+    public function report()
+    {
+        $request = $this->query["content"];
+        $id = $request["id"] ?? 0;
+        $user = $this->query['user'];
+
+        if (empty($id)) {
+            throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+        }
+
+        $service = new DynamicService();
+        $service->report($id, $user);
         return $this->jsonResponse(new \stdClass());
     }
 

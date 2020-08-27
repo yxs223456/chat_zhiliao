@@ -11,6 +11,8 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\enum\DbDataIsDeleteEnum;
+use app\common\enum\DynamicIsReportEnum;
+use app\common\helper\Redis;
 use think\facade\Db;
 
 class DynamicService extends Base
@@ -112,11 +114,83 @@ class DynamicService extends Base
             ->find();
         $ret["userInfo"] = $userInfo;
 
+        // 获取动态统计数据
         $dynamicCount = Db::name("dynamic_count")
             ->whereIn("dynamic_id", array_column($dynamics, 'id'))
             ->select()->toArray();
         $ret["dynamicCount"] = $dynamicCount;
 
         return array_values($ret);
+    }
+
+    /**
+     * 获取动态详情
+     *
+     * @param $id
+     * @return array
+     * @throws AppException
+     */
+    public function info($id)
+    {
+        // 读缓存
+        $redis = Redis::factory();
+        if ($data = getUserDynamicInfo($id, $redis)) {
+            return $data;
+        }
+
+        // 读db回写缓存
+        $lockKey = REDIS_KEY_PREFIX . "userDynamicInfoLock";
+        if ($redis->setnx($lockKey, 1)) {
+            //设置锁过期时间防止失败后数据永修不更新
+            $redis->expire($lockKey, 180);
+            // 获取动态数据
+            $dynamic = Db::name("dynamic")->alias("d")
+                ->leftJoin("user_info ui", "d.u_id = ui.id")
+                ->leftJoin("user u", "d.u_id = u.id")
+                ->leftJoin("dynamic_count dc", "d.id = dc.dynamic_id")
+                ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,
+            dc.like_count,dc.comment_count")
+                ->where("d.is_delete", DbDataIsDeleteEnum::NO)
+                ->where("d.id", $id)
+                ->find();
+            if (empty($dynamic)) {
+                throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+            }
+
+            $ret = [];
+            $ret["info"] = $dynamic;
+
+            // 获取评论数据
+            $dynamicComment = Db::name("dynamic_comment")->alias("dc")
+                ->leftJoin("user_info ui", "dc.u_id = ui.id")
+                ->field("dc.id,dc.pid,dc.u_id,dc.content,dc.source,dc.create_time,ui.portrait,ui.nickname")
+                ->order("dc.id")
+                ->select()->toArray();
+            $ret["comment"] = $dynamicComment;
+            cacheUserDynamicInfo($id, $ret, $redis);
+            $redis->del($lockKey);
+            return $ret;
+        }
+
+        usleep(50000); // sleep 50 毫秒
+        return $this->info($id);
+    }
+
+    /**
+     * 举报
+     *
+     * @param $id
+     * @param $user
+     * @return int
+     * @throws AppException
+     */
+    public function report($id, $user)
+    {
+        $dynamic = Db::name("dynamic")->where('id', $id)->find();
+        if (empty($dynamic)) {
+            throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+        }
+
+        return Db::name("dynamic")->where("id", $id)->update(["is_report" => DynamicIsReportEnum::YES, 'report_u_id' => $user["id"]]);
     }
 }

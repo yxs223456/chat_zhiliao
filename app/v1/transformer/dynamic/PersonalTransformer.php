@@ -32,13 +32,14 @@ class PersonalTransformer extends TransformerAbstract
     public function transformData(array $data): array
     {
         return [
+            'id' => $data['id'] ?? 0,
             'avatar' => $this->getUserInfo( 'portrait'),
             'nickname' => $this->getUserInfo("nickname"),
             'sex' => $this->getUserInfo( "sex"),
             'age' => $this->getAge(),
             'distance' => $this->getDistance(),
             'create_time' => date("Y/m/d", strtotime($data["create_time"])),
-            'content' => $data["content"],
+            'content' => $data["content"] ?? "",
             'source' => json_decode($data["source"], true),
             'like_count' => $this->getCountInfo( $data["id"], 'like_count'),
             'comment_count' => $this->getCountInfo($data['id'], 'comment_count'),

@@ -93,3 +93,26 @@ function getIpSendMsgTimes($ip, \Redis $redis)
     }
     return $times;
 }
+
+// 动态缓存
+define("REDIS_USER_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'userDynamicInfo:');
+function cacheUserDynamicInfo($id, $data, \Redis $redis)
+{
+    $key = REDIS_USER_DYNAMIC_INFO . $id;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 动态获取
+function getUserDynamicInfo($id, \Redis $redis)
+{
+    $key = REDIS_USER_DYNAMIC_INFO . $id;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 动态删除
+function deleteUserDynamicInfo($id, \Redis $redis)
+{
+    $key = REDIS_USER_DYNAMIC_INFO . $id;
+    return $redis->del($key);
+}

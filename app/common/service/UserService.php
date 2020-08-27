@@ -23,23 +23,23 @@ class UserService extends Base
     /**
      * 发送短信验证码
      *
-     * @param $mobile   string  手机号
+     * @param $mobilePhone   string  手机号
      * @param $areaCode int     区号
      * @param $scene    int     短信使用场景
      * @return array
      * @throws AppException
      */
-    public function sendVerifyCode($mobile, $areaCode, $scene)
+    public function sendVerifyCode($mobilePhone, $areaCode, $scene)
     {
         $verifyCode = mt_rand(100000, 999999);
         $param = array('code' => $verifyCode);
 
         // 调用接口使用的参数 国内不加区号，国外港澳台加区号
         if ($areaCode == 86) {
-            $apiMobile = $mobile;
+            $apiMobile = $mobilePhone;
             $templateType = AliSms::TYPE_CHINA;
         } else {
-            $apiMobile = $areaCode . $mobile;
+            $apiMobile = $areaCode . $mobilePhone;
             $templateType = AliSms::TYPE_INTERNATIONAL;
         }
 
@@ -47,8 +47,8 @@ class UserService extends Base
 
         // 记录所有发送短信返回成功和失败
         $sms = new SmsLogModel();
-        if (!$sms->sendCodeMS($areaCode, $mobile, $param, $response, $scene)) {
-            Log::error("手机号" . $mobile . "短信log写入错误 ：" . json_encode($param) . json_encode($response));
+        if (!$sms->sendCodeMS($areaCode, $mobilePhone, $param, $response, $scene)) {
+            Log::error("手机号" . $mobilePhone . "短信log写入错误 ：" . json_encode($param) . json_encode($response));
         }
 
         // 保存redis
@@ -66,17 +66,17 @@ class UserService extends Base
     /**
      * 手机号验证码登录
      * @param $areaCode
-     * @param $mobile
+     * @param $mobilePhone
      * @param $verifyCode
      * @param $inviteUserNumber
      * @return array
      * @throws AppException
      * @throws \Throwable
      */
-    public function codeLogin($areaCode, $mobile, $verifyCode, $inviteUserNumber)
+    public function codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber)
     {
         // 判断验证码是否正确
-        $apiMobile = $areaCode == 86 ? $mobile : $areaCode . $mobile;
+        $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;
         $redis = Redis::factory();
         $cacheCode = getSmsCode($apiMobile, SmsSceneEnum::LOGIN, $redis);
         if ($cacheCode != $verifyCode) {
@@ -85,11 +85,11 @@ class UserService extends Base
 
         // 通过手机号获取用户
         $userModel = new UserModel();
-        $user = $userModel->findByMobilePhone($mobile);
+        $user = $userModel->findByMobilePhone($mobilePhone);
 
         if ($user == null) {
             // 用户不存在执行注册流程
-            $returnData = $this->registerByPhone($areaCode, $mobile, $inviteUserNumber);
+            $returnData = $this->registerByPhone($areaCode, $mobilePhone, $inviteUserNumber);
         } else {
             // 用户存在直接登录
             $returnData = $this->doLogin($user->toArray());
@@ -154,26 +154,6 @@ class UserService extends Base
         return $returnData;
     }
 
-    // 用户登录
-    private function doLogin($user)
-    {
-        //修改用户token
-        $oldToken = $user["token"];
-        $user["token"] = getRandomString();
-        Db::name("user")
-            ->where("id", $user["id"])
-            ->update(["token"=> $user["token"]]);
-
-        // 缓存用户登陆信息
-        cacheUserInfoByToken($user, Redis::factory(), $oldToken);
-
-        return [
-            "user_number" => $user["user_number"],
-            "token" => $user["token"],
-            "sex" => $user["sex"],
-        ];
-    }
-
     // 通过微信移动应用注册用户
     private function registerByWeChatApp($weChatUserInfo, $inviteUserNumber)
     {
@@ -236,11 +216,12 @@ class UserService extends Base
             "user_number" => $newUser["user_number"],
             "token" => $newUser["token"],
             "sex" => $newUser["sex"],
+            "rc_token" => $rongCloudToken,
         ];
     }
 
     // 通过手机号注册用户
-    private function registerByPhone($areaCode, $mobile, $inviteUserNumber)
+    private function registerByPhone($areaCode, $mobilePhone, $inviteUserNumber)
     {
         //判断邀请用户是否存在
         $userModel = new UserModel();
@@ -274,7 +255,7 @@ class UserService extends Base
             $userToken = getRandomString();
             $newUser = [
                 "mobile_phone_area" => $areaCode,
-                "mobile_phone" => $mobile,
+                "mobile_phone" => $mobilePhone,
                 "user_number" => $userNumber,
                 "token" => $userToken,
                 "sex" => UserSexEnum::UNKNOWN,
@@ -297,9 +278,10 @@ class UserService extends Base
         }
 
         return [
-            "user_number" => $newUser["user_number"],
             "token" => $newUser["token"],
             "sex" => $newUser["sex"],
+            "user_number" => $newUser["user_number"],
+            "rc_token" => $rongCloudToken,
         ];
     }
 
@@ -373,5 +355,31 @@ class UserService extends Base
         } while($user);
 
         return $str;
+    }
+
+    // 用户登录
+    private function doLogin($user)
+    {
+        // 修改用户token
+        $oldToken = $user["token"];
+        $user["token"] = getRandomString();
+        Db::name("user")
+            ->where("id", $user["id"])
+            ->update(["token"=> $user["token"]]);
+
+        // 用户融云信息
+        $rcUser = Db::name("user_rc_info")
+            ->where("u_id", $user["id"])
+            ->find();
+
+        // 缓存用户登陆信息
+        cacheUserInfoByToken($user, Redis::factory(), $oldToken);
+
+        return [
+            "user_number" => $user["user_number"],
+            "token" => $user["token"],
+            "sex" => $user["sex"],
+            "rc_token" => $rcUser["token"],
+        ];
     }
 }

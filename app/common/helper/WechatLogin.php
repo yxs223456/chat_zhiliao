@@ -50,14 +50,14 @@ class WechatLogin
 
     /**
      * 获取用户数据
-     *
      * @param string $code
-     * @return $this
+     * @return array
+     * @throws \Exception
      */
     public function getUser($code = "")
     {
         $this->user = $this->getUserByToken($this->getAccessToken($code));
-        return $this;
+        return $this->user;
     }
 
     public function getNickname()

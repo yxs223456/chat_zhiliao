@@ -22,4 +22,9 @@ class UserModel extends Base
     {
         return $this->where("mobile_phone", $mobilePhone)->find();
     }
+
+    public function findByWeChatUnionid($unionid)
+    {
+        return $this->where("wc_unionid", $unionid)->find();
+    }
 }

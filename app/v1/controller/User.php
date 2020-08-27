@@ -39,10 +39,7 @@ class User extends Base
     }
 
     /**
-     * 用户验证码登陆
-     *
-     * @return \think\response\Json
-     * @throws AppException
+     * 用户手机号验证码登陆
      */
     public function codeLogin()
     {
@@ -60,8 +57,45 @@ class User extends Base
         }
 
         $us = new UserService();
-        $ret = $us->codeLogin($areaCode, $mobile, $verifyCode, $inviteUserNumber);
+        $returnData = $us->codeLogin($areaCode, $mobile, $verifyCode, $inviteUserNumber);
 
-        return $this->jsonResponse($ret);
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 手机号直接登录
+     */
+    public function phoneLogin()
+    {
+        $request = $this->query["content"];
+        $accessToken = $request["access_token"]??"";
+        $inviteUserNumber = $request["invite_user_number"] ?? "";
+        if (empty($accessToken)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $us = new UserService();
+        $returnData = $us->phoneLogin($accessToken, $inviteUserNumber);
+
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 微信登录
+     */
+    public function weChatLogin()
+    {
+        $request = $this->query["content"];
+        $weChatCode = $request["code"]??"";
+        $inviteUserNumber = $request["invite_user_number"] ?? "";
+
+        if (empty($weChatCode)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $us = new UserService();
+        $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber);
+
+        return $this->jsonResponse($returnData);
     }
 }

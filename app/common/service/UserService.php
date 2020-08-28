@@ -397,13 +397,11 @@ class UserService extends Base
         $userModel = new UserModel();
         Db::startTrans();
         try {
-
             $user = $userModel->where("id", $userBase["id"])->lock(true)->find();
             // 性别只能设置一次，设置后无法修改
             if ($user["sex"] != UserSexEnum::UNKNOWN) {
                 throw AppException::factory(AppException::USER_MODIFY_SEX_FORBIDDEN);
             }
-
             // 纪录用户性别
             $user->sex = $sex;
             $user->save();

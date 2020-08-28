@@ -1,6 +1,34 @@
 <?php
+/**
+ * redis key 统一前缀
+ */
 define("REDIS_KEY_PREFIX", "chat_zhiliao:");
-//企业微信access_token
+
+/**
+ * vip 套餐
+ */
+define("REDIS_KEY_VIP_CONFIG", REDIS_KEY_PREFIX . "vipConfig");
+
+//缓存vip套餐配置，有效期3天
+function cacheVipConfig(array $vipConfig, \Redis $redis)
+{
+    $redis->setex(REDIS_KEY_VIP_CONFIG, 259200, json_encode($vipConfig, JSON_UNESCAPED_UNICODE));
+}
+
+//获取vip套餐配置
+function getVipConfigByCache(\Redis $redis)
+{
+    $data = $redis->get(REDIS_KEY_VIP_CONFIG);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
+ * 企业微信access_token
+ */
 define("REDIS_WECHAT_WORK_ACCESS_TOKEN", REDIS_KEY_PREFIX . "weChatWorkAccessToken");
 function getWeChatWorkAccessToken(\Redis $redis)
 {
@@ -13,6 +41,9 @@ function setWeChatWorkAccessToken($accessToken, $expire, \Redis $redis)
     $redis->setex(REDIS_WECHAT_WORK_ACCESS_TOKEN, $expire, $accessToken);
 }
 
+/**
+ * 报警邮件发送纪录
+ */
 // 邮件发送纪录，缓存有效期6小时
 function setMailSendExp($key, \Redis $redis)
 {
@@ -27,8 +58,12 @@ function getMailSendExp($key, \Redis $redis)
     return $redis->get($key);
 }
 
-//缓存用户信息
+
+/**
+ * 缓存用户信息 token
+ */
 define("REDIS_USER_INFO_BY_TOKEN", REDIS_KEY_PREFIX . "userInfoByToken:");
+//缓存用户信息
 function cacheUserInfoByToken(array $userInfo, Redis $redis, $oldToken = "")
 {
     $key = REDIS_USER_INFO_BY_TOKEN . $userInfo["token"];
@@ -52,6 +87,9 @@ function getUserInfoByToken($token, Redis $redis)
     return $redis->hGetAll($key);
 }
 
+/**
+ * 短信验证码
+ */
 // 缓存短信验证码
 define("REDIS_SMS_CODE", REDIS_KEY_PREFIX . 'verifyCode:');
 function setSmsCode(array $data, Redis $redis)

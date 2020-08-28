@@ -4,6 +4,7 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\Constant;
+use app\common\enum\InviteRewardAddEnum;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
 use app\common\helper\AliMobilePhoneCertificate;
@@ -11,6 +12,7 @@ use app\common\helper\Redis;
 use app\common\helper\AliSms;
 use app\common\helper\RongCloudApp;
 use app\common\helper\WechatLogin;
+use app\common\model\InviteRewardModel;
 use app\common\model\SmsLogModel;
 use app\common\model\UserCommunityModel;
 use app\common\model\UserModel;
@@ -305,11 +307,11 @@ class UserService extends Base
         ];
         Db::name("user_rc_info")->insert($userRcInfoData);
 
-        // user_invite_reward 表
+        // invite_reward 表
         $userInviteRewardData = [
             "u_id" => $newUser["id"],
         ];
-        Db::name("user_invite_reward")->insert($userInviteRewardData);
+        Db::name("invite_reward")->insert($userInviteRewardData);
 
         // user_wallet 表
         $userWalletData = [
@@ -381,5 +383,51 @@ class UserService extends Base
             "sex" => $user["sex"],
             "rc_token" => $rcUser["token"],
         ];
+    }
+
+    /**
+     * 用户设置性别
+     * @param $sex
+     * @param $userBase
+     * @return \stdClass
+     * @throws \Throwable
+     */
+    public function setSex($sex, $userBase)
+    {
+        $userModel = new UserModel();
+        Db::startTrans();
+        try {
+
+            $user = $userModel->where("id", $userBase["id"])->lock(true)->find();
+            // 性别只能设置一次，设置后无法修改
+            if ($user["sex"] != UserSexEnum::UNKNOWN) {
+                throw AppException::factory(AppException::USER_MODIFY_SEX_FORBIDDEN);
+            }
+
+            // 纪录用户性别
+            $user->sex = $sex;
+            $user->save();
+
+            // 男生注册，奖励邀请人1元
+            if ($sex == UserSexEnum::MALE) {
+                $userCommunity = Db::name("user_community")->where("u_id", $user["id"])->find();
+                if ($userCommunity["p_id"]) {
+                    $inviteRewardModel = new InviteRewardModel();
+                    $inviteRewardModel->add(
+                        $userCommunity["p_id"],
+                        InviteRewardAddEnum::MALE_REGISTER,
+                        Constant::INVITE_MALE_REWARD_MONEY,
+                        $user["id"]
+                    );
+                }
+            }
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        return new \stdClass();
     }
 }

@@ -24,4 +24,10 @@ class Constant
 
     // 获取缓存等待时间 单位 微秒
     const GET_CACHE_WAIT_TIME = 50000; // 50 毫秒
+
+    // 邀请男生奖励人民币（元）
+    const INVITE_MALE_REWARD_MONEY = 1;
+
+    // 邀请女生成为女神奖励人民币（元）
+    const INVITE_PRETTY_FEMALE_REWARD_MONEY = 3;
 }

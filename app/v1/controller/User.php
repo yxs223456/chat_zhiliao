@@ -4,6 +4,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\enum\SmsSceneEnum;
+use app\common\enum\UserSexEnum;
 use app\common\service\UserService;
 use app\v1\transformer\dynamic\LoginTransformer;
 
@@ -11,7 +12,7 @@ class User extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
-            "except" => "sendVerifyCode,codeLogin",
+            "except" => "sendVerifyCode,codeLogin,phoneLogin,weChatLogin",
         ]
     ];
 
@@ -94,5 +95,29 @@ class User extends Base
         $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber);
 
         return $this->jsonResponse($returnData, new LoginTransformer());
+    }
+
+    /**
+     * 设置性别
+     */
+    public function setSex()
+    {
+        $request = $this->query["content"];
+        $sex = $request["sex"]??null;
+        if (!in_array(
+            $sex,
+            [
+                UserSexEnum::MALE,
+                UserSexEnum::FEMALE
+            ]
+        )) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $us = new UserService();
+        $returnData = $us->setSex($sex, $user);
+
+        return $this->jsonResponse($returnData);
     }
 }

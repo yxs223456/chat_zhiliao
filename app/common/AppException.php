@@ -21,6 +21,7 @@ class AppException extends \Exception
     const USER_VERIFY_CODE_ERR = [2004, "验证码错误"];
     const USER_USER_NUMBER_NOT_EXISTS = [2005, "用户编号不存在"];
     const USER_SEX_UNKNOWN = [2006, "请选择性别"];
+    const USER_MODIFY_SEX_FORBIDDEN = [2007, "性别无法修改"];
 
     const USER_DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const USER_DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];

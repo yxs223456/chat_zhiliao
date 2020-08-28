@@ -176,6 +176,9 @@ class DynamicService extends Base
             cacheUserDynamicInfo($id, $ret, $redis);
             $redis->del($lockKey);
             return $ret;
+        } else {
+            //设置锁过期时间防止失败后数据永修不更新
+            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
         }
 
         if ($retry < Constant::GET_CACHE_TIMES) {

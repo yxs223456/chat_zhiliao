@@ -53,7 +53,17 @@ class Dynamic extends Base
      */
     public function like()
     {
+        $request = $this->query["content"];
+        $id = $request["id"] ?? 0;
 
+        if (empty($id) || empty($content)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new DynamicService();
+        $service->like($id, $user);
+        return $this->jsonResponse(new \stdClass());
     }
 
     /**
@@ -112,15 +122,17 @@ class Dynamic extends Base
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
-        $userId = $request["user_id"] ?? 0;
+        $requestUserId = $request["user_id"] ?? 0;
         if (empty($userId)) {
-            $userId = $this->query["user"]["id"];
+            $requestUserId = $this->query["user"]["id"];
         }
+        $currentUserId = $this->query["user"]["id"];
 
         $service = new DynamicService();
-        list($dynamic, $userInfo, $dynamicCount) = $service->personal($startId, $pageSize, $userId);
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicId) = $service->personal($startId, $pageSize, $requestUserId, $currentUserId);
         return $this->jsonResponse($dynamic, new PersonalTransformer(
-            ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount, 'userId' => $this->query["user"]["id"]]
+            ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
+                'userId' => $this->query["user"]["id"], 'likeDynamicId' => $likeDynamicId]
         ));
     }
 

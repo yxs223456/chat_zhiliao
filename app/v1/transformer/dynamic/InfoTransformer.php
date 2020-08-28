@@ -17,6 +17,7 @@ class InfoTransformer extends TransformerAbstract
     {
         $info = $data["info"] ?? [];
         $comment = $data["comment"] ?? [];
+        $likeUserIds = $data["likeUserIds"] ?? [];
         return [
             'id' => $info['id'] ?? 0,
             'avatar' => $info['portrait'] ?? "",
@@ -29,6 +30,7 @@ class InfoTransformer extends TransformerAbstract
             'source' => json_decode($info["source"], true),
             'like_count' => $info['like_count'] ?? 0,
             'comment_count' => $data['comment_count'] ?? 0,
+            'is_like' => $this->getIsLike($likeUserIds),
             'comment_list' => $this->getComment($comment)
         ];
     }
@@ -87,5 +89,10 @@ class InfoTransformer extends TransformerAbstract
             return 1;
         }
         return 0;
+    }
+
+    private function getIsLike($likeUserIds)
+    {
+        return in_array($this->_queries['id'], $likeUserIds) ? 1 : 0;
     }
 }

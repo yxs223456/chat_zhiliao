@@ -85,19 +85,21 @@ class DynamicService extends Base
      *
      * @param $startId
      * @param $pageSize
-     * @param $userId
+     * @param $requestUserId int 查询动态的用户ID
+     * @param $currentUserId int 当前查看动态的用户ID
      * @return array
      */
-    public function personal($startId, $pageSize, $userId)
+    public function personal($startId, $pageSize, $requestUserId, $currentUserId)
     {
         $ret = [
             "dynamic" => [],
             "userInfo" => [],
-            "dynamicCount" => []
+            "dynamicCount" => [],
+            "likeDynamicId" => []
         ];
         // 获取动态数据
         $dynamicQuery = Db::name("dynamic")
-            ->where("u_id", $userId)
+            ->where("u_id", $requestUserId)
             ->where("is_delete", DbDataIsDeleteEnum::NO)
             ->order("create_time", "desc");
         if (!empty($startId)) {
@@ -114,7 +116,7 @@ class DynamicService extends Base
         $userInfo = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
             ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday")
-            ->where("u.id", $userId)
+            ->where("u.id", $requestUserId)
             ->find();
         $ret["userInfo"] = $userInfo;
 
@@ -124,6 +126,11 @@ class DynamicService extends Base
             ->select()->toArray();
         $ret["dynamicCount"] = $dynamicCount;
 
+        // 获取当前用户点赞的动态ID
+        $ret["likeDynamicId"] = Db::name("dynamic_like")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->where("like_u_id", $currentUserId)
+            ->column("dynamic_id");
         return array_values($ret);
     }
 
@@ -173,6 +180,9 @@ class DynamicService extends Base
                 ->order("dc.id")
                 ->select()->toArray();
             $ret["comment"] = $dynamicComment;
+
+            // 获取点赞人ID
+            $ret["likeUserIds"] = Db::name('dynamic_like')->where("dynamic_id", $id)->column("like_u_id");
             cacheUserDynamicInfo($id, $ret, $redis);
             $redis->del($lockKey);
             return $ret;
@@ -203,7 +213,8 @@ class DynamicService extends Base
             throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
         }
 
-        return Db::name("dynamic")->where("id", $id)->update(["is_report" => DynamicIsReportEnum::YES, 'report_u_id' => $user["id"]]);
+        return Db::name("dynamic")->where("id", $id)
+            ->update(["is_report" => DynamicIsReportEnum::YES, 'report_u_id' => $user["id"]]);
     }
 
     /**
@@ -242,5 +253,10 @@ class DynamicService extends Base
 
         // 删除缓存
         deleteUserDynamicInfo($id, Redis::factory());
+    }
+
+    public function like($id, $user)
+    {
+
     }
 }

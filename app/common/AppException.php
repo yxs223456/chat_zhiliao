@@ -10,8 +10,9 @@ namespace app\common;
 
 class AppException extends \Exception
 {
-    const QUERY_PARAMS_ERROR = [1000, "非法请求"];
+    const QUERY_PARAMS_ERROR = [1000, "非法参数"];
     const QUERY_INVALID = [1001, "非法请求"];
+    const TRY_AGAIN_LATER = [1002, "稍后重试"];
 
     const USER_NOT_LOGIN = [2000, "请先登录"];
     const USER_MOBILE_ERR = [2001, "请输入正确的手机号"];

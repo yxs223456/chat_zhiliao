@@ -15,4 +15,13 @@ class Constant
 
     // 提现手续费比例
     const WITHDRAW_POUNDAGE_RATE = 0.01;
+
+    // 回写缓存锁时间 单位秒
+    const CACHE_LOCK_SECONDS = 10;
+
+    // 获取缓存尝试次数
+    const GET_CACHE_TIMES = 3;
+
+    // 获取缓存等待时间 单位 微秒
+    const GET_CACHE_WAIT_TIME = 50000; // 50 毫秒
 }

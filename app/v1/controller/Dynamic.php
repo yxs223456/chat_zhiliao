@@ -57,13 +57,30 @@ class Dynamic extends Base
     }
 
     /**
+     * 评论动态
+     *
      * @param 动态id
      * @param 父评论ID
      * @param 内容
+     *
+     * @return \think\response\Json
+     * @throws AppException
      */
     public function comment()
     {
+        $request = $this->query["content"];
+        $id = $request["id"] ?? 0;
+        $pid = $request["pid"] ?? 0;
+        $content = $request["content"] ?? "";
 
+        if (empty($id) || empty($content)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new DynamicService();
+        $service->comment($id, $pid, $content, $user);
+        return $this->jsonResponse(new \stdClass());
     }
 
     /**
@@ -77,7 +94,7 @@ class Dynamic extends Base
         $request = $this->query["content"];
         $id = $request["id"] ?? 0;
         if (empty($id)) {
-            throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $user = $this->query["user"];
@@ -147,7 +164,7 @@ class Dynamic extends Base
         $user = $this->query["user"];
 
         if (empty($id)) {
-            throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new DynamicService();
@@ -168,7 +185,7 @@ class Dynamic extends Base
         $user = $this->query['user'];
 
         if (empty($id)) {
-            throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new DynamicService();

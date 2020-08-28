@@ -10,6 +10,7 @@ namespace app\common\service;
 
 
 use app\common\AppException;
+use app\common\Constant;
 use app\common\enum\DbDataIsDeleteEnum;
 use app\common\enum\DynamicIsReportEnum;
 use app\common\helper\Redis;
@@ -72,6 +73,9 @@ class DynamicService extends Base
             throw AppException::factory(AppException::QUERY_INVALID);
         }
 
+        // 删除缓存
+        deleteUserDynamicInfo($id, Redis::factory());
+
         return Db::name("dynamic")->where("id", $id)->update(["is_delete" => DbDataIsDeleteEnum::YES]);
 
     }
@@ -127,10 +131,11 @@ class DynamicService extends Base
      * 获取动态详情
      *
      * @param $id
+     * @param $retry int
      * @return array
      * @throws AppException
      */
-    public function info($id)
+    public function info($id, $retry = 0)
     {
         // 读缓存
         $redis = Redis::factory();
@@ -139,10 +144,10 @@ class DynamicService extends Base
         }
 
         // 读db回写缓存
-        $lockKey = REDIS_KEY_PREFIX . "userDynamicInfoLock";
+        $lockKey = REDIS_KEY_PREFIX . "userDynamicInfoLock:" . $id;
         if ($redis->setnx($lockKey, 1)) {
             //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, 180);
+            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
             // 获取动态数据
             $dynamic = Db::name("dynamic")->alias("d")
                 ->leftJoin("user_info ui", "d.u_id = ui.id")
@@ -154,6 +159,7 @@ class DynamicService extends Base
                 ->where("d.id", $id)
                 ->find();
             if (empty($dynamic)) {
+                $redis->del($lockKey);
                 throw AppException::factory(AppException::USER_DYNAMIC_NOT_EXISTS);
             }
 
@@ -172,8 +178,11 @@ class DynamicService extends Base
             return $ret;
         }
 
-        usleep(50000); // sleep 50 毫秒
-        return $this->info($id);
+        if ($retry < Constant::GET_CACHE_TIMES) {
+            usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
+            return $this->info($id, ++$retry);
+        }
+        throw AppException::factory(AppException::TRY_AGAIN_LATER);
     }
 
     /**
@@ -192,5 +201,43 @@ class DynamicService extends Base
         }
 
         return Db::name("dynamic")->where("id", $id)->update(["is_report" => DynamicIsReportEnum::YES, 'report_u_id' => $user["id"]]);
+    }
+
+    /**
+     * 评论动态
+     *
+     * 1.添加评论
+     * 2.修改评论数量
+     * 3.清缓存
+     *
+     * @param $id int 动态ID
+     * @param $pid int 父评论ID
+     * @param $content string 评论内容
+     * @param $user array 评论人
+     *
+     * @throws \Throwable
+     */
+    public function comment($id, $pid, $content, $user)
+    {
+        Db::startTrans();
+        try {
+            Db::name("dynamic_comment")->insertGetId([
+                'dynamic_id' => $id,
+                'pid' => $pid,
+                'u_id' => $user["id"],
+                'content' => $content,
+            ]);
+
+            Db::name("dynamic_count")->where("dynamic_id", $id)
+                ->inc("comment_count", 1)
+                ->update();
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        // 删除缓存
+        deleteUserDynamicInfo($id, Redis::factory());
     }
 }

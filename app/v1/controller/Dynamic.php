@@ -10,8 +10,10 @@ namespace app\v1\controller;
 
 
 use app\common\AppException;
+use app\common\helper\Redis;
 use app\common\service\DynamicService;
 use app\v1\transformer\dynamic\InfoTransformer;
+use app\v1\transformer\dynamic\NewestTransformer;
 use app\v1\transformer\dynamic\PersonalTransformer;
 
 class Dynamic extends Base
@@ -25,7 +27,7 @@ class Dynamic extends Base
     /**********************************************公共动态接口开始****************************************************/
 
     /**
-     * 最近列表 注意去重复 时间倒叙
+     * 最近列表 注意去重复 id倒叙
      */
     public function near()
     {
@@ -33,15 +35,28 @@ class Dynamic extends Base
     }
 
     /**
-     * 最新列表 注意去重复 时间倒叙
+     * 最新列表
+     *
+     * @return \think\response\Json
      */
     public function newest()
     {
+        $request = $this->query["content"];
+        $startId = $request["start_id"] ?? 0;
+        $pageSize = $request["page_size"] ?? 20;
+        $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
+        $user = $this->query["user"];
 
+        $service = new DynamicService();
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicId) = $service->newest($startId, $pageSize, $isFlush, $user);
+        return $this->jsonResponse($dynamic, new NewestTransformer(
+            ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
+                'userId' => $this->query["user"]["id"], 'likeDynamicId' => $likeDynamicId]
+        ));
     }
 
     /**
-     * 关注列表 注意去重复 时间倒叙
+     * 关注列表 注意去重复 id倒叙
      */
     public function concern()
     {
@@ -49,14 +64,17 @@ class Dynamic extends Base
     }
 
     /**
-     * 点赞
+     * 点赞动态
+     *
+     * @return \think\response\Json
+     * @throws AppException
      */
     public function like()
     {
         $request = $this->query["content"];
         $id = $request["id"] ?? 0;
 
-        if (empty($id) || empty($content)) {
+        if (empty($id)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

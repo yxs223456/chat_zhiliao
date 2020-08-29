@@ -132,6 +132,9 @@ function getIpSendMsgTimes($ip, \Redis $redis)
     return $times;
 }
 
+/**
+ * 动态详情缓存相关
+ */
 // 动态缓存
 define("REDIS_USER_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'userDynamicInfo:');
 function cacheUserDynamicInfo($id, $data, \Redis $redis)
@@ -153,4 +156,37 @@ function deleteUserDynamicInfo($id, \Redis $redis)
 {
     $key = REDIS_USER_DYNAMIC_INFO . $id;
     return $redis->del($key);
+}
+
+/**
+ * 最新动态列表缓存相关
+ */
+define("REDIS_NEWEST_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'newestDynamicInfo:');
+// 缓存数据
+function cacheNewestDynamicInfo($startId, $data, \Redis $redis)
+{
+    $key = REDIS_NEWEST_DYNAMIC_INFO . $startId;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取缓存
+function getNewestDynamicInfo($startId, \Redis $redis)
+{
+    $key = REDIS_NEWEST_DYNAMIC_INFO . $startId;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除所有缓存
+function deleteNewestDynamicInfo(\Redis $redis)
+{
+    $keys = $redis->keys(REDIS_NEWEST_DYNAMIC_INFO . "*");
+    $redis->del($keys);
+}
+
+// 删除首页缓存
+function deleteFirstNewestDynamicInfo(\Redis $redis)
+{
+    $key = REDIS_NEWEST_DYNAMIC_INFO . "0";
+    $redis->del($key);
 }

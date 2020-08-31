@@ -19,7 +19,7 @@ class PersonalTransformer extends TransformerAbstract
     // 当前登陆用户ID
     private $userId = null;
     // 当前用户点赞的动态ID
-    private $likeDynamicId = null;
+    private $likeDynamicUserIds = null;
 
     public function __construct(array $params = null)
     {
@@ -29,7 +29,7 @@ class PersonalTransformer extends TransformerAbstract
         $this->countInfo = empty($this->_queries["dynamicCount"]) ? [] :
             array_combine(array_column($this->_queries["dynamicCount"], "dynamic_id"), $this->_queries["dynamicCount"]);
         $this->userId = $this->_queries["userId"] ?? 0;
-        $this->likeDynamicId = $this->_queries["likeDynamicId"] ?? [];
+        $this->likeDynamicUserIds = $this->_queries["likeDynamicUserIds"] ?? [];
     }
 
     public function transformData(array $data): array
@@ -41,6 +41,7 @@ class PersonalTransformer extends TransformerAbstract
             'sex' => $this->getUserInfo("sex"),
             'age' => $this->getAge(),
             'distance' => $this->getDistance(),
+            'city' => $this->getUserInfo('city'),
             'create_time' => date("Y/m/d", strtotime($data["create_time"])),
             'content' => $data["content"] ?? "",
             'source' => json_decode($data["source"], true),
@@ -88,7 +89,10 @@ class PersonalTransformer extends TransformerAbstract
 
     private function getIsLike($dynamicId)
     {
-        return in_array($dynamicId, $this->likeDynamicId) ? 1 : 0;
+        if (!isset($this->likeDynamicUserIds[$dynamicId])) {
+            return 0;
+        }
+        return in_array($this->userId, $this->likeDynamicUserIds[$dynamicId]) ? 1 : 0;
     }
 
 }

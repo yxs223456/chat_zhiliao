@@ -10,7 +10,7 @@ namespace app\v1\transformer\dynamic;
 
 use app\common\transformer\TransformerAbstract;
 
-class NewestTransformer extends TransformerAbstract
+class ConcernTransformer extends TransformerAbstract
 {
     // 用户数据
     private $userInfo = null;

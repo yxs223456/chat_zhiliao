@@ -159,20 +159,20 @@ function deleteUserDynamicInfo($id, \Redis $redis)
 }
 
 /**
- * 最新动态列表缓存相关
+ * 最新动态列表缓存相关(并发)
  */
 define("REDIS_NEWEST_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'newestDynamicInfo:');
 // 缓存数据
-function cacheNewestDynamicInfo($startId, $data, \Redis $redis)
+function cacheNewestDynamicInfo($sex, $startId, $pageSize, $data, \Redis $redis)
 {
-    $key = REDIS_NEWEST_DYNAMIC_INFO . $startId;
+    $key = REDIS_NEWEST_DYNAMIC_INFO . $sex . ":" . $startId . ":" . $pageSize;
     $redis->set($key, json_encode($data), 3600);
 }
 
 // 获取缓存
-function getNewestDynamicInfo($startId, \Redis $redis)
+function getNewestDynamicInfo($sex, $startId, $pageSize, \Redis $redis)
 {
-    $key = REDIS_NEWEST_DYNAMIC_INFO . $startId;
+    $key = REDIS_NEWEST_DYNAMIC_INFO . $sex . ":" . $startId . ":" . $pageSize;
     $data = $redis->get($key);
     return $data ? json_decode($data, true) : null;
 }
@@ -185,8 +185,67 @@ function deleteNewestDynamicInfo(\Redis $redis)
 }
 
 // 删除首页缓存
-function deleteFirstNewestDynamicInfo(\Redis $redis)
+function deleteFirstNewestDynamicInfo($sex, $pageSize, \Redis $redis)
 {
-    $key = REDIS_NEWEST_DYNAMIC_INFO . "0";
+    $key = REDIS_NEWEST_DYNAMIC_INFO . $sex . ":0:" . $pageSize;
     $redis->del($key);
+}
+
+/**
+ * 用户动态列表缓存相关(并发)
+ */
+define("REDIS_PERSONAL_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'personalDynamicInfo:');
+// 缓存数据
+function cachePersonalDynamicInfo($userId, $startId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_PERSONAL_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取缓存
+function getPersonalDynamicInfo($userId, $startId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_PERSONAL_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除所有缓存
+function deletePersonalDynamicInfo($userId, \Redis $redis)
+{
+    $keys = $redis->keys(REDIS_PERSONAL_DYNAMIC_INFO . $userId . "*");
+    $redis->del($keys);
+}
+
+// 删除首页缓存
+function deleteFirstPersonalDynamicInfo($userId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_PERSONAL_DYNAMIC_INFO . $userId . ":0:" . $pageSize;
+    $redis->del($key);
+}
+
+/**
+ * 用户关注用户动态列表缓存相关(无并发)
+ */
+define("REDIS_USER_FOLLOW_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'userFollowDynamicInfo:');
+// 缓存数据
+function cacheUserFollowDynamicInfo($userId, $startId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_USER_FOLLOW_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取缓存
+function getUserFollowDynamicInfo($userId, $startId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_USER_FOLLOW_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除所有缓存
+function deleteUserFollowDynamicInfo($userId, \Redis $redis)
+{
+    $keys = $redis->keys(REDIS_USER_FOLLOW_DYNAMIC_INFO . $userId . "*");
+    $redis->del($keys);
 }

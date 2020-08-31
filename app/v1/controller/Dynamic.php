@@ -10,8 +10,8 @@ namespace app\v1\controller;
 
 
 use app\common\AppException;
-use app\common\helper\Redis;
 use app\common\service\DynamicService;
+use app\v1\transformer\dynamic\ConcernTransformer;
 use app\v1\transformer\dynamic\InfoTransformer;
 use app\v1\transformer\dynamic\NewestTransformer;
 use app\v1\transformer\dynamic\PersonalTransformer;
@@ -48,10 +48,10 @@ class Dynamic extends Base
         $user = $this->query["user"];
 
         $service = new DynamicService();
-        list($dynamic, $userInfo, $dynamicCount, $likeDynamicId) = $service->newest($startId, $pageSize, $isFlush, $user);
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->newest($startId, $pageSize, $isFlush, $user);
         return $this->jsonResponse($dynamic, new NewestTransformer(
             ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
-                'userId' => $this->query["user"]["id"], 'likeDynamicId' => $likeDynamicId]
+                'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds]
         ));
     }
 
@@ -60,7 +60,18 @@ class Dynamic extends Base
      */
     public function concern()
     {
+        $request = $this->query["content"];
+        $startId = $request["start_id"] ?? 0;
+        $pageSize = $request["page_size"] ?? 20;
+        $isFlush = $request["is_flush"] ?? 0; //是否刷新0-否，1-是
+        $userId = $this->query["user"]['id'];
 
+        $service = new DynamicService();
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->concern($startId, $pageSize, $isFlush, $userId);
+        return $this->jsonResponse($dynamic, new ConcernTransformer(
+            ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
+                'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds]
+        ));
     }
 
     /**
@@ -141,16 +152,16 @@ class Dynamic extends Base
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
         $requestUserId = $request["user_id"] ?? 0;
+        $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         if (empty($userId)) {
             $requestUserId = $this->query["user"]["id"];
         }
-        $currentUserId = $this->query["user"]["id"];
 
         $service = new DynamicService();
-        list($dynamic, $userInfo, $dynamicCount, $likeDynamicId) = $service->personal($startId, $pageSize, $requestUserId, $currentUserId);
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->personal($startId, $pageSize, $isFlush, $requestUserId);
         return $this->jsonResponse($dynamic, new PersonalTransformer(
             ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
-                'userId' => $this->query["user"]["id"], 'likeDynamicId' => $likeDynamicId]
+                'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds]
         ));
     }
 

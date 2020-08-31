@@ -6,7 +6,7 @@ use app\common\AppException;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
 use app\common\service\UserService;
-use app\v1\transformer\dynamic\LoginTransformer;
+use app\v1\transformer\user\LoginTransformer;
 
 class User extends Base
 {
@@ -57,7 +57,7 @@ class User extends Base
         $us = new UserService();
         $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber);
 
-        return $this->jsonResponse($returnData, new LoginTransformer());
+        return $this->jsonResponse($returnData, new LoginTransformer);
     }
 
     /**

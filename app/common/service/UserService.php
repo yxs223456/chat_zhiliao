@@ -421,6 +421,7 @@ class UserService extends Base
             }
 
             Db::commit();
+            cacheUserInfoByToken($user->toArray(), Redis::factory());
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;

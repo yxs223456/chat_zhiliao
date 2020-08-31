@@ -6,7 +6,7 @@
  * Time: 14:15
  */
 
-namespace app\v1\transformer\dynamic;
+namespace app\v1\transformer\user;
 
 use app\common\transformer\TransformerAbstract;
 

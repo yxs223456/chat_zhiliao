@@ -136,14 +136,14 @@ XML;
                  * 用户支付订单处理
                  */
                 $userPayOrder = Db::name("pay_order")
-                    ->where("out_trade_no", $weChatNotice["out_trade_no"])
+                    ->where("out_trade_no", $aliNotice["out_trade_no"])
                     ->find();
                 // 将用户支付订单修改为已支付状态
                 Db::name("pay_order")
                     ->where("id", $userPayOrder["id"])
                     ->update([
                         "is_pay" => IsPayEnum::YES,
-                        "pay_time" => strtotime($weChatNotice["time_end"]),
+                        "pay_time" => strtotime($aliNotice["gmt_payment"]),
                         "status" => PayOrderStatusEnum::PAY,
                     ]);
 

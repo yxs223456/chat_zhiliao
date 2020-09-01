@@ -255,25 +255,38 @@ function deleteUserFollowDynamicInfo($userId, \Redis $redis)
  */
 define("REDIS_NEAR_USER_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'nearUserDynamicInfo:');
 // 缓存数据
-function cacheNearUserDynamicInfo($userId, $startId, $pageSize, $data, \Redis $redis)
+function cacheNearUserDynamicInfo($userId, $pageSize, $data, \Redis $redis)
 {
-    $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $pageSize;
     $redis->set($key, json_encode($data), 3600);
 }
 
 // 获取缓存
-function getNearUserDynamicInfo($userId, $startId, $pageSize, \Redis $redis)
+function getNearUserDynamicInfo($userId, $pageSize, \Redis $redis)
 {
-    $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $pageSize;
     $data = $redis->get($key);
     return $data ? json_decode($data, true) : null;
 }
 
 // 删除所有缓存
-function deleteNearUserDynamicInfo($userId, \Redis $redis)
+function deleteNearUserDynamicInfo($userId, $pageSize, \Redis $redis)
 {
-    $keys = $redis->keys(REDIS_NEAR_USER_DYNAMIC_INFO . $userId . "*");
-    $redis->del($keys);
+    $redis->del(REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $pageSize);
+}
+
+// 用户5分钟内只能刷新一次 加锁
+function setNearUserDynamicInfoLock($userId, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_DYNAMIC_INFO . 'Lock' . $userId;
+    $redis->setex($key, 300, 1);
+}
+
+// 获取用户刷新附近人动态的锁
+function getNearUserDynamicInfoLock($userId, Redis $redis)
+{
+    $key = REDIS_NEAR_USER_DYNAMIC_INFO . 'Lock' . $userId;
+    return $redis->get($key);
 }
 
 /**
@@ -285,8 +298,8 @@ function cacheUserLongLatInfo($userId, $lat, $long, \Redis $redis)
 {
     $geotools = new \League\Geotools\Geotools();
     $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
-    $geoHash = $geotools->geohash()->encode($coordToGeohash, 12);
-    $key = REDIS_USER_LONG_LAT_INFO . $geoHash;
+    $geoHash = $geotools->geohash()->encode($coordToGeohash, 12)->getGeohash();
+    $key = REDIS_USER_LONG_LAT_INFO . '|' . $geoHash . "|" . $userId;
     $redis->set($key, $userId, 86400);
 }
 
@@ -295,15 +308,16 @@ function getUserLongLatInfo($lat, $long, \Redis $redis)
 {
     $geotools = new \League\Geotools\Geotools();
     $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
-    $geoHash = $geotools->geohash()->encode($coordToGeohash, 2);
-    $key = REDIS_USER_LONG_LAT_INFO . $geoHash . "*";
+    $geoHash = $geotools->geohash()->encode($coordToGeohash, 1)->getGeohash();
+    $key = REDIS_USER_LONG_LAT_INFO . '|' . $geoHash . "*";
     $keys = $redis->keys($key);
     if (empty($keys)) {
         return null;
     }
     $ret = [];
     foreach ($keys as $item) {
-        $ret[$item] = $redis->get($item);
+        $keyArr = explode("|",$item);
+        $ret[$keyArr[1]."|".$keyArr[2]] = $redis->get($item);
     }
     return $ret;
 }
@@ -314,3 +328,4 @@ function deleteUserLongLatInfo(\Redis $redis)
     $keys = $redis->keys(REDIS_USER_LONG_LAT_INFO . "*");
     $redis->del($keys);
 }
+

@@ -14,6 +14,8 @@ use app\common\Constant;
 use app\common\enum\DbDataIsDeleteEnum;
 use app\common\enum\DynamicIsReportEnum;
 use app\common\helper\Redis;
+use League\Geotools\Coordinate\Coordinate;
+use League\Geotools\Geotools;
 use think\facade\Db;
 
 class DynamicService extends Base
@@ -696,7 +698,7 @@ class DynamicService extends Base
     /**
      * 附近人动态列表
      *
-     * @param $startId int 起始ID
+     * @param $pageNum int 起始ID
      * @param $pageSize int 分页
      * @param $long int 经度
      * @param $lat int 纬度
@@ -704,14 +706,14 @@ class DynamicService extends Base
      * @param $userId int 用户ID
      * @return mixed
      */
-    public function near($startId, $pageSize, $long, $lat, $isFlush, $userId)
+    public function near($pageNum, $pageSize, $long, $lat, $isFlush, $userId)
     {
         // 需要刷新更新缓存内容
         if ($isFlush) {
-            return $this->nearUpdate($pageSize, $userId);
+            return $this->nearUpdate($pageSize, $long, $lat, $userId);
         }
         // 不需要刷新查询缓存数据
-        return $this->nearPage($startId, $pageSize, $userId);
+        return $this->nearPage($pageNum, $pageSize, $userId);
     }
 
     /**
@@ -721,135 +723,153 @@ class DynamicService extends Base
      * 3. 不需要更新缓存，直接返回
      *
      * @param $pageSize int 分页大小
+     * @param $long string 经度
+     * @param $lat string 纬度
      * @param $userId int  用户id
      * @return array|mixed|null
      * @throws AppException
      */
-    private function nearUpdate($pageSize, $userId)
+    private function nearUpdate($pageSize, $long, $lat, $userId)
     {
-        // 获取最新动态ID
-        $followUserIds = Db::name("user_follow")
-            ->where("u_id", $userId)
-            ->column("follow_u_id");
-        if (empty($followUserIds)) {
-            return $this->nearPage(0, $pageSize, $userId);
+        // 获取更新锁 不为空5分钟内更新过，直接返回
+        $redis = Redis::factory();
+        $lock = getNearUserDynamicInfoLock($userId, $redis);
+        if (!empty($lock)) {
+            return $this->nearPage(1, $pageSize, $userId);
         }
-        $newDynamicId = Db::name("dynamic")
-            ->whereIn("u_id", $followUserIds)
-            ->where('is_delete', DbDataIsDeleteEnum::NO)
+
+        // 没有加锁 获取数据库数据 并排序
+        $dynamics = $this->getDbData($pageSize, $lat, $long, $userId);
+
+        // 添加缓存
+        cacheNearUserDynamicInfo($userId, $pageSize, $dynamics, $redis);
+        return array_slice($dynamics, 0, $pageSize);
+    }
+
+    /**
+     * 获取数据库数据并且排序
+     *
+     * @param $pageSize int 分页大小
+     * @param $lat int 纬度
+     * @param $long int 经度
+     * @param $userId int 用户ID
+     * @return array
+     */
+    private function getDbData($pageSize, $lat, $long, $userId)
+    {
+        $redis = Redis::factory();
+        // 更新前删除之前的缓存
+        deleteNearUserDynamicInfo($userId, $pageSize, $redis);
+        // 缓存当前用户坐标
+        cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        // 获取附近用户ID
+        $nearUserIds = getUserLongLatInfo($lat, $long, $redis);
+
+        if (empty($nearUserIds)) {
+            cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
+            return [];
+        }
+
+        // 重新整理geohash 到userID的数组 删除当前用户的ID
+        $userIds = [];
+        foreach ($nearUserIds as $key => $value) {
+            if ($value == $userId) {
+                continue;
+            }
+            $userIds[$key] = $value;
+        }
+
+        if (empty($userIds)) {
+            cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
+            return [];
+        }
+        // 获取动态数据
+        $dynamics = Db::name("dynamic")
+            ->whereIn("u_id", array_values($userIds))
+            ->where("is_delete", DbDataIsDeleteEnum::NO)
             ->order("id", "desc")
-            ->value("id");
-        // 为空，没有动态数据，返回缓存的第一页
-        if (empty($newDynamicId)) {
-            return $this->nearPage(0, $pageSize, $userId);
+            ->limit(300)
+            ->select()->toArray();
+
+        if (empty($dynamics)) {
+            cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
+            return [];
         }
 
-        // 不为空并且和缓存最新一条相同直接返回缓存数据
-        $firstPage = $this->nearPage(0, $pageSize, $userId);
-        $dynamic = array_shift($firstPage);
-        if (isset($dynamic[0]["id"]) && $dynamic[0]["id"] == $newDynamicId) {
-            return $this->nearPage(0, $pageSize, $userId);
+        // 获取动态用户数据
+        $userInfo = Db::name("user")->alias("u")
+            ->leftJoin("user_info ui", "u.id = ui.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->whereIn("u.id", array_column($dynamics, 'u_id'))
+            ->select()->toArray();
+        $userIdToUserInfo = array_combine(array_column($userInfo, 'id'), $userInfo);
+
+        // 获取动态统计数据
+        $dynamicCount = Db::name("dynamic_count")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->select()->toArray();
+        $dynamicIdToDynamicCount = array_combine(array_column($dynamicCount, 'dynamic_id'), $dynamicCount);
+
+        // 获取动态点赞的用户ID
+        $dynamicIdToUserIds = Db::name("dynamic_like")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->field("dynamic_id,u_id")
+            ->select()->toArray();
+        $likeDynamicUserIds = [];
+        // 点赞用户ID根据动态ID分组
+        array_map(function ($item) use (&$likeDynamicUserIds) {
+            $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
+        }, $dynamicIdToUserIds);
+
+
+        $geotools = new Geotools();
+        $coordCurrentUser = new Coordinate([$lat, $long]);// 当前用户经纬度
+
+        foreach ($dynamics as &$item) {
+            $item["userInfo"] = isset($userIdToUserInfo[$item['u_id']]) ? $userIdToUserInfo[$item['u_id']] : [];
+            $item["dynamicCount"] = isset($dynamicIdToDynamicCount[$item['id']]) ? $dynamicIdToDynamicCount[$item['id']] : [];
+            $item["likeDynamicUserIds"] = isset($likeDynamicUserIds[$item['id']]) ? $likeDynamicUserIds[$item['id']] : [];
+
+            // 计算距离
+            $coordUserGeoHashAndUserId = array_search($item['u_id'], $userIds);
+            $coordUserGeoHashArr = explode("|", $coordUserGeoHashAndUserId);
+            $coordUserGeoHash = $coordUserGeoHashArr[0];
+            $decoded = $geotools->geohash()->decode($coordUserGeoHash);
+            $userLat = $decoded->getCoordinate()->getLatitude();
+            $userLong = $decoded->getCoordinate()->getLongitude();
+            $coordUser = new Coordinate([$userLat, $userLong]);
+            $distance = $geotools->distance()->setFrom($coordCurrentUser)->setTo($coordUser);
+            $item["distance"] = $distance->in('km')->haversine();
         }
 
-        // 不同删除当前用户关注动态所有缓存
-        deleteUserFollowDynamicInfo($userId, Redis::factory());
-        return $this->nearPage(0, $pageSize, $userId);
+        $distanceSort = array_column($dynamics, 'distance');
+        array_multisort($distanceSort, SORT_ASC, $dynamics);
+
+        // 添加更新锁
+        setNearUserDynamicInfoLock($userId, $redis);
+
+        return $dynamics;
     }
 
     /**
      * 获取附近人动态的分页数据
      *
-     * @param $startId int 起始查询ID
+     * @param $pageNum int 分页
      * @param $pageSize int 分页大小
      * @param $userId int 当前用户id
-     * @param int $retry 锁等待尝试次数
      * @return array|mixed|null
      * @throws AppException
      */
-    private function nearPage($startId, $pageSize, $userId, $retry = 0)
+    private function nearPage($pageNum, $pageSize, $userId)
     {
         // 读缓存
         $redis = Redis::factory();
-        if ($data = getUserFollowDynamicInfo($userId, $startId, $pageSize, $redis)) {
-            return $data;
+        $data = getNearUserDynamicInfo($userId, $pageSize, $redis);
+
+        if (empty($data)) {
+            return [];
         }
 
-        $lockKey = REDIS_KEY_PREFIX . "nearUserDynamicInfoLock:" . $userId . ":" . $startId . ":" . $pageSize;
-        if ($redis->setnx($lockKey, 1)) {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-            $ret = [
-                "dynamic" => [],
-                "userInfo" => [],
-                "dynamicCount" => [],
-                "likeDynamicUserIds" => []
-            ];
-
-            // 获取关注用户ID
-            $followUserIds = Db::name("user_follow")
-                ->where("u_id", $userId)
-                ->column("follow_u_id");
-            if (empty($followUserIds)) {
-                $redis->del($lockKey);
-                cacheUserFollowDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-                return array_values($ret);
-            }
-
-            // 获取动态数据
-            $dynamicQuery = Db::name("dynamic")
-                ->whereIn("u_id", $followUserIds)
-                ->where("is_delete", DbDataIsDeleteEnum::NO)
-                ->order("id", "desc");
-            if (!empty($startId)) {
-                $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
-            }
-            $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
-
-            if (empty($dynamics)) {
-                $redis->del($lockKey);
-                cacheUserFollowDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-                return array_values($ret);
-            }
-            $ret["dynamic"] = $dynamics;
-
-            // 获取动态用户数据
-            $userInfo = Db::name("user")->alias("u")
-                ->leftJoin("user_info ui", "u.id = ui.u_id")
-                ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
-                ->whereIn("u.id", array_column($dynamics, 'u_id'))
-                ->select()->toArray();
-            $ret["userInfo"] = $userInfo;
-
-            // 获取动态统计数据
-            $dynamicCount = Db::name("dynamic_count")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->select()->toArray();
-            $ret["dynamicCount"] = $dynamicCount;
-
-            // 获取动态点赞的用户ID
-            $dynamicIdToUserIds = Db::name("dynamic_like")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->field("dynamic_id,u_id")
-                ->select()->toArray();
-            $likeDynamicUserIds = [];
-            // 点赞用户ID根据动态ID分组
-            array_map(function ($item) use (&$likeDynamicUserIds) {
-                $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
-            }, $dynamicIdToUserIds);
-            $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
-
-            cacheUserFollowDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-            $redis->del($lockKey);
-            return array_values($ret);
-        } else {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-        }
-
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
-            return $this->nearPage($startId, $pageSize, $userId, ++$retry);
-        }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        return array_slice($data, ($pageNum - 1) * $pageSize, $pageSize);
     }
 }

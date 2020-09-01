@@ -8,11 +8,11 @@
 
 namespace app\v1\controller;
 
-
 use app\common\AppException;
 use app\common\service\DynamicService;
 use app\v1\transformer\dynamic\ConcernTransformer;
 use app\v1\transformer\dynamic\InfoTransformer;
+use app\v1\transformer\dynamic\NearTransformer;
 use app\v1\transformer\dynamic\NewestTransformer;
 use app\v1\transformer\dynamic\PersonalTransformer;
 
@@ -25,13 +25,28 @@ class Dynamic extends Base
     ];
 
     /**********************************************公共动态接口开始****************************************************/
-
     /**
      * 最近列表 注意去重复 id倒叙
+     *
+     * @return \think\response\Json
      */
     public function near()
     {
+        $request = $this->query["content"];
+        $startId = $request["start_id"] ?? 0;
+        $pageSize = $request["page_size"] ?? 20;
+        $long = $request["long"] ?? 0; // 经度
+        $lat = $request["lat"] ?? 0; // 纬度
+        $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
+        $userId = $this->query["user"]["id"]; // 当前登陆用户ID
 
+        $service = new DynamicService();
+
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->near($startId, $pageSize, $long, $lat, $isFlush, $userId);
+        return $this->jsonResponse($dynamic, new NearTransformer([
+            "userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
+            'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds
+        ]));
     }
 
     /**
@@ -57,6 +72,8 @@ class Dynamic extends Base
 
     /**
      * 关注列表 注意去重复 id倒叙
+     *
+     * @return \think\response\Json
      */
     public function concern()
     {
@@ -167,7 +184,6 @@ class Dynamic extends Base
 
     /**********************************************公共动态接口开始****************************************************/
     /**********************************************个人动态接口开始****************************************************/
-
     /**
      * 发布动态
      *
@@ -184,7 +200,7 @@ class Dynamic extends Base
         $source = $request["source"] ?? [];
 
         if (empty($content) && empty($source)) {
-            throw AppException::factory(AppException::USER_DYNAMIC_CONTENT_EMPTY);
+            throw AppException::factory(AppException::DYNAMIC_CONTENT_EMPTY);
         }
         $user = $this->query["user"];
         $service = new DynamicService();

@@ -249,3 +249,68 @@ function deleteUserFollowDynamicInfo($userId, \Redis $redis)
     $keys = $redis->keys(REDIS_USER_FOLLOW_DYNAMIC_INFO . $userId . "*");
     $redis->del($keys);
 }
+
+/**
+ * 附近用户动态列表缓存相关(无并发)
+ */
+define("REDIS_NEAR_USER_DYNAMIC_INFO", REDIS_KEY_PREFIX . 'nearUserDynamicInfo:');
+// 缓存数据
+function cacheNearUserDynamicInfo($userId, $startId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取缓存
+function getNearUserDynamicInfo($userId, $startId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除所有缓存
+function deleteNearUserDynamicInfo($userId, \Redis $redis)
+{
+    $keys = $redis->keys(REDIS_NEAR_USER_DYNAMIC_INFO . $userId . "*");
+    $redis->del($keys);
+}
+
+/**
+ * 附近用户geohash缓存相关(并发)
+ */
+define("REDIS_USER_LONG_LAT_INFO", REDIS_KEY_PREFIX . 'userLongLatInfo:');
+// 缓存数据
+function cacheUserLongLatInfo($userId, $lat, $long, \Redis $redis)
+{
+    $geotools = new \League\Geotools\Geotools();
+    $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
+    $geoHash = $geotools->geohash()->encode($coordToGeohash, 12);
+    $key = REDIS_USER_LONG_LAT_INFO . $geoHash;
+    $redis->set($key, $userId, 86400);
+}
+
+// 获取缓存
+function getUserLongLatInfo($lat, $long, \Redis $redis)
+{
+    $geotools = new \League\Geotools\Geotools();
+    $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
+    $geoHash = $geotools->geohash()->encode($coordToGeohash, 2);
+    $key = REDIS_USER_LONG_LAT_INFO . $geoHash . "*";
+    $keys = $redis->keys($key);
+    if (empty($keys)) {
+        return null;
+    }
+    $ret = [];
+    foreach ($keys as $item) {
+        $ret[$item] = $redis->get($item);
+    }
+    return $ret;
+}
+
+// 删除所有用户坐标缓存
+function deleteUserLongLatInfo(\Redis $redis)
+{
+    $keys = $redis->keys(REDIS_USER_LONG_LAT_INFO . "*");
+    $redis->del($keys);
+}

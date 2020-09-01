@@ -29,30 +29,35 @@ class Dynamic extends Base
      * 最近列表 注意去重复 id倒叙
      *
      * @return \think\response\Json
+     * @throws AppException
      */
     public function near()
     {
         $request = $this->query["content"];
-        $startId = $request["start_id"] ?? 0;
+        $pageNum = $request["page_num"] ?? 1;
         $pageSize = $request["page_size"] ?? 20;
         $long = $request["long"] ?? 0; // 经度
         $lat = $request["lat"] ?? 0; // 纬度
         $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         $userId = $this->query["user"]["id"]; // 当前登陆用户ID
 
+        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (empty($long) && empty($lat)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         $service = new DynamicService();
 
-        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->near($startId, $pageSize, $long, $lat, $isFlush, $userId);
-        return $this->jsonResponse($dynamic, new NearTransformer([
-            "userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
-            'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds
-        ]));
+        $dynamic = $service->near($pageNum, $pageSize, $long, $lat, $isFlush, $userId);
+        return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
     }
 
     /**
      * 最新列表
      *
      * @return \think\response\Json
+     * @throws AppException
      */
     public function newest()
     {
@@ -62,6 +67,9 @@ class Dynamic extends Base
         $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         $user = $this->query["user"];
 
+        if (!checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         $service = new DynamicService();
         list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->newest($startId, $pageSize, $isFlush, $user);
         return $this->jsonResponse($dynamic, new NewestTransformer(
@@ -74,6 +82,7 @@ class Dynamic extends Base
      * 关注列表 注意去重复 id倒叙
      *
      * @return \think\response\Json
+     * @throws AppException
      */
     public function concern()
     {
@@ -82,6 +91,9 @@ class Dynamic extends Base
         $pageSize = $request["page_size"] ?? 20;
         $isFlush = $request["is_flush"] ?? 0; //是否刷新0-否，1-是
         $userId = $this->query["user"]['id'];
+        if (!checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
         $service = new DynamicService();
         list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->concern($startId, $pageSize, $isFlush, $userId);
@@ -162,6 +174,7 @@ class Dynamic extends Base
      * 个人动态列表
      *
      * @return \think\response\Json
+     * @throws AppException
      */
     public function personal()
     {
@@ -172,6 +185,10 @@ class Dynamic extends Base
         $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         if (empty($userId)) {
             $requestUserId = $this->query["user"]["id"];
+        }
+
+        if (!checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new DynamicService();

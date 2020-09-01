@@ -44,6 +44,9 @@ class Dynamic extends Base
         if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
+        if (empty($long) && empty($lat)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         $service = new DynamicService();
 
         $dynamic = $service->near($pageNum, $pageSize, $long, $lat, $isFlush, $userId);

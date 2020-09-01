@@ -38,6 +38,7 @@ class Home extends TransformerAbstract
 
         foreach ($data["svip"] as $item) {
             $returnData["svip"][] = [
+                "id" => (int) $item["id"],
                 "name" => (string) $item["name"],
                 "origin_price" => (string) $item["origin_price"],
                 "price" => (string) $item["price"],
@@ -48,6 +49,7 @@ class Home extends TransformerAbstract
 
         foreach ($data["vip"] as $item) {
             $returnData["vip"][] = [
+                "id" => (int) $item["id"],
                 "name" => (string) $item["name"],
                 "origin_price" => (string) $item["origin_price"],
                 "price" => (string) $item["price"],

@@ -109,7 +109,7 @@ class DynamicService extends Base
                 ->leftJoin("user_info ui", "d.u_id = ui.id")
                 ->leftJoin("user u", "d.u_id = u.id")
                 ->leftJoin("dynamic_count dc", "d.id = dc.dynamic_id")
-                ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,
+                ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city
             dc.like_count,dc.comment_count")
                 ->where("d.is_delete", DbDataIsDeleteEnum::NO)
                 ->where("d.id", $id)
@@ -763,7 +763,7 @@ class DynamicService extends Base
         // 缓存当前用户坐标
         cacheUserLongLatInfo($userId, $lat, $long, $redis);
         // 获取附近用户ID
-        $nearUserIds = getUserLongLatInfo($lat, $long, $redis);
+        $nearUserIds = getNearUserLongLatInfo($lat, $long, $redis);
 
         if (empty($nearUserIds)) {
             cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);

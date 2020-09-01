@@ -237,7 +237,7 @@ class Dynamic extends Base
         $id = $request["id"] ?? 0;
         $user = $this->query["user"];
 
-        if (empty($id)) {
+        if (!checkInt($id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
@@ -258,7 +258,7 @@ class Dynamic extends Base
         $id = $request["id"] ?? 0;
         $user = $this->query['user'];
 
-        if (empty($id)) {
+        if (!checkInt($id,false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

@@ -303,8 +303,8 @@ function cacheUserLongLatInfo($userId, $lat, $long, \Redis $redis)
     $redis->set($key, $userId, 86400);
 }
 
-// 获取缓存
-function getUserLongLatInfo($lat, $long, \Redis $redis)
+// 获取附近用户坐标缓存
+function getNearUserLongLatInfo($lat, $long, \Redis $redis)
 {
     $geotools = new \League\Geotools\Geotools();
     $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
@@ -320,6 +320,19 @@ function getUserLongLatInfo($lat, $long, \Redis $redis)
         $ret[$keyArr[1]."|".$keyArr[2]] = $redis->get($item);
     }
     return $ret;
+}
+
+// 获取某个用户坐标缓存
+function getUserLongLatInfo($userId, \Redis $redis)
+{
+    $key = REDIS_USER_LONG_LAT_INFO . "|*|" . $userId;
+    $keys = $redis->keys($key);
+    if (empty($keys)) {
+        return null;
+    }
+    $first = array_shift($keys);
+    $keyArr = explode("|", $first);
+    return $keyArr[1];
 }
 
 // 删除所有用户坐标缓存

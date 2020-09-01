@@ -8,7 +8,10 @@
 
 namespace app\v1\transformer\dynamic;
 
+use app\common\helper\Redis;
 use app\common\transformer\TransformerAbstract;
+use League\Geotools\Coordinate\Coordinate;
+use League\Geotools\Geotools;
 
 class InfoTransformer extends TransformerAbstract
 {
@@ -25,6 +28,7 @@ class InfoTransformer extends TransformerAbstract
             'sex' => $info['sex'] ?? 0,
             'age' => $this->getAge($info['birthday'] ?? ""),
             'distance' => $this->getDistance($info['u_id']),
+            'city' => $info['city'] ?? '',
             'create_time' => date("Y/m/d", strtotime($info["create_time"])),
             'content' => $info["content"] ?? "",
             'source' => json_decode($info["source"], true),
@@ -45,7 +49,28 @@ class InfoTransformer extends TransformerAbstract
         if ($this->_queries['id'] == $uid) {
             return 0;
         }
-        return 100;
+
+        $redis = Redis::factory();
+        // 获取当前登陆用户和动态用户的geohash
+        $dynamicUser = getUserLongLatInfo($uid, $redis);
+        $loginUser = getUserLongLatInfo($this->_queries['id'], $redis);
+        if (empty($dynamicUser) || empty($loginUser)) {
+            return 0;
+        }
+
+        $geotools = new Geotools();
+        $decodedDynamicUser = $geotools->geohash()->decode($dynamicUser);
+        $userLat = $decodedDynamicUser->getCoordinate()->getLatitude();
+        $userLong = $decodedDynamicUser->getCoordinate()->getLongitude();
+        $dynamicCoordUser = new Coordinate([$userLat, $userLong]);
+
+        $loginUser = $geotools->geohash()->decode($loginUser);
+        $lat = $loginUser->getCoordinate()->getLatitude();
+        $long = $loginUser->getCoordinate()->getLongitude();
+        $loginCoordUser = new Coordinate([$lat, $long]);
+
+        $distance = $geotools->distance()->setFrom($dynamicCoordUser)->setTo($loginCoordUser);
+        return sprintf("%.3f", $distance->in('km')->haversine());
     }
 
     private function getComment($comment)
@@ -66,7 +91,7 @@ class InfoTransformer extends TransformerAbstract
             $tmp['is_self'] = $this->getIsSelf($item['u_id']);
             $tmp['comment'] = [];
 
-            if ($tmp['pid'] == 0) {
+            if ($tmp['pid'] == 0) { // 直接评论
                 $ret[$tmp["id"]] = $tmp;
                 $commentPidPath[$tmp['id']] = $tmp['id'];
             } else {

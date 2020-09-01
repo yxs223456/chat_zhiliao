@@ -277,15 +277,9 @@ class WechatPay
 
     /**
      * 支付结果通用通知
-     * 直接回调函数使用方法: notify(you_function);
-     * 回调类成员函数方法:notify(array($this, you_function));
-     * $callback  原型为：function function_name($data){}
-     *
-     * @param $callback
-     * @param $msg
      * @return bool|mixed
      */
-    public static function notify($callback, &$msg)
+    public static function notify()
     {
         //获取通知的数据
         $xml = isset($GLOBALS['HTTP_RAW_POST_DATA']) ? $GLOBALS['HTTP_RAW_POST_DATA'] : file_get_contents("php://input");
@@ -302,7 +296,7 @@ class WechatPay
             return false;
         }
 
-        return call_user_func($callback, $result);
+        return $result;
     }
 
     /***********************************************wechat.Api***************************************************************/

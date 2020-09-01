@@ -219,6 +219,50 @@ class VipService extends Base
     }
 
     /**
+     * 购买vip套餐支付后续处理
+     * @param $userId
+     * @param $vipId
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public static function afterPay($userId, $vipId)
+    {
+        $vip = Db::name("config_vip")->where("id", $vipId)->find();
+        $userInfo = Db::name("user_info")->where("u_id", $userId)->lock(true)->find();
+
+        /**
+         * 延迟用户vip套餐时间
+         * vip套餐规则：先消耗svip时长，再消耗vip时长
+         */
+        // 套餐vip延迟时间（单位秒）
+        $vipValidTime = self::computeVipDay($vip["valid_time"]);
+
+        // 先处理svip逻辑
+        if ($vip["vip_type"] == VipTypeEnum::SVIP) {
+            if ($userInfo["svip_deadline"] && $userInfo["svip_deadline"] >= date("Y-m-d")) {
+                $newSvipDeadline = date("Y-m-d", strtotime($userInfo["svip_deadline"])+$vipValidTime);
+            } else {
+                $newSvipDeadline = date("Y-m-d", time()+$vipValidTime-86400);
+            }
+        } else {
+            $newSvipDeadline = $userInfo["svip_deadline"];
+        }
+
+        if ($userInfo["vip_deadline"] && $userInfo["vip_deadline"] >= date("Y-m-d")) {
+            $newVipDeadline = date("Y-m-d", strtotime($userInfo["vip_deadline"])+$vipValidTime);
+        } elseif ($vip["vip_type"] == VipTypeEnum::VIP) {
+            $newVipDeadline = date("Y-m-d", time()+$vipValidTime-86400);
+        } else {
+            $newVipDeadline = $userInfo["vip_deadline"];
+        }
+        Db::name("user_info")->where("id", $userInfo["id"])->update([
+            "svip_deadline" => $newSvipDeadline,
+            "vip_deadline" => $newVipDeadline,
+        ]);
+    }
+
+    /**
      * 计算vip套餐时间 返回计算后的天数
      * @param $vipValidTime
      * @return int
@@ -231,16 +275,16 @@ class VipService extends Base
 
         switch ($unit) {
             case "d":
-                $day = $num;
+                $day = $num * 86400;
                 break;
             case "m":
-                $day = $num * 30;
+                $day = $num * 30 * 86400;
                 break;
             case "q":
-                $day = $num * 90;
+                $day = $num * 90 * 86400;
                 break;
             case "y":
-                $day = $num * 360;
+                $day = $num * 360 * 86400;
                 break;
         }
         return $day;

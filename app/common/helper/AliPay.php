@@ -208,27 +208,19 @@ class AliPay
 
     /**
      * 支付结果通用通知
-     * 直接回调函数使用方法: notify(you_function);
-     * 回调类成员函数方法:notify(array($this, you_function));
-     * $callback  原型为：function function_name($data){}
-     *
-     * @param $callback
-     * @param $msg
-     * @return bool|mixed
+     * @throws \Exception
      */
-    public static function notify($callback, &$msg)
+    public static function notify()
     {
-        try {
-            $result = self::checkSign($_POST);
-            if ($result) {
-                return call_user_func($callback, $result);
-            }
-
-        } catch (\Exception $e) {
-            $msg = $e->getMessage();
-            return false;
+        if ($_POST["app_id"] != self::getConfig("app_id")) {
+            throw new \Exception("app_id 验证失败");
         }
-        return false;
+        if ($_POST["seller_id"] != self::getConfig("seller_id")) {
+            throw new \Exception("seller_id 验证失败");
+        }
+        if (!self::checkSign($_POST)) {
+            throw new \Exception("签名验证失败");
+        }
     }
 
     /****************************************************工具方法******************************************************/

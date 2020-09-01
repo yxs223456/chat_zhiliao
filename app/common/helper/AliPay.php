@@ -274,7 +274,7 @@ class AliPay
      * @return string 构建好的、签名后的最终跳转URL（GET）或String形式的form（POST）
      * @throws \Exception
      */
-    private static function h5Pay(array $data, $httpmethod = "POST")
+    private static function h5Pay(array $data, $httpmethod = "GET")
     {
         self::setupCharsets($data);
 

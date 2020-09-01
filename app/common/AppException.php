@@ -26,6 +26,8 @@ class AppException extends \Exception
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];
 
+    const VIP_OFFLINE = [4000, "vip套餐已下架"];
+
     public static function factory($errConst, $message = "")
     {
         $code = $errConst[0];

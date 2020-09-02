@@ -5,6 +5,30 @@
 define("REDIS_KEY_PREFIX", "chat_zhiliao:");
 
 /**
+ * banner 列表
+ */
+define("REDIS_KEY_BANNER_LIST_BY_POSITION", REDIS_KEY_PREFIX . "bannerListByPosition:");
+
+//缓存banner列表，有效期1小时
+function cacheBannerListByPosition(array $list, $position, \Redis $redis)
+{
+    $key = REDIS_KEY_BANNER_LIST_BY_POSITION . $position;
+    $redis->setex($key, 3600, json_encode($list));
+}
+
+// 获取banner列表
+function getBannerListByPosition($position, \Redis $redis)
+{
+    $key = REDIS_KEY_BANNER_LIST_BY_POSITION . $position;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
  * vip 套餐
  */
 define("REDIS_KEY_VIP_CONFIG", REDIS_KEY_PREFIX . "vipConfig");
@@ -12,7 +36,7 @@ define("REDIS_KEY_VIP_CONFIG", REDIS_KEY_PREFIX . "vipConfig");
 //缓存vip套餐配置，有效期3天
 function cacheVipConfig(array $vipConfig, \Redis $redis)
 {
-    $redis->setex(REDIS_KEY_VIP_CONFIG, 259200, json_encode($vipConfig, JSON_UNESCAPED_UNICODE));
+    $redis->setex(REDIS_KEY_VIP_CONFIG, 259200, json_encode($vipConfig));
 }
 
 //获取vip套餐配置
@@ -29,32 +53,34 @@ function getVipConfigByCache(\Redis $redis)
 /**
  * 企业微信access_token
  */
-define("REDIS_WECHAT_WORK_ACCESS_TOKEN", REDIS_KEY_PREFIX . "weChatWorkAccessToken");
+define("REDIS_KEY_WE_CHAT_WORK_ACCESS_TOKEN", REDIS_KEY_PREFIX . "weChatWorkAccessToken");
 function getWeChatWorkAccessToken(\Redis $redis)
 {
-    return $redis->get(REDIS_WECHAT_WORK_ACCESS_TOKEN);
+    return $redis->get(REDIS_KEY_WE_CHAT_WORK_ACCESS_TOKEN);
 }
 
 //缓存企业微信access_token
 function setWeChatWorkAccessToken($accessToken, $expire, \Redis $redis)
 {
-    $redis->setex(REDIS_WECHAT_WORK_ACCESS_TOKEN, $expire, $accessToken);
+    $redis->setex(REDIS_KEY_WE_CHAT_WORK_ACCESS_TOKEN, $expire, $accessToken);
 }
 
 /**
  * 报警邮件发送纪录
  */
+define("REDIS_KEY_MAIL_SEND_EXP", REDIS_KEY_PREFIX . "mailSendExp:");
+
 // 邮件发送纪录，缓存有效期6小时
 function setMailSendExp($key, \Redis $redis)
 {
-    $key = REDIS_KEY_PREFIX . $key;
+    $key = REDIS_KEY_MAIL_SEND_EXP . $key;
     $redis->setex($key, 21600, 1);
 }
 
 // 获取发送缓存查看是否已发送过，6个小时内相同数据只发送一次。
 function getMailSendExp($key, \Redis $redis)
 {
-    $key = REDIS_KEY_PREFIX . $key;
+    $key = REDIS_KEY_MAIL_SEND_EXP . $key;
     return $redis->get($key);
 }
 

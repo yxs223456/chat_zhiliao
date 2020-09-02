@@ -51,6 +51,9 @@ class Vip extends Base
         return $this->jsonResponse($returnData, new PayByWeChat());
     }
 
+    /**
+     * 支付宝购买vip套餐
+     */
     public function payByAli()
     {
         $request = $this->query["content"];

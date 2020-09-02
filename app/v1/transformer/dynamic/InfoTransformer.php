@@ -27,7 +27,7 @@ class InfoTransformer extends TransformerAbstract
             'nickname' => $info['nickname'] ?? '',
             'sex' => $info['sex'] ?? 0,
             'age' => $this->getAge($info['birthday'] ?? ""),
-            'distance' => $this->getDistance($info['u_id']),
+            'distance' => (string)$this->getDistance($info['u_id']),
             'city' => $info['city'] ?? '',
             'create_time' => date("Y/m/d", strtotime($info["create_time"])),
             'content' => $info["content"] ?? "",

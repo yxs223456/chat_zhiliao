@@ -11,7 +11,6 @@ namespace app\v1\transformer\dynamic;
 use app\common\helper\Redis;
 use app\common\transformer\TransformerAbstract;
 use League\Geotools\Coordinate\Coordinate;
-use League\Geotools\Geotools;
 
 class ConcernTransformer extends TransformerAbstract
 {
@@ -98,7 +97,7 @@ class ConcernTransformer extends TransformerAbstract
             return 0;
         }
 
-        $geotools = new Geotools();
+        $geotools = app('geotools');
         $decodedDynamicUser = $geotools->geohash()->decode($dynamicUser);
         $userLat = $decodedDynamicUser->getCoordinate()->getLatitude();
         $userLong = $decodedDynamicUser->getCoordinate()->getLongitude();

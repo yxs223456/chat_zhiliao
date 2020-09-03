@@ -109,7 +109,7 @@ class DynamicService extends Base
                 ->leftJoin("user_info ui", "d.u_id = ui.id")
                 ->leftJoin("user u", "d.u_id = u.id")
                 ->leftJoin("dynamic_count dc", "d.id = dc.dynamic_id")
-                ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city
+                ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
             dc.like_count,dc.comment_count")
                 ->where("d.is_delete", DbDataIsDeleteEnum::NO)
                 ->where("d.id", $id)
@@ -822,7 +822,7 @@ class DynamicService extends Base
         }, $dynamicIdToUserIds);
 
 
-        $geotools = new Geotools();
+        $geotools = app('geotools');
         $coordCurrentUser = new Coordinate([$lat, $long]);// 当前用户经纬度
 
         foreach ($dynamics as &$item) {

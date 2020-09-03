@@ -109,7 +109,7 @@ class ConcernTransformer extends TransformerAbstract
         $loginCoordUser = new Coordinate([$lat, $long]);
 
         $distance = $geotools->distance()->setFrom($dynamicCoordUser)->setTo($loginCoordUser);
-        return sprintf("%.3f", $distance->in('km')->haversine());
+        return sprintf("%.2f", $distance->in('km')->haversine());
     }
 
     private function getIsLike($dynamicId)

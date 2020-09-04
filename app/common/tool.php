@@ -218,3 +218,41 @@ function getShowDate($time)
     $days = ceil(($todayStart - $time) / 3600 / 24);
     return $days . '天前';
 }
+
+function gatewayJson($scene, array $data = [], \app\common\transformer\TransformerAbstract $transformer = null, $msg = "ok")
+{
+    if ($transformer !== null) {
+        $fractal = new League\Fractal\Manager();
+        $fractal->setSerializer(new League\Fractal\Serializer\ArraySerializer());
+        // 关联数组(一维数组)还是索引数组(二维数组), 需要依此返回数据
+        // 如果是关联数组则默认为一维数组的转化逻辑
+        if (array_keys($data) !== array_keys(array_keys($data))) {
+            $resource = new League\Fractal\Resource\Item($data, $transformer);
+            return $fractal->createData($resource)->toArray();
+        }
+        // 如果是索引数组则默认为二维数组的转化逻辑
+        $resource = new League\Fractal\Resource\Collection($data, $transformer);
+        $data = $fractal->createData($resource)->toArray()['data'];
+    }
+    $rs = [
+        'code' => 0,
+        'msg' => $msg,
+        'data' => $data,
+    ];
+    return json_encode($rs);
+}
+
+function transformData(array $data, \app\common\transformer\TransformerAbstract $transformer): array
+{
+    $fractal = new League\Fractal\Manager();
+    $fractal->setSerializer(new League\Fractal\Serializer\ArraySerializer());
+    // 关联数组(一维数组)还是索引数组(二维数组), 需要依此返回数据
+    // 如果是关联数组则默认为一维数组的转化逻辑
+    if (array_keys($data) !== array_keys(array_keys($data))) {
+        $resource = new League\Fractal\Resource\Item($data, $transformer);
+        return $fractal->createData($resource)->toArray();
+    }
+    // 如果是索引数组则默认为二维数组的转化逻辑
+    $resource = new League\Fractal\Resource\Collection($data, $transformer);
+    return $fractal->createData($resource)->toArray()['data'];
+}

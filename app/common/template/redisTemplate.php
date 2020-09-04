@@ -343,7 +343,7 @@ function getNearUserLongLatInfo($lat, $long, \Redis $redis)
     $ret = [];
     foreach ($keys as $item) {
         $keyArr = explode("|",$item);
-        $ret[$keyArr[1]."|".$keyArr[2]] = $redis->get($item);
+        $ret[$keyArr[1]."|".$keyArr[2]] = $keyArr[2];
     }
     return $ret;
 }
@@ -368,3 +368,90 @@ function deleteUserLongLatInfo(\Redis $redis)
     $redis->del($keys);
 }
 
+/**
+ * 附近用户距离排序的有序集合(无并发)
+ */
+define("REDIS_NEAR_USER_SORT_SET", REDIS_KEY_PREFIX . "nearUserSortSet:");
+// 缓存附近用户集合 一天
+function cacheNearUserSortSet($userId, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . $userId;
+    $geoHash = getUserLongLatInfo($userId, $redis);
+    if (empty($geoHash)) {
+        return;
+    }
+    $searchKey = REDIS_USER_LONG_LAT_INFO . "|" . substr($geoHash, 0, 1) . "*";
+    $keys = $redis->keys($searchKey);
+    if (empty($keys)) {
+        return;
+    }
+
+    // 计算距离放入有序集合
+    foreach ($keys as $item) {
+        $keyArr = explode("|", $item);
+        // 排除当前用户自己
+        if ($keyArr[2] == $userId) {
+            continue;
+        }
+        $geotools = app('geotools');
+        $decodedDynamicUser = $geotools->geohash()->decode($keyArr[1]);
+        $userLat = $decodedDynamicUser->getCoordinate()->getLatitude();
+        $userLong = $decodedDynamicUser->getCoordinate()->getLongitude();
+        $dynamicCoordUser = new \League\Geotools\Coordinate\Coordinate([$userLat, $userLong]);
+
+        $loginUser = $geotools->geohash()->decode($geoHash);
+        $lat = $loginUser->getCoordinate()->getLatitude();
+        $long = $loginUser->getCoordinate()->getLongitude();
+        $loginCoordUser = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
+
+        $distance = $geotools->distance()->setFrom($dynamicCoordUser)->setTo($loginCoordUser);
+        $km = sprintf("%.2f", $distance->in('km')->haversine());
+
+        $redis->zAdd($key, $km, $keyArr[2]);
+    }
+    $redis->expire($key, 86400); // 缓存一天
+}
+
+// 获取附近用户ID有序集合
+function getNearUserSortSet($userId, $pageNum, $pageSize, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . $userId;
+    return $redis->zRange($key, ($pageNum - 1) * $pageSize, $pageSize, true);
+}
+
+// 用户5分钟内只能刷新一次 加锁
+function setNearUserSortSetLock($userId, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . 'Lock' . $userId;
+    $redis->setex($key, 300, 1);
+}
+
+// 获取用户刷新附近人动态的锁
+function getNearUserSortSetLock($userId, Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . 'Lock' . $userId;
+    return $redis->get($key);
+}
+
+// 缓存附近用户分页列表数据 // 一天
+function cacheNearUserPage($userId, $pageNum, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . $userId . ":" . $pageNum . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 86400);
+}
+
+// 获取附近用户分页列表缓存
+function getNearUserPage($userId, $pageNum, $pageSize, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . $userId . ":" . $pageNum . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除用户附近缓存数据
+function deleteNearUserCache($userId, \Redis $redis)
+{
+    $key = REDIS_NEAR_USER_SORT_SET . $userId . "*";
+    $keys = $redis->keys($key);
+    $redis->del($keys);
+}

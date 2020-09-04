@@ -41,15 +41,15 @@ class NewestTransformer extends TransformerAbstract
             'id' => $data['id'] ?? 0,
             'avatar' => $this->getUserInfo($data['u_id'], 'portrait'),
             'nickname' => $this->getUserInfo($data['u_id'], "nickname"),
-            'sex' => $this->getUserInfo($data['u_id'], "sex"),
+            'sex' => (int)$this->getUserInfo($data['u_id'], "sex"),
             'age' => $this->getUserAge($data['u_id']),
             'city' => $this->getUserInfo($data['u_id'], 'city'),
-            'distance' => $this->getDistance($data['u_id']),
+            'distance' => (string)$this->getDistance($data['u_id']),
             'create_time' => date("Y/m/d", strtotime($data["create_time"])),
             'content' => $data["content"] ?? "",
             'source' => json_decode($data["source"], true),
-            'like_count' => $this->getCountInfo($data["id"], 'like_count'),
-            'comment_count' => $this->getCountInfo($data['id'], 'comment_count'),
+            'like_count' => (int)$this->getCountInfo($data["id"], 'like_count'),
+            'comment_count' => (int)$this->getCountInfo($data['id'], 'comment_count'),
             'is_like' => $this->getIsLike($data["id"]),
         ];
     }
@@ -109,7 +109,7 @@ class NewestTransformer extends TransformerAbstract
         $loginCoordUser = new Coordinate([$lat, $long]);
 
         $distance = $geotools->distance()->setFrom($dynamicCoordUser)->setTo($loginCoordUser);
-        return sprintf("%.3f", $distance->in('km')->haversine());
+        return sprintf("%.2f", $distance->in('km')->haversine());
     }
 
     private function getIsLike($dynamicId)

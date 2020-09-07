@@ -125,6 +125,27 @@ class Dynamic extends Base
     }
 
     /**
+     * 动态取消点赞
+     *
+     * @return \think\response\Json
+     * @throws AppException
+     */
+    public function unlike()
+    {
+        $request = $this->query["content"];
+        $id = $request["id"] ?? 0;
+
+        if (!checkInt($id, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new DynamicService();
+        $service->unlike($id, $user);
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
      * 评论动态
      *
      * @param 动态id

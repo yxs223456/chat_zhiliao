@@ -11,7 +11,6 @@ namespace app\v1\controller;
 use app\common\AppException;
 use app\common\service\NearService;
 use app\v1\transformer\near\UserTransformer;
-use GatewayClient\Gateway;
 
 class Near extends Base
 {

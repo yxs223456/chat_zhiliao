@@ -17,7 +17,7 @@ class Vip extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
-
+            "except" => "",
         ]
     ];
 
@@ -40,7 +40,7 @@ class Vip extends Base
     {
         $request = $this->query["content"];
         $id = $request["id"]??0;
-        if (!checkInt($id, "false")) {
+        if (!checkInt($id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
@@ -58,7 +58,7 @@ class Vip extends Base
     {
         $request = $this->query["content"];
         $id = $request["id"]??0;
-        if (!checkInt($id, "false")) {
+        if (!checkInt($id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

@@ -109,9 +109,7 @@ class BusinessWorkerCallback
      */
     public static function onClose($client_id)
     {
-        if (isset($_SESSION["user"]["id"])) {
-            Gateway::unbindUid($client_id, $_SESSION["user"]["id"]);
-        }
+
     }
 
     /**

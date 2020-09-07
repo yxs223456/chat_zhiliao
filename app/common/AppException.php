@@ -10,9 +10,10 @@ namespace app\common;
 
 class AppException extends \Exception
 {
-    const QUERY_PARAMS_ERROR = [1000, "非法参数"];
+    const QUERY_PARAMS_ERROR = [1000, "非法请求"];
     const QUERY_INVALID = [1001, "非法请求"];
     const TRY_AGAIN_LATER = [1002, "稍后重试"];
+    const QUERY_URL_ERROR = [1003, "错误调用"];
 
     const USER_NOT_LOGIN = [2000, "请先登录"];
     const USER_MOBILE_ERR = [2001, "请输入正确的手机号"];
@@ -26,7 +27,9 @@ class AppException extends \Exception
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];
 
-    const VIP_OFFLINE = [4000, "vip套餐已下架"];
+    const VIP_OFFLINE = [4000, "该vip套餐已下架"];
+
+    const GIFT_OFFLINE = [5000, "该礼物已经下架"];
 
     public static function factory($errConst, $message = "")
     {

@@ -430,9 +430,9 @@ class UserService extends Base
         return new \stdClass();
     }
 
-    public static function getUserByToken($token)
+    public static function getUserByToken($token, $redis = null)
     {
-        $redis = Redis::factory();
+        $redis = $redis === null ? Redis::factory() : $redis;
         $cacheUser = getUserInfoByToken($token, $redis);
         if (empty($cacheUser['id'])) {
             $model = new UserModel();
@@ -440,6 +440,21 @@ class UserService extends Base
             if ($user) {
                 $cacheUser = $user->toArray();
                 cacheUserInfoByToken($cacheUser, $redis);
+            }
+        }
+        return $cacheUser;
+    }
+
+    public static function getUserByNumber($userNumber, $redis = null)
+    {
+        $redis = $redis === null ? Redis::factory() : $redis;
+        $cacheUser = getUserInfoByNumber($userNumber, $redis);
+        if (empty($cacheUser['id'])) {
+            $model = new UserModel();
+            $user = $model->findByUserNumber($userNumber);
+            if ($user) {
+                $cacheUser = $user->toArray();
+                cacheUserInfoByNumber($cacheUser, $redis);
             }
         }
         return $cacheUser;

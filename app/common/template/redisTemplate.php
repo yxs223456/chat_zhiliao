@@ -29,6 +29,53 @@ function getBannerListByPosition($position, \Redis $redis)
 }
 
 /**
+ * 礼物 详情
+ */
+define("REDIS_KEY_GIFT_BY_ID", REDIS_KEY_PREFIX . "giftById:");
+
+// 缓存礼物详情，有效期3天
+function cacheGiftById(array $giftInfo, \Redis $redis)
+{
+    $key = REDIS_KEY_GIFT_BY_ID . $giftInfo["id"];
+    $redis->setex($key, 259200, json_encode($giftInfo));
+}
+
+// 获取礼物详情
+function getGiftByIdOnRedis($giftId, \Redis $redis)
+{
+    $key = REDIS_KEY_GIFT_BY_ID . $giftId;
+
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
+ * 礼物 配置
+ */
+define("REDIS_KEY_ALL_SALE_GIFT", REDIS_KEY_PREFIX . "allSaleGift");
+
+// 缓存所有上架的礼物，有效期3天
+function cacheAllSaleGift(array $allSaleGift, \Redis $redis)
+{
+    $redis->setex(REDIS_KEY_ALL_SALE_GIFT, 259200, json_encode($allSaleGift));
+}
+
+// 获取所有上架的礼物
+function getAllSaleGift(\Redis $redis)
+{
+    $data = $redis->get(REDIS_KEY_ALL_SALE_GIFT);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
  * vip 套餐
  */
 define("REDIS_KEY_VIP_CONFIG", REDIS_KEY_PREFIX . "vipConfig");
@@ -54,6 +101,7 @@ function getVipConfigByCache(\Redis $redis)
  * 企业微信access_token
  */
 define("REDIS_KEY_WE_CHAT_WORK_ACCESS_TOKEN", REDIS_KEY_PREFIX . "weChatWorkAccessToken");
+
 function getWeChatWorkAccessToken(\Redis $redis)
 {
     return $redis->get(REDIS_KEY_WE_CHAT_WORK_ACCESS_TOKEN);
@@ -84,7 +132,6 @@ function getMailSendExp($key, \Redis $redis)
     return $redis->get($key);
 }
 
-
 /**
  * 缓存用户信息 token
  */
@@ -111,6 +158,29 @@ function getUserInfoByToken($token, Redis $redis)
     }
     $key = REDIS_USER_INFO_BY_TOKEN . $token;
     return $redis->hGetAll($key);
+}
+
+/**
+ * 缓存用户信息 user_number
+ */
+define("REDIS_USER_INFO_BY_NUMBER", REDIS_KEY_PREFIX . "userInfoByNumber:");
+//缓存用户信息，有效期3天
+function cacheUserInfoByNumber(array $userInfo, Redis $redis)
+{
+    $key = REDIS_USER_INFO_BY_NUMBER . $userInfo["user_number"];
+    $redis->setex($key, 259200, json_encode($userInfo));
+}
+
+//通过user_number获取用户信息
+function getUserInfoByNumber($userNumber, Redis $redis)
+{
+    $key = REDIS_USER_INFO_BY_NUMBER . $userNumber;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
 }
 
 /**

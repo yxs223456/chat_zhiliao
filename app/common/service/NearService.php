@@ -85,6 +85,12 @@ class NearService extends Base
             "distance" => []
         ];
 
+        // 缓存IDset不存在初始化
+        if (!$redis->exists(REDIS_NEAR_USER_SORT_SET . $userId)) {
+            // 缓存当前用户附近人集合缓存
+            cacheNearUserSortSet($userId, $redis);
+        }
+
         // 不存在缓存重新生成
         $userIds = getNearUserSortSet($userId, $pageNum, $pageSize, $redis);
         // 有序集合没有数据直接返回空数组

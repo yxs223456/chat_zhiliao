@@ -11,6 +11,7 @@ namespace app\v1\controller;
 use app\common\AppException;
 use app\common\service\NearService;
 use app\v1\transformer\near\UserTransformer;
+use GatewayClient\Gateway;
 
 class Near extends Base
 {
@@ -39,8 +40,6 @@ class Near extends Base
         }
 
         $service = new NearService();
-        long2ip();
-//        return $this->jsonResponse($service->user($pageNum,$pageSize,$isFlush,$userId));
         list($userInfo, $distance) = $service->user($pageNum, $pageSize, $isFlush, $userId);
         return $this->jsonResponse($userInfo, new UserTransformer(['distance' => $distance]));
     }

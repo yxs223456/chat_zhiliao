@@ -63,6 +63,9 @@ class Base extends BaseController
         if ($transformer !== null) {
             $data = $this->transformData($data, $transformer);
         }
+        if ($data === []) {
+            $data = new \stdClass();
+        }
         $rs = [
             'code' => 0,
             'msg' => $msg,

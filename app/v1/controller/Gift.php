@@ -32,19 +32,21 @@ class Gift extends Base
     }
 
     /**
-     * 赠送礼物
+     * 无特殊场景下（通话中、私聊）赠送礼物
      */
     public function give()
     {
         $request = $this->query["content"];
         $gift_id = $request["gift_id"]??0;
-        $r_user_number = $request["r_user_number"]??"";
-        if (!checkInt($gift_id, false) || empty($r_user_number)) {
+        $r_user_id = $request["r_user_id"]??"";
+        if (!checkInt($gift_id, false) || !checkInt($r_user_id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $user = $this->query["user"];
         $service = new GiftService();
-        $returnData = $service->give($user, $r_user_number, $gift_id);
+        $returnData = $service->give($user, $r_user_id, $gift_id);
+
+        return $this->jsonResponse($returnData);
     }
 }

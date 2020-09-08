@@ -412,8 +412,8 @@ function getNearUserLongLatInfo($lat, $long, \Redis $redis)
     }
     $ret = [];
     foreach ($keys as $item) {
-        $keyArr = explode("|",$item);
-        $ret[$keyArr[1]."|".$keyArr[2]] = $keyArr[2];
+        $keyArr = explode("|", $item);
+        $ret[$keyArr[1] . "|" . $keyArr[2]] = $keyArr[2];
     }
     return $ret;
 }
@@ -524,4 +524,81 @@ function deleteNearUserCache($userId, \Redis $redis)
     $key = REDIS_NEAR_USER_SORT_SET . $userId . "*";
     $keys = $redis->keys($key);
     $redis->del($keys);
+}
+
+/**
+ * 用户关系关注用户列表缓存相关(无并发)
+ */
+define("REDIS_USER_RELATION_FOLLOW_INFO", REDIS_KEY_PREFIX . 'userRelationFollowInfo:');
+// 缓存关注用户数据
+function cacheUserRelationFollowInfo($userId, $startId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_USER_RELATION_FOLLOW_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取关注用户缓存
+function getUserRelationFollowInfo($userId, $startId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_USER_RELATION_FOLLOW_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除关注用户数据所有缓存
+function deleteUserRelationFollowInfo($userId, \Redis $redis)
+{
+    $keys = $redis->keys(REDIS_USER_RELATION_FOLLOW_INFO . $userId . "*");
+    $redis->del($keys);
+}
+
+/**
+ * 用户关系用户被关注列表缓存相关(无并发)
+ */
+define("REDIS_USER_RELATION_FANS_INFO", REDIS_KEY_PREFIX . 'userRelationFansInfo:');
+// 缓存用户被关注数据
+function cacheUserRelationFansInfo($userId, $startId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_USER_RELATION_FANS_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取用户被关注缓存
+function getUserRelationFansInfo($userId, $startId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_USER_RELATION_FANS_INFO . $userId . ":" . $startId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除用户被关注所有缓存
+function deleteUserRelationFansInfo($userId, \Redis $redis)
+{
+    $keys = $redis->keys(REDIS_USER_RELATION_FANS_INFO . $userId . "*");
+    $redis->del($keys);
+}
+
+/**
+ * 用户关系用户好友列表缓存相关(无并发)
+ */
+define("REDIS_USER_RELATION_FRIEND_INFO", REDIS_KEY_PREFIX . 'userRelationFriendInfo:');
+// 缓存用户好友数据
+function cacheUserRelationFriendInfo($userId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_USER_RELATION_FRIEND_INFO . $userId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取用户好友缓存
+function getUserRelationFriendInfo($userId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_USER_RELATION_FRIEND_INFO . $userId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除用户好友数据所有缓存
+function deleteUserRelationFriendInfo($userId, $pageSize, \Redis $redis)
+{
+    $redis->del(REDIS_USER_RELATION_FRIEND_INFO . $userId . ":" . $pageSize);
 }

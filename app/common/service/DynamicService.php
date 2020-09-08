@@ -213,26 +213,43 @@ class DynamicService extends Base
      */
     public function like($id, $user)
     {
-        $isLike = Db::name("dynamic_like")->where("dynamic_id", $id)->where("u_id", $user["id"])->find();
         Db::startTrans();
         try {
-            // 没有点赞
-            if (empty($isLike)) {
-                Db::name("dynamic_like")->insertGetId([
-                    "dynamic_id" => $id,
-                    'u_id' => $user['id'],
-                ]);
-                Db::name("dynamic_count")->where("dynamic_id", $id)
-                    ->inc("like_count", 1)
-                    ->update();
-            } else {
-                Db::name("dynamic_like")->where("dynamic_id", $id)
-                    ->where("u_id", $user["id"])
-                    ->delete();
-                Db::name("dynamic_count")->where("dynamic_id", $id)
-                    ->dec("like_count", 1)
-                    ->update();
-            }
+            Db::name("dynamic_like")->insertGetId([
+                "dynamic_id" => $id,
+                'u_id' => $user['id'],
+            ]);
+            Db::name("dynamic_count")->where("dynamic_id", $id)
+                ->inc("like_count", 1)
+                ->update();
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+        // 删除缓存
+        deleteUserDynamicInfo($id, Redis::factory());
+    }
+
+    /**
+     * 动态取消点赞
+     *
+     * @param $id
+     * @param $user
+     * @throws \Throwable
+     */
+    public function unlike($id, $user)
+    {
+        Db::startTrans();
+        try {
+            Db::name("dynamic_like")->where("dynamic_id", $id)
+                ->where("u_id", $user["id"])
+                ->delete();
+            Db::name("dynamic_count")->where("dynamic_id", $id)
+                ->dec("like_count", 1)
+                ->update();
+
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();
@@ -713,7 +730,7 @@ class DynamicService extends Base
             return $this->nearUpdate($pageSize, $long, $lat, $userId);
         }
         // 不需要刷新查询缓存数据
-        return $this->nearPage($pageNum, $pageSize, $userId);
+        return $this->nearPage($pageNum, $pageSize, $long, $lat, $userId);
     }
 
     /**
@@ -735,7 +752,7 @@ class DynamicService extends Base
         $redis = Redis::factory();
         $lock = getNearUserDynamicInfoLock($userId, $redis);
         if (!empty($lock)) {
-            return $this->nearPage(1, $pageSize, $userId);
+            return $this->nearPage(1, $pageSize, $long, $lat, $userId);
         }
 
         // 没有加锁 获取数据库数据 并排序
@@ -856,14 +873,26 @@ class DynamicService extends Base
      *
      * @param $pageNum int 分页
      * @param $pageSize int 分页大小
+     * @param $long int 经度
+     * @param $lat int 纬度
      * @param $userId int 当前用户id
      * @return array|mixed|null
      * @throws AppException
      */
-    private function nearPage($pageNum, $pageSize, $userId)
+    private function nearPage($pageNum, $pageSize, $long, $lat, $userId)
     {
         // 读缓存
         $redis = Redis::factory();
+        $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $pageSize;
+        // 缓存不存在生成缓存
+        if (!$redis->exists($key)) {
+            // 没有加锁 获取数据库数据 并排序
+            $dynamics = $this->getDbData($pageSize, $lat, $long, $userId);
+            // 添加缓存
+            cacheNearUserDynamicInfo($userId, $pageSize, $dynamics, $redis);
+            return array_slice($dynamics, 0, $pageSize);
+        }
+
         $data = getNearUserDynamicInfo($userId, $pageSize, $redis);
 
         if (empty($data)) {

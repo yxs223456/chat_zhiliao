@@ -460,13 +460,13 @@ class UserService extends Base
         return $cacheUser;
     }
 
-    public static function getUserById($userNumber, $redis = null)
+    public static function getUserById($userId, $redis = null)
     {
         $redis = $redis === null ? Redis::factory() : $redis;
-        $cacheUser = getUserInfoById($userNumber, $redis);
+        $cacheUser = getUserInfoById($userId, $redis);
         if (empty($cacheUser['id'])) {
             $model = new UserModel();
-            $user = $model->findByUserNumber($userNumber);
+            $user = $model->findById($userId);
             if ($user) {
                 $cacheUser = $user->toArray();
                 cacheUserInfoById($cacheUser, $redis);

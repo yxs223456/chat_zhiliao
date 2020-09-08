@@ -32,7 +32,7 @@ class Gift extends Base
     }
 
     /**
-     * 赠送礼物
+     * 无特殊场景下（通话中、私聊）赠送礼物
      */
     public function give()
     {
@@ -46,5 +46,7 @@ class Gift extends Base
         $user = $this->query["user"];
         $service = new GiftService();
         $returnData = $service->give($user, $r_user_number, $gift_id);
+
+        return $this->jsonResponse($returnData);
     }
 }

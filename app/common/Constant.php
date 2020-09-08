@@ -30,4 +30,7 @@ class Constant
 
     // 邀请女生成为女神奖励人民币（元）
     const INVITE_PRETTY_FEMALE_REWARD_MONEY = 3;
+
+    // 收礼人礼物分润比例
+    const GIFT_BONUS_RATE = 0.6;
 }

@@ -13,7 +13,7 @@ class AppException extends \Exception
     const QUERY_PARAMS_ERROR = [1000, "非法请求"];
     const QUERY_INVALID = [1001, "非法请求"];
     const TRY_AGAIN_LATER = [1002, "稍后重试"];
-    const QUERY_URL_ERROR = [1003, "错误调用"];
+    const QUERY_API_ERROR = [1003, "错误调用"];
 
     const USER_NOT_LOGIN = [2000, "请先登录"];
     const USER_MOBILE_ERR = [2001, "请输入正确的手机号"];
@@ -30,6 +30,8 @@ class AppException extends \Exception
     const VIP_OFFLINE = [4000, "该vip套餐已下架"];
 
     const GIFT_OFFLINE = [5000, "该礼物已经下架"];
+
+    const WALLET_MONEY_LESS = [6000, "余额不足"];
 
     public static function factory($errConst, $message = "")
     {

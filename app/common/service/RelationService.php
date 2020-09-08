@@ -186,4 +186,48 @@ class RelationService extends Base
         cacheUserRelationFriendInfo($userId, $pageSize, $ret, $redis);
         return array_slice($data, ($pageNum - 1) * $pageSize, $pageSize);
     }
+
+    /**
+     * 取消用户关注
+     *
+     * @param $followId
+     * @param $userId
+     */
+    public function unfollow($followId, $userId)
+    {
+        Db::name("user_follow")->where("u_id", $userId)->where("follow_u_id", $followId)->delete();
+        $redis = Redis::factory();
+        $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();
+        // 当前用户也关注我，需要删除自己好友缓存
+        if (!empty($followedMe)) {
+            deleteUserRelationFriendInfo($userId, $redis);
+            deleteUserRelationFriendInfo($followId, $redis);
+        }
+        // 删除自己关注用户缓存
+        deleteUserRelationFollowInfo($userId, $redis);
+        // 删除关注用户被关注缓存
+        deleteUserRelationFansInfo($followId, $redis);
+    }
+
+    /**
+     * 关注用户
+     *
+     * @param $followId
+     * @param $userId
+     */
+    public function follow($followId, $userId)
+    {
+        Db::name("user_follow")->insertGetId(["follow_u_id" => $followId, 'u_id' => $userId]);
+        $redis = Redis::factory();
+        $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();
+        // 当前用户也关注我，需要互删好友缓存
+        if (!empty($followedMe)) {
+            deleteUserRelationFriendInfo($userId, $redis);
+            deleteUserRelationFriendInfo($followId, $redis);
+        }
+        // 删除自己关注用户缓存
+        deleteUserRelationFollowInfo($userId, $redis);
+        // 删除关注用户被关注缓存
+        deleteUserRelationFansInfo($followId, $redis);
+    }
 }

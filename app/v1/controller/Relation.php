@@ -89,18 +89,44 @@ class Relation extends Base
 
     /**
      * 关注
+     *
+     * @return \think\response\Json
+     * @throws AppException
      */
     public function follow()
     {
-        
+        $request = $this->query["content"];
+        $followUserId = $request["u_id"] ?? 0;
+        $userId = $this->query['user']['id']; // 登陆用户
+
+        if (!checkInt($followUserId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new RelationService();
+        $service->follow($followUserId, $userId);
+        return $this->jsonResponse(new \stdClass());
     }
 
     /**
      * 取消关注
+     *
+     * @return \think\response\Json
+     * @throws AppException
      */
     public function unFollow()
     {
+        $request = $this->query["content"];
+        $followUserId = $request["u_id"] ?? 0;
+        $userId = $this->query['user']['id']; // 登陆用户
 
+        if (!checkInt($followUserId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new RelationService();
+        $service->unfollow($followUserId, $userId);
+        return $this->jsonResponse(new \stdClass());
     }
 
 }

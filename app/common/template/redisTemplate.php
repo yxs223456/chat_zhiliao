@@ -598,7 +598,8 @@ function getUserRelationFriendInfo($userId, $pageSize, \Redis $redis)
 }
 
 // 删除用户好友数据所有缓存
-function deleteUserRelationFriendInfo($userId, $pageSize, \Redis $redis)
+function deleteUserRelationFriendInfo($userId, \Redis $redis)
 {
-    $redis->del(REDIS_USER_RELATION_FRIEND_INFO . $userId . ":" . $pageSize);
+    $keys = $redis->keys(REDIS_USER_RELATION_FRIEND_INFO . $userId . "*");
+    $redis->del($keys);
 }

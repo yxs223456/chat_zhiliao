@@ -56,7 +56,7 @@ class GiftService extends Base
     /**
      * 无特殊场景下（通话中、私聊）赠送礼物
      * @param $user
-     * @param $rUNumber
+     * @param $rUId
      * @param $giftId
      * @return array
      * @throws AppException
@@ -65,7 +65,7 @@ class GiftService extends Base
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function give($user, $rUNumber, $giftId)
+    public function give($user, $rUId, $giftId)
     {
         $redis = Redis::factory();
 
@@ -73,7 +73,7 @@ class GiftService extends Base
         $gift = self::getGiftById($giftId, $redis);
 
         // 礼物接收用户
-        $receiveUser = UserService::getUserByNumber($rUNumber, $redis);
+        $receiveUser = UserService::getUserById($rUId, $redis);
         if (empty($receiveUser)) {
             throw AppException::factory(AppException::QUERY_INVALID);
         }

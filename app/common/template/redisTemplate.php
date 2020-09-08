@@ -184,6 +184,29 @@ function getUserInfoByNumber($userNumber, Redis $redis)
 }
 
 /**
+ * 缓存用户信息 user_id
+ */
+define("REDIS_USER_INFO_BY_ID", REDIS_KEY_PREFIX . "userInfoById:");
+//缓存用户信息，有效期3天
+function cacheUserInfoById(array $userInfo, Redis $redis)
+{
+    $key = REDIS_USER_INFO_BY_ID . $userInfo["id"];
+    $redis->setex($key, 259200, json_encode($userInfo));
+}
+
+//通过user_number获取用户信息
+function getUserInfoById($userId, Redis $redis)
+{
+    $key = REDIS_USER_INFO_BY_ID . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
  * 短信验证码
  */
 // 缓存短信验证码

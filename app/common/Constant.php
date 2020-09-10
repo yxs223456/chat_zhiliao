@@ -33,4 +33,49 @@ class Constant
 
     // 收礼人礼物分润比例
     const GIFT_BONUS_RATE = 0.6;
+
+
+    // 女神通话，视频等级金额限制(聊币)
+    // 普通女性
+    const PRETTY_FEMALE_LEVEL_COMMON = 100;
+
+    // 见习女神
+    const PRETTY_FEMALE_LEVEL_TRAINEE = 100;
+
+    // 铁牌女神
+    const PRETTY_FEMALE_LEVEL_IRON = 150;
+
+    // 铜牌女神
+    const PRETTY_FEMALE_LEVEL_COPPER = 200;
+
+    // 银牌女神
+    const PRETTY_FEMALE_LEVEL_SILVER = 250;
+
+    // 金牌女神
+    const PRETTY_FEMALE_LEVEL_GOLD = 350;
+
+    // 皇冠女神
+    const PRETTY_FEMALE_LEVEL_CROWN = 500;
+
+    // 男神通话，视频等级金额限制(聊币) 必须是vip
+    // 普通男性
+    const PRETTY_MALE_LEVEL_COMMON = 30;
+
+    // 见习男神
+    const PRETTY_MALE_LEVEL_TRAINEE = 100;
+
+    // 铁牌男神
+    const PRETTY_MALE_LEVEL_IRON = 150;
+
+    // 铜牌男神
+    const PRETTY_MALE_LEVEL_COPPER = 200;
+
+    // 银牌男神
+    const PRETTY_MALE_LEVEL_SILVER = 250;
+
+    // 金牌男神
+    const PRETTY_MALE_LEVEL_GOLD = 350;
+
+    // 皇冠男神
+    const PRETTY_MALE_LEVEL_CROWN = 500;
 }

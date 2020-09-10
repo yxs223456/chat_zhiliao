@@ -108,7 +108,7 @@ class RelationService extends Base
                 'data' => [],
             ];
 
-            // 获取当前用户关注用户 列表
+            // 获取当前用户粉丝 列表
             $query = Db::name("user_follow")->alias("uf")
                 ->leftJoin("user u", "u.id = uf.u_id")
                 ->leftJoin("user_info ui", "ui.u_id = uf.u_id")
@@ -192,9 +192,14 @@ class RelationService extends Base
      *
      * @param $followId
      * @param $userId
+     * @throws AppException
      */
     public function unfollow($followId, $userId)
     {
+        $followUser = UserService::getUserById($followId);
+        if (empty($followUser)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
         Db::name("user_follow")->where("u_id", $userId)->where("follow_u_id", $followId)->delete();
         $redis = Redis::factory();
         $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();
@@ -214,9 +219,14 @@ class RelationService extends Base
      *
      * @param $followId
      * @param $userId
+     * @throws AppException
      */
     public function follow($followId, $userId)
     {
+        $followUser = UserService::getUserById($followId);
+        if (empty($followUser)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
         Db::name("user_follow")->insertGetId(["follow_u_id" => $followId, 'u_id' => $userId]);
         $redis = Redis::factory();
         $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();

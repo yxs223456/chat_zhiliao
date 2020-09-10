@@ -4,6 +4,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\enum\SmsSceneEnum;
+use app\common\enum\UserOpenEnum;
 use app\common\enum\UserSexEnum;
 use app\common\service\UserService;
 use app\v1\transformer\user\LoginTransformer;
@@ -119,5 +120,72 @@ class User extends Base
         $returnData = $us->setSex($sex, $user);
 
         return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 设置视频通话金额，开启关闭
+     */
+    public function setVideo()
+    {
+        $request = $this->query["content"];
+        $open = $request["switch"] ?? 0;
+        $coin = $request["coin"] ?? 0;
+        if (!in_array($open, [UserOpenEnum::NO, UserOpenEnum::YES])) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (!checkInt($coin)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $user = $this->query["user"];
+
+        $service = new UserService();
+        $service->setVideoOrVoice($open, $coin, $user);
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 设置语音通话金额，开启关闭
+     */
+    public function setVoice()
+    {
+        $request = $this->query["content"];
+        $open = $request["switch"] ?? 0;
+        $coin = $request["coin"] ?? 0;
+        if (!in_array($open, [UserOpenEnum::NO, UserOpenEnum::YES])) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (!checkInt($coin)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $user = $this->query["user"];
+
+        $service = new UserService();
+        $service->setVideoOrVoice($open, $coin, $user, 'voice');
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 设置私信收费和收费金额
+     */
+    public function setMessage()
+    {
+
+    }
+
+    /**
+     * 一键隐身和取消隐身
+     */
+    public function setStealth()
+    {
+        $request = $this->query["content"];
+        $open = $request["switch"] ?? 0;
+        if (!in_array($open, [UserOpenEnum::NO, UserOpenEnum::YES])) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new UserService();
+        $service->setStealth($open, $user);
+        return $this->jsonResponse(new \stdClass());
     }
 }

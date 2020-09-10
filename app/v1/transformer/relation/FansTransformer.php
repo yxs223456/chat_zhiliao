@@ -10,14 +10,14 @@ namespace app\v1\transformer\relation;
 
 use app\common\transformer\TransformerAbstract;
 
-class UserTransformer extends TransformerAbstract
+class FansTransformer extends TransformerAbstract
 {
 
     public function transformData(array $data): array
     {
         return [
             'id' => $data['id'] ?? 0,
-            'u_id' => $data['follow_u_id'] ?? 0,
+            'u_id' => $data['u_id'] ?? 0,
             'avatar' => $data['portrait'] ?? '',
             'nickname' => $data['nickname'] ?? '',
             'sex' => $data['sex'] ?? 0,

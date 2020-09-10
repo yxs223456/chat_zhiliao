@@ -10,8 +10,9 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\RelationService;
+use app\v1\transformer\relation\FansTransformer;
 use app\v1\transformer\relation\FriendTransformer;
-use app\v1\transformer\relation\UserTransformer;
+use app\v1\transformer\relation\FollowTransformer;
 
 class Relation extends Base
 {
@@ -40,7 +41,7 @@ class Relation extends Base
 
         $service = new RelationService();
         $data = $service->followList($startId, $pageSize, $userId);
-        return $this->jsonResponse($data, new UserTransformer());
+        return $this->jsonResponse($data, new FollowTransformer());
     }
 
     /**
@@ -62,7 +63,7 @@ class Relation extends Base
 
         $service = new RelationService();
         $data = $service->fansList($startId, $pageSize, $userId);
-        return $this->jsonResponse($data, new UserTransformer());
+        return $this->jsonResponse($data, new FansTransformer());
     }
 
     /**

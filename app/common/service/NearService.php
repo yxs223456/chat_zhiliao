@@ -8,6 +8,7 @@
 
 namespace app\common\service;
 
+use app\common\enum\UserIsStealthEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -101,8 +102,10 @@ class NearService extends Base
         // 查询用户数据
         $userData = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
+            ->leftJoin("user_set us", "u.id = us.u_id")
             ->field("u.id,u.sex,ui.portrait,ui.nickname,ui.birthday")
             ->whereIn("u.id", array_keys($userIds))
+            ->where("us.is_stealth", UserIsStealthEnum::NO)
             ->select()->toArray();
         if (empty($userData)) {
             return array_values($ret);

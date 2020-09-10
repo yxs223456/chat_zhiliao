@@ -5,6 +5,8 @@ namespace app\common\service;
 use app\common\AppException;
 use app\common\Constant;
 use app\common\enum\InviteRewardAddEnum;
+use app\common\enum\PrettyFemaleLevelEnum;
+use app\common\enum\PrettyMaleLevelEnum;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
 use app\common\helper\AliMobilePhoneCertificate;
@@ -473,5 +475,98 @@ class UserService extends Base
             }
         }
         return $cacheUser;
+    }
+
+    /**
+     * 设置视频和音频
+     *
+     * @param $switch int
+     * @param $coin int
+     * @param $user array
+     * @param $type string (video,voice)
+     * @throws AppException
+     */
+    public function setVideoOrVoice($switch, $coin, $user, $type = "video")
+    {
+        $sex = $user["sex"] ?? 0;
+        if ($sex == UserSexEnum::UNKNOWN) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $userInfo = Db::name("user_info")->where("u_id", $user["id"])->find();
+        if (empty($userInfo)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        // 女神金额逻辑
+        if ($sex == UserSexEnum::FEMALE) {
+            $femaleLevel = $userInfo["pretty_female_level"];
+            $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
+            if ($coin > $ruleCoin) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
+            Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+            return;
+        }
+
+        // 男神金额逻辑 必须是vip
+        $maleLevel = $userInfo["pretty_male_level"];
+        $today = date("Y-m-d");
+        $vipDeadline = $userInfo["vip_deadline"] ?? $today;
+        $svipDeadline = $userInfo['svip_deadline'] ?? $today;
+        // vip过期 不是vip不能设置通话聊天金额
+        if ($today >= $vipDeadline && $today >= $svipDeadline && $coin > 0) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $ruleCoin = $this->getMaleCoinRule($maleLevel);
+        if ($coin > $ruleCoin) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+        return;
+    }
+
+    public function setStealth($switch, $user)
+    {
+
+    }
+
+    /**
+     * 获取女神等级金额限制规则
+     *
+     * @param $level
+     * @return int|mixed
+     */
+    private function getFemaleCoinRule($level)
+    {
+        $levelToCoin = [
+            PrettyFemaleLevelEnum::COMMON => Constant::PRETTY_FEMALE_LEVEL_COMMON,
+            PrettyFemaleLevelEnum::TRAINEE => Constant::PRETTY_FEMALE_LEVEL_TRAINEE,
+            PrettyFemaleLevelEnum::IRON => Constant::PRETTY_FEMALE_LEVEL_IRON,
+            PrettyFemaleLevelEnum::COPPER => Constant::PRETTY_FEMALE_LEVEL_COPPER,
+            PrettyFemaleLevelEnum::SILVER => Constant::PRETTY_FEMALE_LEVEL_SILVER,
+            PrettyFemaleLevelEnum::GOLD => Constant::PRETTY_FEMALE_LEVEL_GOLD,
+            PrettyFemaleLevelEnum::CROWN => Constant::PRETTY_FEMALE_LEVEL_CROWN,
+        ];
+        return $levelToCoin[$level] ?? 0;
+    }
+
+    /**
+     * 获取男神等级金额限制规则
+     *
+     * @param $level
+     * @return int|mixed
+     */
+    private function getMaleCoinRule($level)
+    {
+        $levelToCoin = [
+            PrettyMaleLevelEnum::COMMON => Constant::PRETTY_MALE_LEVEL_COMMON,
+            PrettyMaleLevelEnum::TRAINEE => Constant::PRETTY_MALE_LEVEL_TRAINEE,
+            PrettyMaleLevelEnum::IRON => Constant::PRETTY_MALE_LEVEL_IRON,
+            PrettyMaleLevelEnum::COPPER => Constant::PRETTY_MALE_LEVEL_COPPER,
+            PrettyMaleLevelEnum::SILVER => Constant::PRETTY_MALE_LEVEL_SILVER,
+            PrettyMaleLevelEnum::GOLD => Constant::PRETTY_MALE_LEVEL_GOLD,
+            PrettyMaleLevelEnum::CROWN => Constant::PRETTY_MALE_LEVEL_CROWN,
+        ];
+        return $levelToCoin[$level] ?? 0;
     }
 }

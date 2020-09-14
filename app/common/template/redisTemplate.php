@@ -491,6 +491,13 @@ function deleteUserLongLatInfo(\Redis $redis)
     $redis->del($keys);
 }
 
+// 删除一个用户坐标缓存
+function deleteUserLongLatInfoByUserId($userId, \Redis $redis)
+{
+    $keys = $redis->keys(REDIS_USER_LONG_LAT_INFO . "|*|" . $userId);
+    $redis->del($keys);
+}
+
 /**
  * 附近用户距离排序的有序集合(无并发)
  */

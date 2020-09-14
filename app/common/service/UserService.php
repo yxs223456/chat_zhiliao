@@ -9,6 +9,7 @@ use app\common\enum\PrettyFemaleLevelEnum;
 use app\common\enum\PrettyMaleLevelEnum;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
+use app\common\enum\UserSwitchEnum;
 use app\common\helper\AliMobilePhoneCertificate;
 use app\common\helper\Redis;
 use app\common\helper\AliSms;
@@ -526,9 +527,37 @@ class UserService extends Base
         return;
     }
 
+    /**
+     * 一键隐身必须是vip
+     *
+     * @param $switch int
+     * @param $user array
+     * @throws AppException
+     */
     public function setStealth($switch, $user)
     {
-
+        $redis = Redis::factory();
+        // 开启逻辑 （删除用户坐标缓存,判断VIP）
+        if ($switch == UserSwitchEnum::ON) {
+            // 判断是否是vip
+            $userInfo = Db::name("user_info")->where("u_id", $user["id"])->find();
+            if (empty($userInfo)) {
+                throw AppException::factory(AppException::USER_NOT_EXISTS);
+            }
+            $today = date("Y-m-d");
+            $vipDeadline = $userInfo["vip_deadline"] ?? $today;
+            $svipDeadline = $userInfo['svip_deadline'] ?? $today;
+            // vip过期 不是vip不能设置通话聊天金额
+            if ($today >= $vipDeadline && $today >= $svipDeadline) {
+                throw AppException::factory(AppException::USER_NOT_VIP);
+            }
+            // 删除用户坐标缓存，不出现在附近
+            deleteUserLongLatInfoByUserId($user["id"], $redis);
+        }
+        // 关闭逻辑直接关闭
+        // 开启关闭的修改数据库操作
+        Db::name("user_set")->where("u_id", $user["id"])->update(["is_stealth" => $switch]);
+        return;
     }
 
     /**

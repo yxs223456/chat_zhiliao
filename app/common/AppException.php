@@ -24,6 +24,7 @@ class AppException extends \Exception
     const USER_SEX_UNKNOWN = [2006, "请选择性别"];
     const USER_MODIFY_SEX_FORBIDDEN = [2007, "性别无法修改"];
     const USER_NOT_EXISTS = [2008, "用户不存在"];
+    const USER_NOT_VIP = [2009, "您不是VIP"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];

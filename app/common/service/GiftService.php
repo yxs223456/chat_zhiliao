@@ -88,19 +88,25 @@ class GiftService extends Base
         }
 
         // 礼物赠送过程
+        $rUIncome = floor(Constant::GIFT_BONUS_RATE * $gift["price"]); // 收礼人礼物分润收入
         Db::startTrans();
         try {
-            $this->giveDbOperate($user, $gift, $receiveUser);
+            $this->giveDbOperate($user, $gift, $receiveUser, $rUIncome);
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
         }
 
-        return [];
+        return [
+            "name" => $gift["name"],
+            "image_url" => $gift["image_url"],
+            "price" => $gift["price"],
+            "r_u_income" => $rUIncome,
+        ];
     }
 
-    private function giveDbOperate($user, $gift, $receiveUser)
+    private function giveDbOperate($user, $gift, $receiveUser, $rUIncome)
     {
         // 判断用户账户余额是否足够。
         // 先花费不可提现聊币，再花费可提现聊币
@@ -127,7 +133,6 @@ class GiftService extends Base
         }
 
         // 增加收礼人钱包余额
-        $rUIncome = floor(Constant::GIFT_BONUS_RATE * $price); // 收礼人礼物分润收入
         $rUserWallet = Db::name("user_wallet")->where("u_id", $receiveUser["id"])->find();
         Db::name("user_wallet")
             ->where("id", $rUserWallet["id"])

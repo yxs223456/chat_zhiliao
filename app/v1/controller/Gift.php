@@ -11,6 +11,7 @@ namespace app\v1\controller;
 use app\common\AppException;
 use app\common\service\GiftService;
 use app\v1\transformer\gift\GetAll;
+use app\v1\transformer\gift\Give;
 
 class Gift extends Base
 {
@@ -47,6 +48,6 @@ class Gift extends Base
         $service = new GiftService();
         $returnData = $service->give($user, $r_user_id, $gift_id);
 
-        return $this->jsonResponse($returnData);
+        return $this->jsonResponse($returnData, new Give());
     }
 }

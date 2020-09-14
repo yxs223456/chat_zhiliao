@@ -184,6 +184,29 @@ function getUserInfoByNumber($userNumber, Redis $redis)
 }
 
 /**
+ * 缓存用户设置信息 user_id
+ */
+define("REDIS_USER_SET_BY_UID", REDIS_KEY_PREFIX . "userSetByUId:");
+//缓存用户设置信息，有效期3天
+function cacheUserSetByUId(array $userSet, Redis $redis)
+{
+    $key = REDIS_USER_SET_BY_UID . $userSet["id"];
+    $redis->setex($key, 259200, json_encode($userSet));
+}
+
+//通过user_id获取用户设置信息
+function getUserSetByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_SET_BY_UID . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
  * 缓存用户信息 user_id
  */
 define("REDIS_USER_INFO_BY_ID", REDIS_KEY_PREFIX . "userInfoById:");
@@ -194,7 +217,7 @@ function cacheUserInfoById(array $userInfo, Redis $redis)
     $redis->setex($key, 259200, json_encode($userInfo));
 }
 
-//通过user_number获取用户信息
+//通过user_id获取用户信息
 function getUserInfoById($userId, Redis $redis)
 {
     $key = REDIS_USER_INFO_BY_ID . $userId;

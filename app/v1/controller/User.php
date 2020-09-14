@@ -6,6 +6,7 @@ use app\common\AppException;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserOpenEnum;
 use app\common\enum\UserSexEnum;
+use app\common\enum\UserSwitchEnum;
 use app\common\service\UserService;
 use app\v1\transformer\user\LoginTransformer;
 
@@ -130,7 +131,7 @@ class User extends Base
         $request = $this->query["content"];
         $open = $request["switch"] ?? 0;
         $coin = $request["coin"] ?? 0;
-        if (!in_array($open, [UserOpenEnum::NO, UserOpenEnum::YES])) {
+        if (!in_array($open, [UserSwitchEnum::NO, UserSwitchEnum::YES])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (!checkInt($coin)) {
@@ -151,7 +152,7 @@ class User extends Base
         $request = $this->query["content"];
         $open = $request["switch"] ?? 0;
         $coin = $request["coin"] ?? 0;
-        if (!in_array($open, [UserOpenEnum::NO, UserOpenEnum::YES])) {
+        if (!in_array($open, [UserSwitchEnum::NO, UserSwitchEnum::YES])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (!checkInt($coin)) {
@@ -179,7 +180,7 @@ class User extends Base
     {
         $request = $this->query["content"];
         $open = $request["switch"] ?? 0;
-        if (!in_array($open, [UserOpenEnum::NO, UserOpenEnum::YES])) {
+        if (!in_array($open, [UserSwitchEnum::NO, UserSwitchEnum::YES])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

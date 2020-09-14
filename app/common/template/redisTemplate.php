@@ -190,7 +190,7 @@ define("REDIS_USER_SET_BY_UID", REDIS_KEY_PREFIX . "userSetByUId:");
 //缓存用户设置信息，有效期3天
 function cacheUserSetByUId(array $userSet, Redis $redis)
 {
-    $key = REDIS_USER_SET_BY_UID . $userSet["id"];
+    $key = REDIS_USER_SET_BY_UID . $userSet["u_id"];
     $redis->setex($key, 259200, json_encode($userSet));
 }
 
@@ -204,6 +204,13 @@ function getUserSetByUId($userId, Redis $redis)
     } else {
         return [];
     }
+}
+
+// 通过user_id删除用户设置信息
+function deleteUserSetByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_SET_BY_UID . $userId;
+    $redis->del($key);
 }
 
 /**

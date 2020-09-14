@@ -11,7 +11,7 @@ namespace app\common\enum;
 /**
  * 用户设置开启
  */
-class UserOpenEnum
+class UserSwitchEnum
 {
     use EnumTrait;
 

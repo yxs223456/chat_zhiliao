@@ -17,7 +17,7 @@ class UserSetService extends Base
     {
         $redis = $redis === null ? Redis::factory() : $redis;
         $cacheUserSet = getUserSetByUId($userId, $redis);
-        if (empty($cacheUserSet['id'])) {
+        if (empty($cacheUserSet['u_id'])) {
             $model = new UserSetModel();
             $userSet = $model->findByUId($userId);
             if ($userSet) {

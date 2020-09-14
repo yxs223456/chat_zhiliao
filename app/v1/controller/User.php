@@ -131,7 +131,7 @@ class User extends Base
         $request = $this->query["content"];
         $open = $request["switch"] ?? 0;
         $coin = $request["coin"] ?? 0;
-        if (!in_array($open, [UserSwitchEnum::NO, UserSwitchEnum::YES])) {
+        if (!in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (!checkInt($coin)) {
@@ -152,7 +152,7 @@ class User extends Base
         $request = $this->query["content"];
         $open = $request["switch"] ?? 0;
         $coin = $request["coin"] ?? 0;
-        if (!in_array($open, [UserSwitchEnum::NO, UserSwitchEnum::YES])) {
+        if (!in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (!checkInt($coin)) {
@@ -180,7 +180,7 @@ class User extends Base
     {
         $request = $this->query["content"];
         $open = $request["switch"] ?? 0;
-        if (!in_array($open, [UserSwitchEnum::NO, UserSwitchEnum::YES])) {
+        if (!in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

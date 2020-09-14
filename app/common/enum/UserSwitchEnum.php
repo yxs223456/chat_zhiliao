@@ -15,14 +15,14 @@ class UserSwitchEnum
 {
     use EnumTrait;
 
-    const NO = 0;
-    const YES = 1;
+    const OFF = 0;
+    const ON = 1;
 
     protected static $desc = [
-        self::NO => [
+        self::OFF => [
             "cn" => "off",
         ],
-        self::YES => [
+        self::ON => [
             "cn" => "on",
         ],
 

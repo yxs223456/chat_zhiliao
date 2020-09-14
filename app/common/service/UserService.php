@@ -522,6 +522,7 @@ class UserService extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+        deleteUserSetByUId($user["id"], Redis::factory());
         return;
     }
 

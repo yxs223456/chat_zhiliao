@@ -599,4 +599,39 @@ class UserService extends Base
         ];
         return $levelToCoin[$level] ?? 0;
     }
+
+    /**
+     * 获取用户info
+     *
+     * @param $user
+     * @return array
+     * @throws AppException
+     */
+    public function getInfo($user)
+    {
+        $info = UserInfoService::getUserInfoById($user["id"], Redis::factory());
+        if (empty($info)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        return $info;
+    }
+
+    /**
+     * 修改用户信息
+     *
+     * @param $user
+     * @param $info
+     * @throws AppException
+     */
+    public function editInfo($user, $info)
+    {
+        $redis = Redis::factory();
+        $user = UserInfoService::getUserInfoById($user["id"], $redis);
+        if (empty($user)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        Db::name("user_info")->where("u_id", $user["id"])->update($info);
+        deleteUserInfoDataByUId($user["id"], $redis);
+        return;
+    }
 }

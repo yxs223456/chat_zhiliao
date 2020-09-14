@@ -218,3 +218,12 @@ function getShowDate($time)
     $days = ceil(($todayStart - $time) / 3600 / 24);
     return $days . '天前';
 }
+
+// 验证日期格式
+function checkDateFormat($date)
+{
+    if (date("Y-m-d", strtotime($date)) == $date) {
+        return true;
+    }
+    return false;
+}

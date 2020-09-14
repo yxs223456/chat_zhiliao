@@ -4,10 +4,11 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\enum\SmsSceneEnum;
-use app\common\enum\UserOpenEnum;
+use app\common\enum\UserOccupationEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\service\UserService;
+use app\v1\transformer\user\InfoTransformer;
 use app\v1\transformer\user\LoginTransformer;
 
 class User extends Base
@@ -187,6 +188,48 @@ class User extends Base
         $user = $this->query["user"];
         $service = new UserService();
         $service->setStealth($open, $user);
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 查看用户info
+     */
+    public function info()
+    {
+        $user = $this->query["user"];
+        $service = new UserService();
+        $userInfo = $service->getInfo($user);
+        return $this->jsonResponse($userInfo, new InfoTransformer());
+    }
+
+    /**
+     * 编辑用户信息
+     *
+     * @return \think\response\Json
+     * @throws AppException
+     */
+    public function editInfo()
+    {
+        $request = $this->query["content"];
+        $avatar = $request["avatar"] ?? "";
+        $nickname = $request["nickname"] ?? "";
+        $birthday = $request["birthday"] ?? "";
+        $occupation = $request["occupation"] ?? 0;
+        $photo = $request["photos"] ?? [];
+        if (!empty($birthday) && !checkDateFormat($birthday)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (!empty($occupation) && !in_array($occupation, UserOccupationEnum::getAllValues())) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (!empty($photo) && !is_array($photo)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new UserService();
+        $update = ["portrait" => $avatar, "nickname" => $nickname, "birthday" => $birthday, "occupation" => $occupation, "photos" => json_encode($photo)];
+        $service->editInfo($user, array_filter($update));
         return $this->jsonResponse(new \stdClass());
     }
 }

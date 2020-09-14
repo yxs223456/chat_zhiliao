@@ -663,3 +663,33 @@ function deleteUserRelationFriendInfo($userId, \Redis $redis)
     $keys = $redis->keys(REDIS_USER_RELATION_FRIEND_INFO . $userId . "*");
     $redis->del($keys);
 }
+
+/**
+ * 缓存用户info信息
+ */
+define("REDIS_USER_INFO_DATA_BY_UID", REDIS_KEY_PREFIX . "userInfoDataByUId:");
+//缓存user_info数据，有效期3天
+function cacheUserInfoDataByUId(array $userInfo, Redis $redis)
+{
+    $key = REDIS_USER_INFO_DATA_BY_UID . $userInfo["u_id"];
+    $redis->setex($key, 259200, json_encode($userInfo));
+}
+
+//通过user_id获取用户info数据
+function getUserInfoDataByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_INFO_DATA_BY_UID . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+// 通过user_id删除用户info数据
+function deleteUserInfoDataByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_INFO_DATA_BY_UID . $userId;
+    $redis->del($key);
+}

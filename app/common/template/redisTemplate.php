@@ -693,3 +693,64 @@ function deleteUserInfoDataByUId($userId, Redis $redis)
     $key = REDIS_USER_INFO_DATA_BY_UID . $userId;
     $redis->del($key);
 }
+
+
+/**
+ * 缓存用户blackUserId信息
+ */
+define("REDIS_USER_BLACK_LIST_BY_UID", REDIS_KEY_PREFIX . "userBlackListByUId:");
+//缓存black_list数据，有效期3天
+function cacheUserBlackListByUId(array $blackUids, Redis $redis)
+{
+    $key = REDIS_USER_BLACK_LIST_BY_UID . $blackUids["userId"];
+    $redis->setex($key, 259200, json_encode($blackUids));
+}
+
+//通过user_id获取用户黑名单数据
+function getUserBlackListByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_BLACK_LIST_BY_UID . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+// 通过user_id删除用户黑名单数据
+function deleteUserBlackListByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_BLACK_LIST_BY_UID . $userId;
+    $redis->del($key);
+}
+
+/**
+ * 缓存用户blackUserListData信息
+ */
+define("REDIS_USER_BLACK_LIST_DATA_BY_UID", REDIS_KEY_PREFIX . "userBlackListDataByUId:");
+//缓存black_list数据，有效期3天
+function cacheUserBlackListDataByUId(array $blackList, Redis $redis)
+{
+    $key = REDIS_USER_BLACK_LIST_DATA_BY_UID . $blackList["userId"];
+    $redis->setex($key, 259200, json_encode($blackList));
+}
+
+//通过user_id获取用户黑名单数据
+function getUserBlackListDataByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_BLACK_LIST_DATA_BY_UID . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+// 通过user_id删除用户黑名单数据
+function deleteUserBlackListDataByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_BLACK_LIST_DATA_BY_UID . $userId;
+    $redis->del($key);
+}

@@ -7,7 +7,9 @@ use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserOccupationEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
+use app\common\service\BlackListService;
 use app\common\service\UserService;
+use app\v1\transformer\user\BlackListTransformer;
 use app\v1\transformer\user\InfoTransformer;
 use app\v1\transformer\user\LoginTransformer;
 
@@ -230,6 +232,51 @@ class User extends Base
         $service = new UserService();
         $update = ["portrait" => $avatar, "nickname" => $nickname, "birthday" => $birthday, "occupation" => $occupation, "photos" => json_encode($photo)];
         $service->editInfo($user, array_filter($update));
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 黑名单列表
+     */
+    public function blackList()
+    {
+        $user = $this->query["user"];
+        $service = new BlackListService();
+        $list = $service->list($user);
+        return $this->jsonResponse($list, new BlackListTransformer());
+    }
+
+    /**
+     * 加入黑名单 (黑名单内不能进行关注,通话,私信,评论,赞,打赏操作)
+     */
+    public function addBlack()
+    {
+        $request = $this->query["content"];
+        $blackUserId = $request['black_u_id'] ?? 0;
+        if (!checkInt($blackUserId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new BlackListService();
+        $service->addBlack($user, $blackUserId);
+        return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 移除黑名单
+     */
+    public function removeBlack()
+    {
+        $request = $this->query["content"];
+        $blackUserId = $request["black_u_id"] ?? 0;
+        if (!checkInt($blackUserId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new BlackListService();
+        $service->removeBlack($user, $blackUserId);
         return $this->jsonResponse(new \stdClass());
     }
 }

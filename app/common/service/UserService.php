@@ -330,6 +330,13 @@ class UserService extends Base
         ];
         Db::name("user_community")->insert($userCommunityData);
 
+        // chat_free_wallet 表
+        $chatFreeWallet = [
+            "u_id" => $newUser["id"],
+        ];
+        Db::name("chat_free_wallet")->insert($chatFreeWallet);
+
+
         // tmp_user_register_callback 表
         if ($parent) {
             Db::name("tmp_user_register_callback")->insert([

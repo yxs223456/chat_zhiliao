@@ -44,11 +44,12 @@ class BlackListService extends Base
      *
      * @param $userId int 查询的用户ID
      * @param $blackUserId int 黑名单用户ID
+     * @param null $redis
      * @return bool
      */
-    public static function inUserBlackList($userId, $blackUserId)
+    public static function inUserBlackList($userId, $blackUserId, $redis = null)
     {
-        $blackUserIds = self::getUserBlackListById($blackUserId);
+        $blackUserIds = self::getUserBlackListById($blackUserId, $redis);
         if (in_array($userId, $blackUserIds)) {
             return true;
         }

@@ -25,6 +25,7 @@ class AppException extends \Exception
     const USER_MODIFY_SEX_FORBIDDEN = [2007, "性别无法修改"];
     const USER_NOT_EXISTS = [2008, "用户不存在"];
     const USER_NOT_VIP = [2009, "您不是VIP"];
+    const USER_IN_BLACK_LIST = [2010, "您已被对方添加到黑名单"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];
@@ -34,6 +35,10 @@ class AppException extends \Exception
     const GIFT_OFFLINE = [5000, "该礼物已经下架"];
 
     const WALLET_MONEY_LESS = [6000, "余额不足"];
+
+    const CHAT_VIDEO_CLOSE = [7000, "对方关闭视频接听"];
+    const CHAT_VOICE_CLOSE = [7001, "对方关闭语言接听"];
+    const CHAT_LESS_MONTY = [7002, "余额不足无法发起聊天"];
 
     public static function factory($errConst, $message = "")
     {

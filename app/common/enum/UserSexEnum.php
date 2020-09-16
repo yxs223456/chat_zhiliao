@@ -27,7 +27,7 @@ class UserSexEnum
             "cn" => "男",
         ],
         self::FEMALE => [
-            "cn" => "nv",
+            "cn" => "女",
         ],
     ];
 }

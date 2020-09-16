@@ -54,6 +54,30 @@ function getGiftByIdOnRedis($giftId, \Redis $redis)
 }
 
 /**
+ *  用户今日免费接听时长
+ */
+define("REDIS_KEY_CHAT_FREE_MINUTES", REDIS_KEY_PREFIX . "chatFreeMinutes:");
+
+// 用户今日免费接听数
+function getUserChatFreeMinutes($userId, $date, \Redis $redis)
+{
+    $key = REDIS_KEY_CHAT_FREE_MINUTES . $date . ":$userId";
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+// 更新用户今日免费接听数
+function cacheUserChatFreeMinutes($userId, $date, array $info, \Redis $redis)
+{
+    $key = REDIS_KEY_CHAT_FREE_MINUTES . $date . ":$userId";
+    $redis->setex($key, 86400, json_encode($info));
+}
+
+/**
  * 礼物 配置
  */
 define("REDIS_KEY_ALL_SALE_GIFT", REDIS_KEY_PREFIX . "allSaleGift");

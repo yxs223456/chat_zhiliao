@@ -49,12 +49,17 @@ class BusinessWorkerCallback
      */
     public static function onConnect($client_id)
     {
-        $scene = "init_connect";
-        $returnData = [
-            "client_id" => $client_id
-        ];
-        $responseJson = self::jsonData($scene, $returnData);
-        Gateway::sendToClient($client_id, $responseJson);
+        try {
+            $scene = "init_connect";
+            $returnData = [
+                "client_id" => $client_id
+            ];
+            $responseJson = self::jsonData($scene, $returnData);
+            Gateway::sendToClient($client_id, $responseJson);
+        } catch (\Throwable $e) {
+
+        }
+
     }
 
     /**
@@ -67,30 +72,39 @@ class BusinessWorkerCallback
      */
     public static function onWebSocketConnect($client_id, $data)
     {
-        if (isset($data["get"]["v"])) {
-            $_SESSION["v"] = $data["get"]["v"];
-        }
-        if (isset($data["get"]["os"])) {
-            $_SESSION["os"] = $data["get"]["os"];
-        }
-        if (isset($data["get"]["token"])) {
-            $user = UserService::getUserByToken($data["get"]["token"]);
-            if ($user) {
-                // 断开旧连接
-                $oldClientIdArr = Gateway::getClientIdByUid($user["id"]);
-                foreach ($oldClientIdArr as $oldClientId) {
-                    Gateway::closeClient($oldClientId);
-                }
-
-                // uid与当前client_id 绑定
-                $_SESSION["user"] = $user;
-                Gateway::bindUid($client_id, $user["id"]);
-                $scene = "init_user";
-                $returnData = [];
-                $responseJson = self::jsonData($scene, $returnData);
-                Gateway::sendToClient($client_id, $responseJson);
+        try {
+            if (isset($data["get"]["v"])) {
+                $_SESSION["v"] = $data["get"]["v"];
             }
+            if (isset($data["get"]["os"])) {
+                $_SESSION["os"] = $data["get"]["os"];
+            }
+            if (isset($data["get"]["token"])) {
+                $user = UserService::getUserByToken($data["get"]["token"]);
+                if ($user) {
+                    // 断开旧连接，并发送异地登录消息
+                    $oldClientIdArr = Gateway::getClientIdByUid($user["id"]);
+                    foreach ($oldClientIdArr as $oldClientId) {
+                        $scene = "another_site_login";
+                        $returnData = [];
+                        $responseJson = self::jsonData($scene, $returnData);
+                        Gateway::sendToClient($oldClientId, $responseJson);
+                        Gateway::closeClient($oldClientId);
+                    }
+
+                    // uid与当前client_id 绑定
+                    $_SESSION["user"] = $user;
+                    Gateway::bindUid($client_id, $user["id"]);
+                    $scene = "init_user";
+                    $returnData = [];
+                    $responseJson = self::jsonData($scene, $returnData);
+                    Gateway::sendToClient($client_id, $responseJson);
+                }
+            }
+        } catch (\Throwable $e) {
+
         }
+
     }
 
     /**
@@ -104,7 +118,11 @@ class BusinessWorkerCallback
      */
     public static function onMessage($client_id, $data)
     {
+        try {
 
+        } catch (\Throwable $e) {
+
+        }
     }
 
     /**

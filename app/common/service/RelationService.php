@@ -227,6 +227,9 @@ class RelationService extends Base
         if (empty($followUser)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
+        if (BlackListService::inUserBlackList($userId, $followId)) {
+            throw AppException::factory(AppException::USER_IN_BLACK_LIST);
+        }
         Db::name("user_follow")->insertGetId(["follow_u_id" => $followId, 'u_id' => $userId]);
         $redis = Redis::factory();
         $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();

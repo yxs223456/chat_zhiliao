@@ -182,6 +182,15 @@ class DynamicService extends Base
      */
     public function comment($id, $pid, $content, $user)
     {
+        $dynamic = Db::name("dynamic")->where("id", $id)->field("id,u_id")->find();
+        if (empty($dynamic)) {
+            throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
+        }
+        $uid = $dynamic["u_id"];
+        if (BlackListService::inUserBlackList($user['id'], $uid)) {
+            throw AppException::factory(AppException::USER_IN_BLACK_LIST);
+        }
+
         Db::startTrans();
         try {
             Db::name("dynamic_comment")->insertGetId([
@@ -213,6 +222,15 @@ class DynamicService extends Base
      */
     public function like($id, $user)
     {
+        $dynamic = Db::name("dynamic")->where("id", $id)->field("id,u_id")->find();
+        if (empty($dynamic)) {
+            throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
+        }
+        $uid = $dynamic["u_id"];
+        if (BlackListService::inUserBlackList($user['id'], $uid)) {
+            throw AppException::factory(AppException::USER_IN_BLACK_LIST);
+        }
+
         Db::startTrans();
         try {
             Db::name("dynamic_like")->insertGetId([

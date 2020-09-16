@@ -9,6 +9,7 @@
 namespace app\common\service;
 
 use app\common\AppException;
+use app\common\enum\ChatStatusEnum;
 use app\common\enum\ChatTypeEnum;
 use app\common\enum\UserIsPrettyEnum;
 use app\common\enum\UserSexEnum;
@@ -18,6 +19,18 @@ use think\facade\Db;
 
 class ChatService extends Base
 {
+    /**
+     * 初始化通话
+     * @param $user
+     * @param $tUId
+     * @param $chatType
+     * @return array
+     * @throws AppException
+     * @throws \Throwable
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
     public function init($user, $tUId, $chatType)
     {
         // 接听方个人设置
@@ -85,10 +98,53 @@ class ChatService extends Base
             throw AppException::factory(AppException::CHAT_LESS_MONTY);
         }
 
+        Db::startTrans();
+        try {
+            // 双方有人正在通话中，无法发起新通话
+            $oldChat = Db::name("chat")
+                ->where("(s_u_id=$tUId and status=". ChatStatusEnum::CALLING .") or " .
+                    "(t_u_id=$tUId and status= " . ChatStatusEnum::CALLING .")")
+                ->lock(true)
+                ->find();
+            if ($oldChat) {
+                throw AppException::factory(AppException::CHAT_LINE_BUSY);
+            }
 
+            $oldChat = Db::name("chat")
+                ->where("(s_u_id={$user['id']} and status=". ChatStatusEnum::CALLING .") or " .
+                    "(t_u_id={$user['id']} and status= " . ChatStatusEnum::CALLING .")")
+                ->lock(true)
+                ->find();
+            if ($oldChat) {
+                throw AppException::factory(AppException::CHAT_USER_CHAT_ING);
+            }
 
+            // 数据库纪录通话纪录
+            $chatData = [
+                "s_u_id" => $user["id"],
+                "t_u_id" => $tUId,
+                "chat_type" => $chatType,
+                "s_user_price" => 0,
+                "t_user_price" => 0,
+                "free_minutes" => $freeMinutes,
+                "status" => ChatStatusEnum::WAIT_ANSWER,
+            ];
+            $chatId = Db::name("chat")->insertGetId($chatData);
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        $returnData = [
+            "is_free" => $isFree,
+            "chat_id" => $chatId,
+            "free_minutes" => $freeMinutes,
+            "total_minutes" => $totalMinutes,
+        ];
+
+        return $returnData;
     }
-
 
     public static function getFreeMinutes($userId, $redis = null) :int
     {

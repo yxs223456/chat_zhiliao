@@ -10,6 +10,8 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\enum\ChatTypeEnum;
+use app\common\service\ChatService;
+use app\v1\transformer\chat\Init;
 
 class Chat extends Base
 {
@@ -19,6 +21,9 @@ class Chat extends Base
         ]
     ];
 
+    /**
+     * 初始化通话
+     */
     public function init()
     {
         $request = $this->query["content"];
@@ -33,9 +38,17 @@ class Chat extends Base
         }
 
         $user = $this->query["user"];
-        $s = new UserService();
-        $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber);
+        $s = new ChatService();
+        $returnData = $s->init($user, $tUId, $chatType);
 
-        return $this->jsonResponse($returnData, new LoginTransformer);
+        return $this->jsonResponse($returnData, new Init());
     }
+
+    /**
+     * 挂断通话请求
+     */
+
+    /**
+     * 结束通话
+     */
 }

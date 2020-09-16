@@ -39,6 +39,8 @@ class AppException extends \Exception
     const CHAT_VIDEO_CLOSE = [7000, "对方关闭视频接听"];
     const CHAT_VOICE_CLOSE = [7001, "对方关闭语言接听"];
     const CHAT_LESS_MONTY = [7002, "余额不足无法发起聊天"];
+    const CHAT_USER_CHAT_ING = [7003, "您正处于通话中，无法发起新聊天"];
+    const CHAT_LINE_BUSY = [7004, "对方正处于通话中，无法发起新聊天"];
 
     public static function factory($errConst, $message = "")
     {

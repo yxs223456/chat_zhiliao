@@ -76,6 +76,13 @@ class BusinessWorkerCallback
         if (isset($data["get"]["token"])) {
             $user = UserService::getUserByToken($data["get"]["token"]);
             if ($user) {
+                // 断开旧连接
+                $oldClientIdArr = Gateway::getClientIdByUid($user["id"]);
+                foreach ($oldClientIdArr as $oldClientId) {
+                    Gateway::closeClient($oldClientId);
+                }
+
+                // uid与当前client_id 绑定
                 $_SESSION["user"] = $user;
                 Gateway::bindUid($client_id, $user["id"]);
                 $scene = "init_user";

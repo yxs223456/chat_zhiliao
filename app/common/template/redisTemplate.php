@@ -778,3 +778,33 @@ function deleteUserBlackListDataByUId($userId, Redis $redis)
     $key = REDIS_USER_BLACK_LIST_DATA_BY_UID . $userId;
     $redis->del($key);
 }
+
+/**
+ * 缓存用户个人主页信息
+ */
+define("REDIS_USER_INDEX_DATA_BY_UID", REDIS_KEY_PREFIX . "userIndexDataByUId:");
+//缓存用户个人主页数据，有效期2小时
+function cacheUserIndexDataByUId($userId, array $data, Redis $redis)
+{
+    $key = REDIS_USER_INDEX_DATA_BY_UID . $userId;
+    $redis->setex($key, 7200, json_encode($data));
+}
+
+//通过user_id获取用户主页数据
+function getUserIndexDataByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_INDEX_DATA_BY_UID . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+// 通过user_id删除用户主页数据
+function deleteUserIndexDataByUId($userId, Redis $redis)
+{
+    $key = REDIS_USER_INDEX_DATA_BY_UID . $userId;
+    $redis->del($key);
+}

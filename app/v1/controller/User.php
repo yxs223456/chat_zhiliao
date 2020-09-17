@@ -10,6 +10,7 @@ use app\common\enum\UserSwitchEnum;
 use app\common\service\BlackListService;
 use app\common\service\UserService;
 use app\v1\transformer\user\BlackListTransformer;
+use app\v1\transformer\user\IndexTransformer;
 use app\v1\transformer\user\InfoTransformer;
 use app\v1\transformer\user\LoginTransformer;
 
@@ -278,5 +279,24 @@ class User extends Base
         $service = new BlackListService();
         $service->removeBlack($user, $blackUserId);
         return $this->jsonResponse(new \stdClass());
+    }
+
+    /**
+     * 用户主页
+     */
+    public function index()
+    {
+        $request = $this->query["content"];
+        $uid = $request["u_id"] ?? 0;
+        if (!checkInt($uid)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (empty($uid)) {
+            $uid = $this->query["user"]['id'];
+        }
+
+        $service = new UserService();
+        $data = $service->index($uid);
+        return $this->jsonResponse($data, new IndexTransformer());
     }
 }

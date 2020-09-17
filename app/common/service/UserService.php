@@ -641,4 +641,89 @@ class UserService extends Base
         deleteUserInfoDataByUId($user["id"], $redis);
         return;
     }
+
+    /**
+     * 获取用户主页数据
+     *
+     * @param $userId int 用户ID
+     * @param int $retry 重试次数
+     * @return array|mixed
+     * @throws AppException
+     */
+    public function index($userId, $retry = 0)
+    {
+        $redis = Redis::factory();
+        $ret = getUserIndexDataByUId($userId, $redis);
+        if (!empty($ret)) {
+            return $ret;
+        }
+
+        // 某个用户的更新锁
+        $lockKey = REDIS_KEY_PREFIX . "USER_INDEX_LOCK" . $userId;
+        if ($redis->setnx($lockKey, 1)) {
+            // 设置锁过期时间，防止死锁永不更新
+            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
+            $data = [
+                "user" => [],
+                "userInfo" => [],
+                "userSet" => [],// 用户配置
+                "dynamics" => [],
+                "dynamicLike" => [],
+                "videos" => [],
+                "gifts" => [],
+                "guard" => [], //守护
+            ];
+            $user = self::getUserById($userId, $redis);
+            $userInfo = UserInfoService::getUserInfoById($userId,$redis);
+            if (empty($user) || empty($userInfo)) {
+                $redis->del($lockKey);
+                throw AppException::factory(AppException::USER_NOT_EXISTS);
+            }
+
+            $data["user"] = $user;
+            $data["userInfo"] = $userInfo;
+
+            // 用户设置
+            $set = Db::name("user_set")->where("u_id", $userId)->find();
+            $data["userSet"] = $set;
+
+            // 查询四条带有图片的动态
+            $dynamic = Db::query("select * from dynamic where u_id=:id and length(source) > 2 order by create_time desc limit 4", ['id' => $userId]);
+            $dynamicLike = [];
+            if (!empty($dynamic)) {
+                $dynamicLikeData = Db::name("dynamic_like")
+                    ->whereIn("dynamic_id", array_column($dynamic, "id"))
+                    ->group("dynamic_id")
+                    ->field("count(dynamic_id) c,dynamic_id")
+                    ->select()->toArray();
+                if ($dynamicLikeData) {
+                    $dynamicLike = array_column($dynamicLikeData, "c", 'dynamic_id');
+                }
+            }
+            $data["dynamics"] = $dynamic;
+            $data["dynamicLike"] = $dynamicLike;
+            $data["videos"] = [];
+            // 查询礼物数据
+            $gifts = Db::name("gift_give_log")->alias("gl")
+                ->leftJoin("config_gift cg", "gl.g_id = cg.id")
+                ->field("cg.image_url,count(gl.g_id) c")
+                ->where("gl.r_u_id", $userId)
+                ->group("gl.g_id")
+                ->order("cg.id", "asc")
+                ->select()->toArray();
+            $data["gifts"] = $gifts;
+
+            cacheUserIndexDataByUId($userId, $data, $redis);
+            $redis->del($lockKey);
+            return $data;
+        } else {
+            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
+        }
+
+        if ($retry < Constant::GET_CACHE_TIMES) {
+            usleep(Constant::GET_CACHE_WAIT_TIME);
+            return $this->index($userId, ++$retry);
+        }
+        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+    }
 }

@@ -31,7 +31,7 @@ class ChatService extends Base
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function init($user, $tUId, $chatType)
+    public function dial($user, $tUId, $chatType)
     {
         // 接听方个人设置
         $redis = Redis::factory();
@@ -54,15 +54,11 @@ class ChatService extends Base
 
         // 接听方设置的接听价格
         $price = ChatTypeEnum::VIDEO ? $tUSet["video_chat_price"] : $tUSet["voice_chat_price"];
-
-        // 初始化返回数据
-        $isFree = 1;       // 通话是否免费
-        $freeMinutes = 0;  // 可以免费通话分钟数
-        $totalMinutes = 0; // 可以总通话分钟数
+        $isFree = $price == 0 ? 1 : 0;  // 通话是否免费
+        $freeMinutes = 0;               // 可以免费通话分钟数
 
         // 不免费情况下计算免费通话分钟数和付费通话时长
-        if ($price != 0) {
-            $isFree = 0;
+        if (!$isFree) {
             // 免费通话分钟数计算
             do {
                 // 用户如果没有免费通话分钟数，不用后续计算
@@ -87,23 +83,24 @@ class ChatService extends Base
                     $tUFreeMinutes;
             } while(0);
 
-            // 计算付费通话时长
-            $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
-            $payMinutes = floor($userWallet["total_balance"]/$price);
-            $totalMinutes = $freeMinutes + $payMinutes;
-        }
-
-        // 通话不免费时，总通话时长为0无法发起聊天
-        if ($isFree == 0 && $totalMinutes == 0) {
-            throw AppException::factory(AppException::CHAT_LESS_MONTY);
+            // 通话不免费时，总通话时长为0无法发起聊天
+            if ($freeMinutes == 0) {
+                // 计算付费通话时长
+                $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
+                $payMinutes = floor($userWallet["total_balance"]/$price);
+                if ($payMinutes == 0) {
+                    throw AppException::factory(AppException::CHAT_LESS_MONTY);
+                }
+            }
         }
 
         Db::startTrans();
         try {
             // 双方有人正在通话中，无法发起新通话
+            $whereInStr = "status in (".ChatStatusEnum::WAIT_ANSWER.",".ChatStatusEnum::CALLING.") ";
             $oldChat = Db::name("chat")
-                ->where("(s_u_id=$tUId and status=". ChatStatusEnum::CALLING .") or " .
-                    "(t_u_id=$tUId and status= " . ChatStatusEnum::CALLING .")")
+                ->where("(s_u_id=$tUId and $whereInStr) or " .
+                    "(t_u_id=$tUId and $whereInStr)")
                 ->lock(true)
                 ->find();
             if ($oldChat) {
@@ -111,8 +108,8 @@ class ChatService extends Base
             }
 
             $oldChat = Db::name("chat")
-                ->where("(s_u_id={$user['id']} and status=". ChatStatusEnum::CALLING .") or " .
-                    "(t_u_id={$user['id']} and status= " . ChatStatusEnum::CALLING .")")
+                ->where("(s_u_id={$user['id']} and $whereInStr) or " .
+                    "(t_u_id={$user['id']} and $whereInStr)")
                 ->lock(true)
                 ->find();
             if ($oldChat) {
@@ -125,7 +122,7 @@ class ChatService extends Base
                 "t_u_id" => $tUId,
                 "chat_type" => $chatType,
                 "s_user_price" => 0,
-                "t_user_price" => 0,
+                "t_user_price" => $price,
                 "free_minutes" => $freeMinutes,
                 "status" => ChatStatusEnum::WAIT_ANSWER,
             ];
@@ -137,15 +134,18 @@ class ChatService extends Base
         }
 
         $returnData = [
-            "is_free" => $isFree,
             "chat_id" => $chatId,
-            "free_minutes" => $freeMinutes,
-            "total_minutes" => $totalMinutes,
         ];
 
         return $returnData;
     }
 
+    /**
+     * 计算用户免费接听时长
+     * @param $userId
+     * @param null $redis
+     * @return int
+     */
     public static function getFreeMinutes($userId, $redis = null) :int
     {
         // 女神免费接听分钟数策略:
@@ -165,5 +165,142 @@ class ChatService extends Base
         } else {
             return $freeMinutesInfo["free_minutes"];
         }
+    }
+
+    /**
+     * 挂断通话请求
+     * @param $user
+     * @param $chatId
+     * @return \stdClass
+     * @throws \Throwable
+     */
+    public function hangUp($user, $chatId)
+    {
+        // 只有通话状态处于待接听时才可挂断通话请求
+        // 只有通话双方可以挂断通话
+        // 因为没有通话，所以无需其他处理
+        Db::startTrans();
+        try {
+            $chat = Db::name("chat")->where("id", $chatId)->lock(true)->find();
+            if (empty($chat)) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($user["id"] != $chat["s_u_id "] && $user["id"] != $chat["t_u_id"]) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($chat["status"] == ChatStatusEnum::CALLING) {
+                throw AppException::factory(AppException::CHAT_HANG_UP_CALLING);
+            }
+            if ($chat["status"] != ChatStatusEnum::WAIT_ANSWER) {
+                throw AppException::factory(AppException::CHAT_NOT_WAIT_ANSWER);
+            }
+
+            $chatUpdateData = [
+                "status" => ChatStatusEnum::NO_ANSWER,
+                "hang_up_id" => $user["id"]
+            ];
+            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+        return new \stdClass();
+    }
+
+    /**
+     * 接听通话请求
+     * @param $user
+     * @param $chatId
+     * @return array
+     * @throws \Throwable
+     */
+    public function answer($user, $chatId)
+    {
+        // 只有通话状态处于待接听时才可挂断通话请求
+        // 只有通话接听方可以接听
+        Db::startTrans();
+        try {
+            $chat = Db::name("chat")->where("id", $chatId)->lock(true)->find();
+            if (empty($chat)) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($user["id"] != $chat["t_u_id"]) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($chat["status"] != ChatStatusEnum::WAIT_ANSWER) {
+                throw AppException::factory(AppException::CHAT_NOT_WAIT_ANSWER);
+            }
+
+            // 计算允许通话时长
+            $price = $chat["t_user_price"];     // 通话价格
+            $isFree = $price == 0 ? 1 : 0;      // 通话是否免费
+            $minutes = $chat["free_minutes"];   // 不免费时通话时长
+            if (!$isFree) {
+                $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
+                $payMinutes = floor($userWallet["total_balance"]/$price);
+                $minutes += $payMinutes;
+                if ($minutes == 0) {
+                    throw AppException::factory(AppException::CHAT_LESS_MONTY);
+                }
+            }
+
+            $chatUpdateData = [
+                "status" => ChatStatusEnum::CALLING,
+                "chat_begin_time" => time()
+            ];
+            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        $returnData = [
+            "is_free" => $isFree,
+            "current_time" => time(),
+            "deadline" => $isFree ? 0 : time() + ($minutes * 60),
+        ];
+        return $returnData;
+    }
+
+    public function end($user, $chatId)
+    {
+        // 只有通话状态处于待接听时才可挂断通话请求
+        // 只有通话双方可以挂断通话
+        // 需要后续处理
+        Db::startTrans();
+        try {
+            $chat = Db::name("chat")->where("id", $chatId)->lock(true)->find();
+            if (empty($chat)) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($user["id"] != $chat["s_u_id "] && $user["id"] != $chat["t_u_id"]) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($chat["status"] != ChatStatusEnum::CALLING) {
+                throw AppException::factory(AppException::CHAT_NOT_CALLING);
+            }
+
+
+
+            // 后续处理通过队列异步处理
+            // 数据库纪录回调数据
+            $callbackData = [
+                "chat_id" => $chatId,
+                "hang_up_id" => $user["id"],
+                "hang_up_time" => time(),
+            ];
+            Db::name("tmp_chat_end_callback")->insert($callbackData);
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        return new \stdClass();
     }
 }

@@ -41,6 +41,10 @@ class AppException extends \Exception
     const CHAT_LESS_MONTY = [7002, "余额不足无法发起聊天"];
     const CHAT_USER_CHAT_ING = [7003, "您正处于通话中，无法发起新聊天"];
     const CHAT_LINE_BUSY = [7004, "对方正处于通话中，无法发起新聊天"];
+    const CHAT_HANG_UP_CALLING = [7005, "已经通话无法拒接"];
+    const CHAT_END_ALREADY = [7006, "通话已结束"];
+    const CHAT_NOT_CALLING = [7007, "不在通话中"];
+    const CHAT_NOT_WAIT_ANSWER = [7008, "通话状态不为待接听"];
 
     public static function factory($errConst, $message = "")
     {

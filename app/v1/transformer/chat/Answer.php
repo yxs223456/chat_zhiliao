@@ -10,7 +10,7 @@ namespace app\v1\transformer\chat;
 
 use app\common\transformer\TransformerAbstract;
 
-class Init extends TransformerAbstract
+class Answer extends TransformerAbstract
 {
 
     public function __construct(array $params = null)
@@ -22,9 +22,8 @@ class Init extends TransformerAbstract
     {
         $returnData = [
             "is_free" => (int) $data["is_free"],
-            "chat_id" => (int) $data["chat_id"],
-            "free_minutes" => (int) $data["free_minutes"],
-            "total_minutes" => (int) $data["total_minutes"],
+            "current_time" => (int) $data["current_time"],
+            "deadline" => (int) $data["deadline"],
         ];
 
         return $returnData;

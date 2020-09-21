@@ -11,11 +11,11 @@ class SmsLogModel extends Base
 
     /**
      * 记录发送短信日志
-     *
      * @param $areaCode
      * @param $mobile
      * @param $msgContent
      * @param $responseData
+     * @param $scene
      * @return bool
      */
     public function sendCodeMS($areaCode, $mobile, $msgContent, $responseData, $scene)

@@ -26,6 +26,7 @@ class AppException extends \Exception
     const USER_NOT_EXISTS = [2008, "用户不存在"];
     const USER_NOT_VIP = [2009, "您不是VIP"];
     const USER_IN_BLACK_LIST = [2010, "您已被对方添加到黑名单"];
+    const USER_ACCOUNT_ERROR = [2011, "账号或密码错误"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在"];

@@ -16,10 +16,14 @@ class SmsSceneEnum
     use EnumTrait;
 
     const LOGIN = 1;
+    const REGISTER = 2;
 
     protected static $desc = [
         self::LOGIN => [
             "cn" => "登录",
+        ],
+        self::REGISTER => [
+            "cn" => "注册",
         ],
     ];
 }

@@ -32,6 +32,10 @@ class User extends Base
         $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
         $scene = !empty($request["scene"]) ? $request["scene"] : SmsSceneEnum::LOGIN;
 
+        if (empty($mobilePhone)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
         $us = new UserService();
         $re = $us->sendVerifyCode($mobilePhone, $areaCode, $scene);
 

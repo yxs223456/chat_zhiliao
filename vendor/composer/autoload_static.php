@@ -74,7 +74,6 @@ class ComposerStaticInit455113819cbc4c66cae2333d13f21cd0
         ),
         'R' => 
         array (
-            'RongCloud\\' => 10,
             'React\\Promise\\' => 14,
             'React\\EventLoop\\' => 16,
         ),
@@ -229,10 +228,6 @@ class ComposerStaticInit455113819cbc4c66cae2333d13f21cd0
         'Stringy\\' => 
         array (
             0 => __DIR__ . '/..' . '/danielstjules/stringy/src',
-        ),
-        'RongCloud\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/rongcloud/php-sdk/RongCloud',
         ),
         'React\\Promise\\' => 
         array (

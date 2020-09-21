@@ -18,11 +18,14 @@ define("RABBIT_MQ_FANOUT_EXCHANGE_PREFIX", "chat_fanout_exchange:");
 define("RABBIT_MQ_QUEUE_PREFIX", "chat_queue:");
 
 
-// 用户注册后续处理
+/**
+ * 用户填写邀请人后续处理
+ * @param $userId
+ */
 function userAddParentCallbackProduce($userId)
 {
-    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_add_parent_callback";
-    $routingKey = "user_add_parent_callback";
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_add_parent";
+    $routingKey = "user_add_parent";
     RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
         "u_id" => $userId,
     ]));
@@ -30,9 +33,31 @@ function userAddParentCallbackProduce($userId)
 
 function userAddParentCallbackConsumer($callback)
 {
-    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_add_parent_callback";
-    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_add_parent_callback";
-    $routingKey = "user_add_parent_callback";
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_add_parent";
+    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_add_parent";
+    $routingKey = "user_add_parent";
+
+    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
+}
+
+/**
+ * 通话结束后续处理
+ * @param $chatId
+ */
+function chatEndCallbackProduce($chatId)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "chat_end";
+    $routingKey = "chat_end";
+    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+        "chat_id" => $chatId,
+    ]));
+}
+
+function chatEndCallbackConsumer($callback)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "chat_end";
+    $queueName = RABBIT_MQ_QUEUE_PREFIX . "chat_end";
+    $routingKey = "chat_end";
 
     RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
 }

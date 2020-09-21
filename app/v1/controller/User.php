@@ -29,8 +29,12 @@ class User extends Base
     {
         $request = $this->query["content"];
         $mobilePhone = $request["mobile_phone"] ?? "";
-        $areaCode = $request["area_code"] ? $request["area_code"] : "86";
-        $scene = $request["scene"] ? $request["scene"] : SmsSceneEnum::LOGIN;
+        $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
+        $scene = !empty($request["scene"]) ? $request["scene"] : SmsSceneEnum::LOGIN;
+
+        if (empty($mobilePhone)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
         $us = new UserService();
         $re = $us->sendVerifyCode($mobilePhone, $areaCode, $scene);
@@ -49,7 +53,7 @@ class User extends Base
     {
         $request = $this->query["content"];
         $mobilePhone = $request["mobile_phone"] ?? "";
-        $areaCode = $request["area_code"] ? $request["area_code"] : "86";
+        $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
         $verifyCode = $request["verify_code"] ?? null;
         $inviteUserNumber = $request["invite_user_number"] ?? "";
 

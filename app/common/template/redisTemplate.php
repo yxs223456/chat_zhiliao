@@ -808,3 +808,83 @@ function deleteUserIndexDataByUId($userId, Redis $redis)
     $key = REDIS_USER_INDEX_DATA_BY_UID . $userId;
     $redis->del($key);
 }
+
+
+/**
+ * 缓存用户访客数据信息 每日访客的集合（去重复，减少数据库查询次数）
+ */
+define("REDIS_USER_VISITOR_DAY_SET", REDIS_KEY_PREFIX . "userVisitorDaySet:");
+//缓存用户访客用户ID，有效期一天
+function cacheUserVisitorIdData($userId, $visitorId, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_DAY_SET . $userId . ":" . date("Y-m-d");
+    $redis->sadd($key, $visitorId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//查看当前用户今天是否已经访问过
+function getUserVisitorExists($userId, $visitorId, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_DAY_SET . $userId . ":" . date("Y-m-d");
+    return $redis->sIsMember($key, $visitorId);
+}
+
+/**
+ * 用户访客分页数据
+ */
+define("REDIS_USER_VISITOR_PAGE_DATA", REDIS_KEY_PREFIX . "userVisitorPageData:");
+function cacheUserVisitorPageData($userId, $page, $pageSize, $data, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $page;
+    $redis->setex($key, 7200, json_encode($data));
+}
+
+// 获取用户访客分页数据
+function getUserVisitorPageData($userId, $page, $pageSize, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $page;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return [];
+}
+
+// 删除用户所有访客分页数据缓存
+function deleteUserVisitorPageData($userId, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":*";
+    $keys = $redis->keys($key);
+    $redis->del($keys);
+}
+
+/**
+ * 缓存用户访客数据信息 每日访客的集合（去重复，减少数据库查询次数）
+ */
+define("REDIS_USER_VISITOR_SUM_COUNT", REDIS_KEY_PREFIX . "userVisitorSumCount:");
+//缓存用户访客总数，初始化
+function cacheUserVisitorSumCount($userId,$count, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_SUM_COUNT . $userId;
+    $redis->set($key,$count);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+// 更新
+function addUserVisitorSumCount($userId, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_SUM_COUNT . $userId;
+    $redis->incr($key);
+}
+
+// 获取当前用户访问总人数
+function getUserVisitorSumCount($userId, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_DAY_SET . $userId;
+    return $redis->get($key);
+}
+

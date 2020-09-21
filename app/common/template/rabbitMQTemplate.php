@@ -36,3 +36,22 @@ function userAddParentCallbackConsumer($callback)
 
     RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
 }
+
+// 用户访问后续处理
+function userVisitorCallbackProduce($userId, $visitorId)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
+    $routingKey = "user_visitor_callback";
+    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+        'uid' => $userId, 'vid' => $visitorId
+    ]));
+}
+
+function userVisitorCallBackConsumer($callback)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
+    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_visitor_callback";
+    $routingKey = "user_visitor_callback";
+
+    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
+}

@@ -10,6 +10,7 @@ namespace app\command;
 use app\common\helper\RabbitMQ;
 use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
+use app\common\service\VisitorService;
 use PhpAmqpLib\Message\AMQPMessage;
 use think\console\Command;
 use think\console\Input;
@@ -98,25 +99,32 @@ class VisitorLogCallback extends Command
 
         Db::startTrans();
         try {
-
+            // 添加访问日志
             Db::name("visitor_log")
                 ->insert([
-                   'u_id' => $this->userId,
+                    'u_id' => $this->userId,
                     'visitor_u_id' => $this->visitorId,
                     'date' => date("Y-m-d"),
                 ]);
 
-            Db::name("visitor_count")
-                ->where("u_id", $this->userId)
-                ->inc("count", 1)
-                ->update();
+            // 更新访问总次数（没有总数初始化，有更新数据）
+            $exists = Db::name("visitor_count")->where("u_id", $this->userId)->find();
+            if (empty($exists)) {
+                Db::name("visitor_count")->insert(["u_id" => $this->userId, 'count' => 1]);
+            } else {
+                Db::name("visitor_count")
+                    ->where("u_id", $this->userId)
+                    ->inc("count", 1)
+                    ->update();
+            }
 
             Db::commit();
             // 添加今日访问缓存
             cacheUserVisitorIdData($this->userId, $this->visitorId, $redis);
             // 删除分页缓存
             deleteUserVisitorPageData($this->userId, $redis);
-            // 删除总数缓存
+            // 更新总数缓存
+            VisitorService::updateVisitorSumCount($this->userId, $redis);
 
         } catch (\Throwable $e) {
             Db::rollback();

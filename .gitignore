@@ -2,6 +2,5 @@
 /.vscode
 *.log
 .env
-composer.lock
 config/*
 test.*

@@ -95,6 +95,13 @@ class UserService extends Base
         return $returnData;
     }
 
+    /**
+     * 密码登录
+     * @param $account
+     * @param $password
+     * @return array
+     * @throws AppException
+     */
     public function passwordLogin($account, $password)
     {
         $userModel = new UserModel();

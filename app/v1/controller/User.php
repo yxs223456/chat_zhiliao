@@ -77,6 +77,11 @@ class User extends Base
         return $this->jsonResponse($returnData, new LoginTransformer);
     }
 
+    /**
+     * 密码登录
+     * @return \think\response\Json
+     * @throws AppException
+     */
     public function passwordLogin()
     {
         $request = $this->query["content"];

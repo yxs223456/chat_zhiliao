@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "44634268d2e7baf647d50c7dea104c5b",
+    "content-hash": "a6c7f89841772be3ed0548e252293f3e",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -2311,56 +2311,6 @@
             "time": "2020-05-12T15:16:56+00:00"
         },
         {
-            "name": "rongcloud/php-sdk",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/rongcloud/server-sdk-php-composer.git",
-                "reference": "6fe3d5b256d072637e6ef7feadfb64052273872c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/rongcloud/server-sdk-php-composer/zipball/6fe3d5b256d072637e6ef7feadfb64052273872c",
-                "reference": "6fe3d5b256d072637e6ef7feadfb64052273872c",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "RongCloud\\": "RongCloud"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Rong Cloud",
-                    "email": "support@rongcloud.cn",
-                    "homepage": "https://github.com/rongcloud/"
-                }
-            ],
-            "description": "Rong Cloud Server SDK in PHP.",
-            "homepage": "https://www.rongcloud.cn",
-            "keywords": [
-                "rlcoud",
-                "rong cloud",
-                "rongCloud",
-                "sdk"
-            ],
-            "time": "2020-06-22T01:21:51+00:00"
-        },
-        {
             "name": "symfony/console",
             "version": "v5.1.5",
             "source": {
@@ -3924,7 +3874,6 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "rongcloud/php-sdk": 20,
         "league/geotools": 0
     },
     "prefer-stable": false,

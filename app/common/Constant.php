@@ -11,7 +11,7 @@ namespace app\common;
 class Constant
 {
     // 默认头像
-    const USER_DEFAULT_PORTRAIT = "";
+    const USER_DEFAULT_PORTRAIT = "https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTI2ypuOuCibDFf8xy6ktq5wZM2iamlkibbib0tv78hoicbdL7XsZMXasiaRvTApuzvHGo64qZcCiavicTiaoyw/132";
 
     // 提现手续费比例
     const WITHDRAW_POUNDAGE_RATE = 0.01;

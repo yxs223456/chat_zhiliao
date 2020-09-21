@@ -47,6 +47,53 @@ class User extends Base
     }
 
     /**
+     * 手机号密码注册
+     * @return \think\response\Json
+     * @throws AppException
+     * @throws \Throwable
+     */
+    public function register()
+    {
+        $request = $this->query["content"];
+        $mobilePhone = $request["mobile_phone"] ?? "";
+        $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
+        $verifyCode = $request["verify_code"] ?? null;
+        $inviteUserNumber = $request["invite_user_number"] ?? "";
+        $password = $request["password"] ?? "";
+
+        if (empty($mobilePhone) || $verifyCode === null || empty($areaCode)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (!checkInt($areaCode, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if ($password === "") {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $us = new UserService();
+        $returnData = $us->register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber);
+
+        return $this->jsonResponse($returnData, new LoginTransformer);
+    }
+
+    public function passwordLogin()
+    {
+        $request = $this->query["content"];
+        $account = $request["account"] ?? "";
+        $password = $request["password"] ?? "";
+
+        if (empty($account) || $password === "") {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $us = new UserService();
+        $returnData = $us->passwordLogin($account, $password);
+
+        return $this->jsonResponse($returnData, new LoginTransformer);
+    }
+
+    /**
      * 用户手机号验证码登陆
      */
     public function codeLogin()

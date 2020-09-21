@@ -11,6 +11,7 @@ use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\helper\AliMobilePhoneCertificate;
+use app\common\helper\Pbkdf2;
 use app\common\helper\Redis;
 use app\common\helper\AliSms;
 use app\common\helper\RongCloudApp;
@@ -66,6 +67,48 @@ class UserService extends Base
         }
 
         return $re;
+    }
+
+    /**
+     * 使用手机号密码注册
+     * @param $areaCode
+     * @param $mobilePhone
+     * @param $password
+     * @param $verifyCode
+     * @param $inviteUserNumber
+     * @return array
+     * @throws AppException
+     * @throws \Throwable
+     */
+    public function register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber)
+    {
+        // 判断验证码是否正确
+        $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;
+        $redis = Redis::factory();
+        $cacheCode = getSmsCode($apiMobile, SmsSceneEnum::REGISTER, $redis);
+        if ($cacheCode != $verifyCode) {
+            throw AppException::factory(AppException::USER_VERIFY_CODE_ERR);
+        }
+
+        // 执行注册流程
+        $returnData = $this->registerByPhoneAndPassword($areaCode, $mobilePhone, $password, $inviteUserNumber);
+        return $returnData;
+    }
+
+    public function passwordLogin($account, $password)
+    {
+        $userModel = new UserModel();
+        $user = $userModel->findByMobilePhone($account);
+
+        if (empty($user)) {
+            throw AppException::factory(AppException::USER_ACCOUNT_ERROR);
+        }
+        if (!Pbkdf2::validate_password($password, $user["password"])) {
+            throw AppException::factory(AppException::USER_ACCOUNT_ERROR);
+        }
+
+        $returnData = $this->doLogin($user->toArray());
+        return $returnData;
     }
 
     /**
@@ -221,6 +264,81 @@ class UserService extends Base
             "user_number" => $newUser["user_number"],
             "token" => $newUser["token"],
             "sex" => $newUser["sex"],
+            "rc_token" => $rongCloudToken,
+        ];
+    }
+
+    /**
+     * 使用手机号密码注册
+     * @param $areaCode
+     * @param $mobilePhone
+     * @param $password
+     * @param $inviteUserNumber
+     * @return array
+     * @throws AppException
+     * @throws \Throwable
+     */
+    private function registerByPhoneAndPassword($areaCode, $mobilePhone, $password, $inviteUserNumber)
+    {
+        //判断邀请用户是否存在
+        $userModel = new UserModel();
+        if (!empty($inviteUserNumber)) {
+            $parent = $userModel->findById($inviteUserNumber);
+            if (empty($parent)) {
+                throw AppException::factory(AppException::USER_USER_NUMBER_NOT_EXISTS);
+            }
+            $userCommunityModel = new UserCommunityModel();
+            $parentCommunity = $userCommunityModel->findByUId($parent["id"]);
+            $parent = $parent->toArray();
+            $parent["p_id_path"] = $parentCommunity["p_id_path"];
+        } else {
+            $parent = null;
+        }
+
+        // 创建融云用户
+        $userNumber = $this->createUserNumber(6);
+        $nickname = "用户" . $userNumber;
+        $portrait = Constant::USER_DEFAULT_PORTRAIT;
+        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
+        if (!empty($rongCloudResponse["token"])) {
+            $rongCloudToken = $rongCloudResponse["token"];
+        } else {
+            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
+        }
+
+        Db::startTrans();
+        try {
+            // user表
+            $userToken = getRandomString();
+            $newUser = [
+                "mobile_phone_area" => $areaCode,
+                "mobile_phone" => $mobilePhone,
+                "password" => Pbkdf2::create_hash($password),
+                "user_number" => $userNumber,
+                "token" => $userToken,
+                "sex" => UserSexEnum::UNKNOWN,
+            ];
+            $newUser["id"] = Db::name("user")->insertGetId($newUser);
+
+            // 后续处理
+            $this->registerAfter($newUser, $parent, $rongCloudToken, $nickname, $portrait);
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        // 缓存用户登陆信息
+        cacheUserInfoByToken($newUser, Redis::factory());
+        if ($parent) {
+            $this->registerCallback($newUser["id"]);
+        }
+
+        return [
+            "token" => $newUser["token"],
+            "sex" => $newUser["sex"],
+            "user_number" => $newUser["user_number"],
             "rc_token" => $rongCloudToken,
         ];
     }

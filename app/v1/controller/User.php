@@ -18,7 +18,7 @@ class User extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
-            "except" => "sendVerifyCode,codeLogin,phoneLogin,weChatLogin",
+            "except" => "sendVerifyCode,register,passwordLogin,codeLogin,phoneLogin,weChatLogin",
         ]
     ];
 

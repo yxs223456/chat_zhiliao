@@ -37,7 +37,8 @@
         "league/fractal": "^0.19.2",
         "league/geotools": "@stable",
         "topthink/think-worker": "^3.0",
-        "workerman/gatewayclient": "^3.0"
+        "workerman/gatewayclient": "^3.0",
+        "rongcloud/php-sdk": "^3.0"
     },
     "require-dev": {
         "symfony/var-dumper": "^4.2",

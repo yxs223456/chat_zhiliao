@@ -53,6 +53,11 @@ class GiftService extends Base
         return $returnData;
     }
 
+    public function giveWhenChat($user, $chatId, $gift_id)
+    {
+
+    }
+
     /**
      * 无特殊场景下（通话中、私聊）赠送礼物
      * @param $user
@@ -76,6 +81,11 @@ class GiftService extends Base
         $receiveUser = UserService::getUserById($rUId, $redis);
         if (empty($receiveUser)) {
             throw AppException::factory(AppException::QUERY_INVALID);
+        }
+
+        // 判断接收方是否拉黑用户
+        if (BlackListService::inUserBlackList($rUId, $user["id"], $redis)) {
+            throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
         // 用户处于聊天中，不允许调用该接口发送礼物

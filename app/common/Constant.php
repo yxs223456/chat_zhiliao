@@ -34,6 +34,11 @@ class Constant
     // 收礼人礼物分润比例
     const GIFT_BONUS_RATE = 0.6;
 
+    // 普通人通话分润比例
+    const ORDINARY_CHAT_DIVIDED_RATE = 0.5;
+
+    // 女、男神通话分润比例
+    const PRETTY_CHAT_DIVIDED_RATE = 0.8;
 
     // 女神通话，视频等级金额限制(聊币)
     // 普通女性

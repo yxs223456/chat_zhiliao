@@ -14,7 +14,9 @@ use app\common\enum\ChatTypeEnum;
 use app\common\enum\UserIsPrettyEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
+use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
+use app\common\model\UserWalletFlowModel;
 use think\facade\Db;
 
 class ChatService extends Base
@@ -56,6 +58,7 @@ class ChatService extends Base
         $price = ChatTypeEnum::VIDEO ? $tUSet["video_chat_price"] : $tUSet["voice_chat_price"];
         $isFree = $price == 0 ? 1 : 0;  // 通话是否免费
         $freeMinutes = 0;               // 可以免费通话分钟数
+        $freeMinutesIsFree = 0;         // 免费通话分钟数是否真正免费
 
         // 不免费情况下计算免费通话分钟数和付费通话时长
         if (!$isFree) {
@@ -76,11 +79,12 @@ class ChatService extends Base
                     break;
                 }
                 // 接听方今日免费接听分钟数
-                $tUFreeMinutes = self::getFreeMinutes($tUId, $redis);
+                $tUFreeMinutesInfo = self::getFreeMinutes($tUId, $redis);
                 // 本次通话可以使用的免费分钟数
-                $freeMinutes = $freeChatWallet["free_minutes"] <= $tUFreeMinutes ?
+                $freeMinutes = $freeChatWallet["free_minutes"] <= $tUFreeMinutesInfo["minutes"] ?
                     $freeChatWallet["free_minutes"] :
-                    $tUFreeMinutes;
+                    $tUFreeMinutesInfo["minutes"];
+                $freeMinutesIsFree = $tUFreeMinutesInfo["is_free"];
             } while(0);
 
             // 通话不免费时，总通话时长为0无法发起聊天
@@ -97,10 +101,10 @@ class ChatService extends Base
         Db::startTrans();
         try {
             // 双方有人正在通话中，无法发起新通话
-            $whereInStr = "status in (".ChatStatusEnum::WAIT_ANSWER.",".ChatStatusEnum::CALLING.") ";
+            $whereStatusStr = "status in (".ChatStatusEnum::WAIT_ANSWER.",".ChatStatusEnum::CALLING.") ";
             $oldChat = Db::name("chat")
-                ->where("(s_u_id=$tUId and $whereInStr) or " .
-                    "(t_u_id=$tUId and $whereInStr)")
+                ->where("(s_u_id=$tUId and $whereStatusStr) or " .
+                    "(t_u_id=$tUId and $whereStatusStr)")
                 ->lock(true)
                 ->find();
             if ($oldChat) {
@@ -108,8 +112,8 @@ class ChatService extends Base
             }
 
             $oldChat = Db::name("chat")
-                ->where("(s_u_id={$user['id']} and $whereInStr) or " .
-                    "(t_u_id={$user['id']} and $whereInStr)")
+                ->where("(s_u_id={$user['id']} and $whereStatusStr) or " .
+                    "(t_u_id={$user['id']} and $whereStatusStr)")
                 ->lock(true)
                 ->find();
             if ($oldChat) {
@@ -124,6 +128,7 @@ class ChatService extends Base
                 "s_user_price" => 0,
                 "t_user_price" => $price,
                 "free_minutes" => $freeMinutes,
+                "free_minutes_is_free" => $freeMinutesIsFree,
                 "status" => ChatStatusEnum::WAIT_ANSWER,
             ];
             $chatId = Db::name("chat")->insertGetId($chatData);
@@ -144,9 +149,9 @@ class ChatService extends Base
      * 计算用户免费接听时长
      * @param $userId
      * @param null $redis
-     * @return int
+     * @return array
      */
-    public static function getFreeMinutes($userId, $redis = null) :int
+    public static function getFreeMinutes($userId, $redis = null)
     {
         // 女神免费接听分钟数策略:
         // 1、平台上的女神，每天都有3分钟的免费接听时长。
@@ -161,12 +166,17 @@ class ChatService extends Base
         $today = date("Y-m-d");
         $freeMinutesInfo = getUserChatFreeMinutes($userId, $today, $redis);
         if (empty($freeMinutesInfo)) {
-            return 3;
+            return [
+                "minutes" => 3,
+                "is_free" => 1,
+            ];
         } else {
-            return $freeMinutesInfo["free_minutes"];
+            return [
+                "minutes" => $freeMinutesInfo["free_minutes"],
+                "is_free" => 0,
+            ];
         }
     }
-
     /**
      * 挂断通话请求
      * @param $user
@@ -191,15 +201,13 @@ class ChatService extends Base
             if ($chat["status"] == ChatStatusEnum::CALLING) {
                 throw AppException::factory(AppException::CHAT_HANG_UP_CALLING);
             }
-            if ($chat["status"] != ChatStatusEnum::WAIT_ANSWER) {
-                throw AppException::factory(AppException::CHAT_NOT_WAIT_ANSWER);
+            if ($chat["status"] == ChatStatusEnum::WAIT_ANSWER) {
+                $chatUpdateData = [
+                    "status" => ChatStatusEnum::NO_ANSWER,
+                    "hang_up_id" => $user["id"]
+                ];
+                Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
             }
-
-            $chatUpdateData = [
-                "status" => ChatStatusEnum::NO_ANSWER,
-                "hang_up_id" => $user["id"]
-            ];
-            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -266,6 +274,13 @@ class ChatService extends Base
         return $returnData;
     }
 
+    /**
+     * 结束通话
+     * @param $user
+     * @param $chatId
+     * @return \stdClass
+     * @throws \Throwable
+     */
     public function end($user, $chatId)
     {
         // 只有通话状态处于待接听时才可挂断通话请求
@@ -284,23 +299,106 @@ class ChatService extends Base
                 throw AppException::factory(AppException::CHAT_NOT_CALLING);
             }
 
+            // 计算本次聊天费用
+            $price = self::getChatPay($chat);
+            if ($price > 0) {
+                // 扣除拨打人钱包余额
+                $sUWallet = Db::name("user_wallet")
+                    ->where("u_id", $chat["s_u_id"])
+                    ->lock(true)
+                    ->find();
+                $sUWalletUpdate = Db::name("user_wallet")
+                    ->where("id", $sUWallet["id"]);
+                if ($sUWallet["balance_amount"] >= $price) {
+                    $sUWalletUpdate->dec("balance_amount", $price)
+                        ->dec("total_balance", $price)
+                        ->update();
+                } else if ($sUWallet["total_balance"] >= $price) {
+                    $sUWalletUpdate->dec("balance_amount", $sUWallet["balance_amount"])
+                        ->dec("income_amount", $price - $sUWallet["balance_amount"])
+                        ->dec("total_balance", $price)
+                        ->update();
+                } else {
+                    $sUWalletUpdate->update([
+                        "balance_amount" => 0,
+                        "income_amount" => 0,
+                        "total_balance" => 0,
+                    ]);
+                    $price = $sUWallet["total_balance"];
+                }
+                
+                // 纪录拨打人钱包流水
+                UserWalletFlowModel::reduceFlow(
+                    $chat["s_u_id"],
+                    $price,
+                    $chat["chat_type"] == ChatTypeEnum::VIDEO ?
+                        WalletReduceEnum::VIDEO_CHAT : WalletReduceEnum::VOICE_CHAT,
+                    $chatId,
+                    $sUWallet["total_balance"],
+                    $sUWallet["total_balance"] - $price
+                );
+            }
 
+            // 修改通话纪录
+            $chatUpdateData = [
+                "status" => ChatStatusEnum::END,
+                "chat_end_time" => time(),
+                "chat_time_length" => time() - $chat["chat_begin_time"],
+                "hang_up_id" => $user["id"],
+            ];
+            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
 
             // 后续处理通过队列异步处理
             // 数据库纪录回调数据
             $callbackData = [
                 "chat_id" => $chatId,
-                "hang_up_id" => $user["id"],
-                "hang_up_time" => time(),
+                "s_u_pay" => $price,
             ];
             Db::name("tmp_chat_end_callback")->insert($callbackData);
 
             Db::commit();
+
+            // 把后续处理任务放入队列
+            chatEndCallbackProduce($chatId);
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
         }
 
         return new \stdClass();
+    }
+
+    /**
+     * 计算通话费用
+     * @param $chat
+     * @return int
+     */
+    public static function getChatPay($chat) : int
+    {
+        $minutes = self::getChatMinutes($chat);
+        $needPayMinutes = $minutes - $chat["free_minutes"];
+        $needPayMinutes = $needPayMinutes <= 0 ? 0 : $needPayMinutes;
+        return $chat["t_user_price"] * $needPayMinutes;
+    }
+
+    /**
+     * 计算通话分钟数，不够一分钟时 >=3秒 按一分钟计算
+     * @param $chat
+     * @return int
+     */
+    public static function getChatMinutes($chat) : int
+    {
+        $timeLength = $chat["chat_time_length"];
+        $minutes = floor($timeLength/60);
+        if ($minutes == 0) {
+            return 1;
+        }
+
+        $seconds = $timeLength % 60;
+        if ($seconds >= 3) {
+            return $minutes + 1;
+        } else {
+            return $minutes;
+        }
     }
 }

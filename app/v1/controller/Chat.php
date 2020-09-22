@@ -14,6 +14,7 @@ use app\common\service\ChatService;
 use app\common\service\GiftService;
 use app\v1\transformer\chat\Answer;
 use app\v1\transformer\chat\Dial;
+use app\v1\transformer\chat\Gift;
 
 class Chat extends Base
 {
@@ -100,19 +101,22 @@ class Chat extends Base
         return $this->jsonResponse($returnData);
     }
 
+    /**
+     * 聊天通话中，赠送礼物
+     */
     public function gift()
     {
         $request = $this->query["content"];
-        $gift_id = $request["gift_id"]??0;
+        $giftId = $request["gift_id"]??0;
         $chatId = $request["chat_id"]??"";
-        if (!checkInt($gift_id, false) || !checkInt($chatId, false)) {
+        if (!checkInt($giftId, false) || !checkInt($chatId, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $user = $this->query["user"];
         $service = new GiftService();
-        $returnData = $service->give($user, $chatId, $gift_id);
+        $returnData = $service->giveWhenChat($user, $chatId, $giftId);
 
-        return $this->jsonResponse($returnData);
+        return $this->jsonResponse($returnData, new Gift());
     }
 }

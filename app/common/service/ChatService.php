@@ -244,7 +244,7 @@ class ChatService extends Base
             // 计算允许通话时长
             $price = $chat["t_user_price"];     // 通话价格
             $isFree = $price == 0 ? 1 : 0;      // 通话是否免费
-            $minutes = $chat["free_minutes"];   // 不免费时通话时长
+            $minutes = $chat["free_minutes"];   // 不免费时最大通话分钟数
             if (!$isFree) {
                 $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
                 $payMinutes = floor($userWallet["total_balance"]/$price);
@@ -300,7 +300,7 @@ class ChatService extends Base
             }
 
             // 计算本次聊天费用
-            $price = self::getChatPay($chat);
+            $price = self::getEndChatPay($chat);
             if ($price > 0) {
                 // 扣除拨打人钱包余额
                 $sUWallet = Db::name("user_wallet")
@@ -369,11 +369,11 @@ class ChatService extends Base
     }
 
     /**
-     * 计算通话费用
+     * 计算已结束通话费用
      * @param $chat
      * @return int
      */
-    public static function getChatPay($chat) : int
+    public static function getEndChatPay($chat) : int
     {
         $minutes = self::getChatMinutes($chat);
         $needPayMinutes = $minutes - $chat["free_minutes"];
@@ -400,5 +400,18 @@ class ChatService extends Base
         } else {
             return $minutes;
         }
+    }
+
+    /**
+     * 计算通话中通话已经产生的费用
+     * @param $chat
+     * @return int
+     */
+    public static function getCallingChatPay($chat) : int
+    {
+        $minutes = (int) ceil((time() - $chat["chat_begin_time"])/60);
+        $needPayMinutes = $minutes - $chat["free_minutes"];
+        $needPayMinutes = $needPayMinutes <= 0 ? 0 : $needPayMinutes;
+        return $chat["t_user_price"] * $needPayMinutes;
     }
 }

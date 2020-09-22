@@ -33,7 +33,7 @@ class Gift extends Base
     }
 
     /**
-     * 无特殊场景下（通话中、私聊）赠送礼物
+     * 无特殊场景下（通话中等）赠送礼物
      */
     public function give()
     {
@@ -41,6 +41,22 @@ class Gift extends Base
         $gift_id = $request["gift_id"]??0;
         $r_user_id = $request["r_user_id"]??"";
         if (!checkInt($gift_id, false) || !checkInt($r_user_id, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new GiftService();
+        $returnData = $service->give($user, $r_user_id, $gift_id);
+
+        return $this->jsonResponse($returnData, new Give());
+    }
+
+    public function redPackage()
+    {
+        $request = $this->query["content"];
+        $amount = $request["amount"]??0;
+        $r_user_id = $request["r_user_id"]??"";
+        if (!checkInt($amount, false) || !checkInt($r_user_id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

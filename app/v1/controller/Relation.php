@@ -89,7 +89,7 @@ class Relation extends Base
     }
 
     /**
-     * 关注
+     * 关注 （添加访问记录）
      *
      * @return \think\response\Json
      * @throws AppException

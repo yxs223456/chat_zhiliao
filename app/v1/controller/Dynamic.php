@@ -104,7 +104,7 @@ class Dynamic extends Base
     }
 
     /**
-     * 点赞动态
+     * 点赞动态 （添加访问记录）
      *
      * @return \think\response\Json
      * @throws AppException
@@ -146,7 +146,7 @@ class Dynamic extends Base
     }
 
     /**
-     * 评论动态
+     * 评论动态 （添加访问记录）
      *
      * @param 动态id
      * @param 父评论ID
@@ -173,7 +173,7 @@ class Dynamic extends Base
     }
 
     /**
-     * 动态详情
+     * 动态详情 （添加访问记录）
      *
      * @return \think\response\Json
      * @throws AppException
@@ -188,7 +188,7 @@ class Dynamic extends Base
 
         $user = $this->query["user"];
         $service = new DynamicService();
-        return $this->jsonResponse($service->info($id), new InfoTransformer($user));
+        return $this->jsonResponse($service->info($id, $user), new InfoTransformer($user));
     }
 
     /**

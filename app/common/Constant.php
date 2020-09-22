@@ -83,4 +83,7 @@ class Constant
 
     // 皇冠男神
     const PRETTY_MALE_LEVEL_CROWN = 500;
+
+    // 男神女神私聊收费金额 条/10聊币
+    const PRETTY_MESSAGE_PRICE_COIN = 10;
 }

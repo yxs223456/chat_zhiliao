@@ -78,7 +78,7 @@ class VisitorService extends Base
             u.sex,u.user_number,
             ui.portrait,ui.nickname,ui.birthday,ui.city")
             ->order("vl.create_time", 'desc');
-        if (empty($startId)) {
+        if (!empty($startId)) {
             $query = $query->where("vl.id", "<", $startId);
         }
 

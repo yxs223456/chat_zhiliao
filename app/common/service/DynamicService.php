@@ -88,7 +88,7 @@ class DynamicService extends Base
      *
      * @param $id int 动态ID
      * @param $user array 登陆用户
-     * @return array 
+     * @return array
      * @throws AppException
      */
     public function info($id, $user)

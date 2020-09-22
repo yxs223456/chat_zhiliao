@@ -34,6 +34,7 @@ class AppException extends \Exception
     const VIP_OFFLINE = [4000, "该vip套餐已下架"];
 
     const GIFT_OFFLINE = [5000, "该礼物已经下架"];
+    const GIFT_RED_PACKAGE_AMOUNT_LESS = [5001, "红包金额不能小于10"];
 
     const WALLET_MONEY_LESS = [6000, "余额不足"];
 

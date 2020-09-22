@@ -258,11 +258,21 @@ class User extends Base
     }
 
     /**
-     * 设置私信收费和收费金额
+     * 设置私信收费
      */
     public function setMessage()
     {
+        $request = $this->query["content"];
+        $open = $request["switch"] ?? 0;
+        if (!in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
+        $user = $this->query["user"];
+
+        $service = new UserService();
+        $service->setMessage($open, $user);
+        return $this->jsonResponse(new \stdClass());
     }
 
     /**

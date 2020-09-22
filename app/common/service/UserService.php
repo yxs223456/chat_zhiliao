@@ -660,6 +660,10 @@ class UserService extends Base
         if (empty($userInfo)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
+        // 关闭操作，计费清零
+        if ($switch == UserSwitchEnum::OFF) {
+            $coin = 0;
+        }
         // 女神金额逻辑
         if ($sex == UserSexEnum::FEMALE) {
             $femaleLevel = $userInfo["pretty_female_level"];
@@ -667,7 +671,9 @@ class UserService extends Base
             if ($coin > $ruleCoin) {
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
             }
+
             Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+            deleteUserSetByUId($user["id"], Redis::factory());
             return;
         }
 
@@ -685,7 +691,56 @@ class UserService extends Base
         if ($coin > $ruleCoin) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
+
         Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+        deleteUserSetByUId($user["id"], Redis::factory());
+        return;
+    }
+
+    /**
+     * 设置视频和音频
+     *
+     * @param $switch int
+     * @param $user array
+     * @throws AppException
+     */
+    public function setMessage($switch, $user)
+    {
+        $sex = $user["sex"] ?? 0;
+        if ($sex == UserSexEnum::UNKNOWN) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $userInfo = UserInfoService::getUserInfoById($user["id"]);
+        if (empty($userInfo)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        // 默认收费标准
+        $coin = Constant::PRETTY_MESSAGE_PRICE_COIN;
+        // 关闭操作，计费清零
+        if ($switch == UserSwitchEnum::OFF) {
+            $coin = 0;
+        }
+        // 女神金额逻辑(是女神)
+        if ($sex == UserSexEnum::FEMALE) {
+            $isPretty = $userInfo["is_pretty"];
+            if (!$isPretty) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
+            Db::name("user_set")->where("u_id", $user["id"])->update(["direct_message_free" => $switch, "direct_message_price" => $coin]);
+            deleteUserSetByUId($user["id"], Redis::factory());
+            return;
+        }
+
+        // 男神金额逻辑 必须是vip
+        $today = date("Y-m-d");
+        $vipDeadline = $userInfo["vip_deadline"] ?? $today;
+        $svipDeadline = $userInfo['svip_deadline'] ?? $today;
+        // vip过期 不是vip不能设置通话聊天金额
+        if ($today >= $vipDeadline && $today >= $svipDeadline) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        Db::name("user_set")->where("u_id", $user["id"])->update(["direct_message_free" => $switch, "direct_message_price" => $coin]);
         deleteUserSetByUId($user["id"], Redis::factory());
         return;
     }
@@ -720,6 +775,7 @@ class UserService extends Base
         // 关闭逻辑直接关闭
         // 开启关闭的修改数据库操作
         Db::name("user_set")->where("u_id", $user["id"])->update(["is_stealth" => $switch]);
+        deleteUserSetByUId($user["id"], Redis::factory());
         return;
     }
 

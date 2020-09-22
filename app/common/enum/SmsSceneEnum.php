@@ -17,6 +17,7 @@ class SmsSceneEnum
 
     const LOGIN = 1;
     const REGISTER = 2;
+    const RESET_PASSWORD = 3;
 
     protected static $desc = [
         self::LOGIN => [
@@ -24,6 +25,9 @@ class SmsSceneEnum
         ],
         self::REGISTER => [
             "cn" => "注册",
+        ],
+        self::RESET_PASSWORD => [
+            "cn" => "重置密码",
         ],
     ];
 }

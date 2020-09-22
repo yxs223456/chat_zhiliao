@@ -18,7 +18,6 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
-use think\facade\Db;
 
 class Base extends BaseController
 {
@@ -32,6 +31,9 @@ class Base extends BaseController
     protected $beforeActionList = [
         "getUser" => [
             "only" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
         ]
     ];
 
@@ -107,7 +109,11 @@ class Base extends BaseController
         if (!$GLOBALS['isLogin'] || !isset($this->query["user"]["sex"])) {
             throw AppException::factory(AppException::USER_NOT_LOGIN);
         }
-        if ($this->query["user"]["sex"] == UserSexEnum::UNKNOWN) {
+    }
+
+    protected function checkSex()
+    {
+        if (isset($this->query["user"]["sex"]) && $this->query["user"]["sex"] == UserSexEnum::UNKNOWN) {
             throw AppException::factory(AppException::USER_SEX_UNKNOWN);
         }
     }

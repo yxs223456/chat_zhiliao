@@ -119,6 +119,37 @@ class UserService extends Base
     }
 
     /**
+     * 重置密码
+     * @param $areaCode
+     * @param $mobilePhone
+     * @param $verifyCode
+     * @param $password
+     * @return \stdClass
+     * @throws AppException
+     */
+    public function resetPassword($areaCode, $mobilePhone, $verifyCode, $password)
+    {
+        // 判断验证码是否正确
+        $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;
+        $redis = Redis::factory();
+        $cacheCode = getSmsCode($apiMobile, SmsSceneEnum::RESET_PASSWORD, $redis);
+        if ($cacheCode != $verifyCode) {
+            throw AppException::factory(AppException::USER_VERIFY_CODE_ERR);
+        }
+
+        // 通过手机号获取用户
+        $userModel = new UserModel();
+        $user = $userModel->findByMobilePhone($mobilePhone);
+        if (empty($user)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        $user->password = Pbkdf2::create_hash($password);
+        $user->save();
+
+        return new \stdClass();
+    }
+
+    /**
      * 手机号验证码登录
      * @param $areaCode
      * @param $mobilePhone

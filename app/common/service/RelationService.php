@@ -230,6 +230,10 @@ class RelationService extends Base
         if (BlackListService::inUserBlackList($userId, $followId)) {
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
+
+        // 访问日志队列
+        VisitorService::addVisitorLog($followId, $userId);
+        // 添加关注
         Db::name("user_follow")->insertGetId(["follow_u_id" => $followId, 'u_id' => $userId]);
         $redis = Redis::factory();
         $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();

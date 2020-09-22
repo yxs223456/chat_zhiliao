@@ -9,6 +9,7 @@ use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\service\BlackListService;
 use app\common\service\UserService;
+use app\common\service\VisitorService;
 use app\v1\transformer\user\BlackListTransformer;
 use app\v1\transformer\user\IndexTransformer;
 use app\v1\transformer\user\InfoTransformer;
@@ -338,7 +339,7 @@ class User extends Base
     }
 
     /**
-     * 用户主页
+     * 用户主页 （添加访问记录）
      */
     public function index()
     {
@@ -350,7 +351,8 @@ class User extends Base
         if (empty($uid)) {
             $uid = $this->query["user"]['id'];
         }
-
+        // 添加访问记录到队列
+        VisitorService::addVisitorLog($uid, $this->query["user"]["id"]);
         $service = new UserService();
         $data = $service->index($uid);
         return $this->jsonResponse($data, new IndexTransformer());

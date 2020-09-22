@@ -83,7 +83,12 @@ class VisitorLogCallback extends Command
         }
         $this->userId = $msgArray["uid"];
         $this->visitorId = $msgArray["vid"];
-
+        // 判断是访问和被访问是否是同一个人，同一个人忽略
+        if ($this->userId == $this->visitorId) {
+            //显示确认，队列接收到显示确认后会删除该消息
+            RabbitMQ::ackMessage($message);
+            return;
+        }
         $this->doWork($message);
     }
 

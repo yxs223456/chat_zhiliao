@@ -84,14 +84,37 @@ class DynamicService extends Base
     }
 
     /**
-     * 获取动态详情
+     * 获取动态详情信息
      *
-     * @param $id
-     * @param $retry int
+     * @param $id int 动态ID
+     * @param $user array 登陆用户
+     * @return array 
+     * @throws AppException
+     */
+    public function info($id, $user)
+    {
+        $info = $this->getInfo($id);
+        // 如果有数据
+        if (!empty($info["info"]["u_id"])) {
+            // 判断是否黑名单
+            if (BlackListService::inUserBlackList($user['id'], $info["info"]['u_id'])) {
+                throw AppException::factory(AppException::USER_IN_BLACK_LIST);
+            }
+            // 添加访问记录队列
+            VisitorService::addVisitorLog($info["info"]['u_id'], $user["id"]);
+        }
+        return $info;
+    }
+
+    /**
+     * 获取动态详情（缓存）
+     *
+     * @param $id int 动态ID
+     * @param $retry int 尝试次数
      * @return array
      * @throws AppException
      */
-    public function info($id, $retry = 0)
+    public function getInfo($id, $retry = 0)
     {
         // 读缓存
         $redis = Redis::factory();
@@ -142,7 +165,7 @@ class DynamicService extends Base
 
         if ($retry < Constant::GET_CACHE_TIMES) {
             usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
-            return $this->info($id, ++$retry);
+            return $this->getInfo($id, ++$retry);
         }
         throw AppException::factory(AppException::TRY_AGAIN_LATER);
     }
@@ -191,6 +214,9 @@ class DynamicService extends Base
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
+        // 添加访问记录队列
+        VisitorService::addVisitorLog($uid, $user["id"]);
+
         Db::startTrans();
         try {
             Db::name("dynamic_comment")->insertGetId([
@@ -230,6 +256,9 @@ class DynamicService extends Base
         if (BlackListService::inUserBlackList($user['id'], $uid)) {
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
+
+        // 添加访问记录队列
+        VisitorService::addVisitorLog($uid, $user["id"]);
 
         Db::startTrans();
         try {

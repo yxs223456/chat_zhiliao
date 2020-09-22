@@ -831,20 +831,27 @@ function getUserVisitorExists($userId, $visitorId, Redis $redis)
     return $redis->sIsMember($key, $visitorId);
 }
 
+// 获取用户今天总访问次数
+function getUserVisitorTodayCount($userId, Redis $redis)
+{
+    $key = REDIS_USER_VISITOR_DAY_SET . $userId . ":" . date("Y-m-d");
+    return $redis->sCard($key);
+}
+
 /**
  * 用户访客分页数据
  */
 define("REDIS_USER_VISITOR_PAGE_DATA", REDIS_KEY_PREFIX . "userVisitorPageData:");
-function cacheUserVisitorPageData($userId, $page, $pageSize, $data, Redis $redis)
+function cacheUserVisitorPageData($userId, $startId, $pageSize, $data, Redis $redis)
 {
-    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $page;
+    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $startId;
     $redis->setex($key, 7200, json_encode($data));
 }
 
 // 获取用户访客分页数据
-function getUserVisitorPageData($userId, $page, $pageSize, Redis $redis)
+function getUserVisitorPageData($userId, $startId, $pageSize, Redis $redis)
 {
-    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $page;
+    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $startId;
     $data = $redis->get($key);
     if ($data) {
         return json_decode($data, true);
@@ -865,10 +872,10 @@ function deleteUserVisitorPageData($userId, Redis $redis)
  */
 define("REDIS_USER_VISITOR_SUM_COUNT", REDIS_KEY_PREFIX . "userVisitorSumCount:");
 //缓存用户访客总数，初始化
-function cacheUserVisitorSumCount($userId,$count, Redis $redis)
+function cacheUserVisitorSumCount($userId, $count, Redis $redis)
 {
     $key = REDIS_USER_VISITOR_SUM_COUNT . $userId;
-    $redis->set($key,$count);
+    $redis->set($key, $count);
     if ($redis->ttl($key) == -1) {
         $redis->expire($key, 86400);// 缓存一天
     }
@@ -887,4 +894,5 @@ function getUserVisitorSumCount($userId, Redis $redis)
     $key = REDIS_USER_VISITOR_DAY_SET . $userId;
     return $redis->get($key);
 }
+
 

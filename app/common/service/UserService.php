@@ -794,6 +794,7 @@ class UserService extends Base
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
         Db::name("user_info")->where("u_id", $user["id"])->update($info);
+        // TODO 调用融云接口
         deleteUserInfoDataByUId($user["id"], $redis);
         return;
     }

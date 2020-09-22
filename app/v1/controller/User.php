@@ -19,7 +19,11 @@ class User extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
-            "except" => "sendVerifyCode,register,passwordLogin,codeLogin,phoneLogin,weChatLogin",
+            "except" => "sendVerifyCode,register,passwordLogin,codeLogin,phoneLogin,weChatLogin,resetPassword",
+        ],
+        "checkSex" => [
+            "except" => "sendVerifyCode,register,passwordLogin,codeLogin,phoneLogin,weChatLogin,resetPassword,
+                        setSex",
         ]
     ];
 
@@ -158,6 +162,33 @@ class User extends Base
         $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber);
 
         return $this->jsonResponse($returnData, new LoginTransformer());
+    }
+
+    /**
+     * 重置密码
+     */
+    public function resetPassword()
+    {
+        $request = $this->query["content"];
+        $mobilePhone = $request["mobile_phone"] ?? "";
+        $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
+        $verifyCode = $request["verify_code"] ?? null;
+        $password = $request["password"] ?? "";
+
+        if (empty($mobilePhone) || $verifyCode === null || empty($areaCode)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (!checkInt($areaCode, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if ($password === "") {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $us = new UserService();
+        $returnData = $us->resetPassword($areaCode, $mobilePhone, $verifyCode, $password);
+
+        return $this->jsonResponse($returnData);
     }
 
     /**

@@ -31,8 +31,18 @@ class AliSms
 
     // 模版数组
     private static $TYPE_LIST_TO_TEMPLATE = [
-        // 用户注册模版
+        // 登录模版
         SmsSceneEnum::LOGIN => [
+            self::TYPE_CHINA => "SMS_197870801",
+            self::TYPE_INTERNATIONAL => "SMS_197870779",
+        ],
+        // 注册模版
+        SmsSceneEnum::REGISTER => [
+            self::TYPE_CHINA => "SMS_197870801",
+            self::TYPE_INTERNATIONAL => "SMS_197870779",
+        ],
+        // 重置密码模版
+        SmsSceneEnum::RESET_PASSWORD => [
             self::TYPE_CHINA => "SMS_197870801",
             self::TYPE_INTERNATIONAL => "SMS_197870779",
         ],

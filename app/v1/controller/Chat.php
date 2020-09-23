@@ -9,12 +9,14 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
+use app\common\Constant;
 use app\common\enum\ChatTypeEnum;
 use app\common\service\ChatService;
 use app\common\service\GiftService;
 use app\v1\transformer\chat\Answer;
 use app\v1\transformer\chat\Dial;
 use app\v1\transformer\chat\Gift;
+use app\v1\transformer\chat\RedPackage;
 
 class Chat extends Base
 {
@@ -118,5 +120,27 @@ class Chat extends Base
         $returnData = $service->giveWhenChat($user, $chatId, $giftId);
 
         return $this->jsonResponse($returnData, new Gift());
+    }
+
+    /**
+     * 聊天通话中，发送红包
+     */
+    public function redPackage()
+    {
+        $request = $this->query["content"];
+        $amount = $request["amount"]??0;
+        $chatId = $request["chat_id"]??"";
+        if (!checkInt($amount, false) || !checkInt($chatId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if ($amount < Constant::RED_PACKAGE_MIN_AMOUNT) {
+            throw AppException::factory(AppException::GIFT_RED_PACKAGE_AMOUNT_LESS);
+        }
+
+        $user = $this->query["user"];
+        $service = new GiftService();
+        $returnData = $service->sendRedPackageWhenChat($user, $chatId, $amount);
+
+        return $this->jsonResponse($returnData, new RedPackage());
     }
 }

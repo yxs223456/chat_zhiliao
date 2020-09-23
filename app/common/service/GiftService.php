@@ -41,9 +41,15 @@ class GiftService extends Base
         }
 
         // 格式化返回数据
-        $returnData = [];
+        $returnData = [
+            "red_package" => [
+                "name" => Constant::RED_PACKAGE_CONFIG["name"],
+                "image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
+            ],
+            "gift" => [],
+        ];
         foreach ($gifts as $gift) {
-            $returnData[] = [
+            $returnData["gift"][] = [
                 "id" => $gift["id"],
                 "name" => $gift["name"],
                 "image_url" => $gift["image_url"],
@@ -82,7 +88,7 @@ class GiftService extends Base
         // 礼物详情
         $gift = self::getGiftById($giftId, Redis::factory());
         // 收礼人礼物分润收入
-        $rUIncome = floor(Constant::GIFT_BONUS_RATE * $gift["price"]);
+        $rUIncome = (int) round(Constant::GIFT_BONUS_RATE * $gift["price"]);
 
         // 赠送礼物数据库操作
         Db::startTrans();
@@ -158,7 +164,7 @@ class GiftService extends Base
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
-        // 用户处于聊天中，不允许调用该接口发送礼物
+        // 用户处于自己发起的聊天中，不允许调用该接口发送礼物
         if ($checkScene) {
             $chatModel = new ChatModel();
             $chat = $chatModel->where("t_u_id", $user["id"])
@@ -170,7 +176,7 @@ class GiftService extends Base
         }
 
         // 收礼人礼物分润收入
-        $rUIncome = floor(Constant::GIFT_BONUS_RATE * $gift["price"]);
+        $rUIncome = (int) round(Constant::GIFT_BONUS_RATE * $gift["price"]);
         // 礼物赠送数据库操作
         Db::startTrans();
         try {
@@ -190,11 +196,11 @@ class GiftService extends Base
     }
 
     /**
-     * 发送礼物
+     * 赠送礼物数据库
      * @param $user         array/model 发送礼物用户
      * @param $gift         array/model   礼物
      * @param $rUId         int   接受礼物用户id
-     * @param $minBalance   int   发送礼物用户最下账号余额，不足该余额时无法赠送礼物
+     * @param $minBalance   int   发送礼物用户最低账号余额，不足该余额时无法赠送礼物
      * @param $rUIncome     int   接受礼物用户可以收到的分润
      * @return array
      * @throws AppException
@@ -204,7 +210,7 @@ class GiftService extends Base
      */
     private function giveDbOperate($user, $gift, $rUId, $minBalance, $rUIncome)
     {
-        // 判断用户账户余额是否足够。需要考虑聊天花费
+        // 判断用户账户余额是否足够。
         // 先花费不可提现聊币，再花费可提现聊币
         $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->lock(true)->find();
         $balanceAmount = $userWallet["balance_amount"]; // 用户充值余额
@@ -275,6 +281,224 @@ class GiftService extends Base
 
         return [
             "s_u_after_balance" => $userWallet["total_balance"] - $giftPrice,
+            "t_u_after_balance" => $rUserWallet["total_balance"] + $rUIncome,
+        ];
+    }
+
+    /**
+     * 发红包
+     * @param $user
+     * @param $rUId
+     * @param $amount
+     * @param bool $checkScene
+     * @return array
+     * @throws AppException
+     * @throws \Throwable
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function sendRedPackage($user, $rUId, $amount, $checkScene = true)
+    {
+        $redis = Redis::factory();
+
+        // 判断接收方是否拉黑用户
+        if (BlackListService::inUserBlackList($rUId, $user["id"], $redis)) {
+            throw AppException::factory(AppException::USER_IN_BLACK_LIST);
+        }
+
+        // 用户处于自己发起的聊天中，不允许调用该接口发送礼物
+        if ($checkScene) {
+            $chatModel = new ChatModel();
+            $chat = $chatModel->where("t_u_id", $user["id"])
+                ->where("status", ChatStatusEnum::CALLING)
+                ->find();
+            if ($chat) {
+                throw AppException::factory(AppException::QUERY_API_ERROR);
+            }
+        }
+
+        // 接收者分润收入
+        $rUIncome = (int) round(Constant::RED_PACKAGE_BONUS_RATE * $amount);
+        // 礼物赠送数据库操作
+        Db::startTrans();
+        try {
+            $this->giveRedPackageDbOperate($user, $amount, $rUId, $amount, $rUIncome);
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        return [
+            "gift_name" => Constant::RED_PACKAGE_CONFIG["name"],
+            "gift_image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
+            "amount" => $amount,
+            "r_u_income" => $rUIncome,
+        ];
+    }
+
+    /**
+     * 通话中发红包
+     * @param $user
+     * @param $chatId
+     * @param $amount
+     * @return array
+     * @throws AppException
+     * @throws \Throwable
+     */
+    public function sendRedPackageWhenChat($user, $chatId, $amount)
+    {
+        $chatModel = new ChatModel();
+        $chat = $chatModel->findById($chatId);
+
+        // 聊天必须是正在通话中状态
+        // 用户必须是参与通话一方
+        if ($chat == null) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        if ($chat["status"] != ChatStatusEnum::CALLING) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        if ($user["id"] != $chat["s_u_id"] && $user["id"] != $chat["t_u_id"]) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+
+        // 接收者分润收入
+        $rUIncome = (int) round(Constant::RED_PACKAGE_BONUS_RATE * $amount);
+
+        // 赠送礼物数据库操作
+        Db::startTrans();
+        try {
+            if ($user["id"] == $chat["t_u_id"]) {
+                // 接听方发红包 只考虑红包金额和自己的钱包余额即可
+                $minBalance = $amount;
+            } else {
+                // 拨打方发红包不仅要考虑红包金额和自己的钱包余额，还需考虑已经产生的聊天费用
+                $chatPrice = ChatService::getCallingChatPay($chat); // 通话已经产生的费用
+                $minBalance = $amount + $chatPrice;
+            }
+            $sendResp = $this->giveRedPackageDbOperate($user, $amount, $chat["t_u_id"], $minBalance, $rUIncome);
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        // 再次计算通话时长
+        $price = $chat["t_user_price"];     // 通话价格
+        $isFree = $price == 0 ? 1 : 0;      // 通话是否免费
+        $minutes = $chat["free_minutes"];   // 不免费时最大通话分钟数
+        if (!$isFree) {
+            // 拨打方剩余余额
+            if ($user["id"] == $chat["t_u_id"]) {
+                $balance = $sendResp["t_u_after_balance"];
+            } else {
+                $balance = $sendResp["s_u_after_balance"];
+            }
+            $payMinutes = floor($balance/$price);
+            $minutes += $payMinutes;
+        }
+
+        return [
+            "gift" => [
+                "gift_name" => Constant::RED_PACKAGE_CONFIG["name"],
+                "gift_image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
+                "amount" => $amount,
+                "r_u_income" => $rUIncome,
+            ],
+            "chat" => [
+                "is_free" => $isFree,
+                "current_time" => time(),
+                "deadline" => $isFree ? 0 : $chat["chat_begin_time"] + ($minutes * 60),
+            ],
+        ];
+    }
+
+    /**
+     * 赠送红包数据库操作
+     * @param $user             array/model 发红包用户
+     * @param $amount           int   红包金额
+     * @param $rUId             int   收红包物用户id
+     * @param $minBalance       int   发红包用户最低账号余额，不足该余额时无法发红包
+     * @param $rUIncome         int   接受礼物用户可以收到的分润
+     * @return array
+     * @throws AppException
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    private function giveRedPackageDbOperate($user, $amount, $rUId, $minBalance, $rUIncome)
+    {
+        // 判断用户账户余额是否足够。
+        // 先花费不可提现聊币，再花费可提现聊币
+        $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->lock(true)->find();
+        $balanceAmount = $userWallet["balance_amount"]; // 用户充值余额
+        $incomeAmount = $userWallet["income_amount"]; // 用户收入余额
+
+        if ($balanceAmount + $incomeAmount < $minBalance) {
+            throw AppException::factory(AppException::WALLET_MONEY_LESS);
+        } else if ($balanceAmount < $amount) {
+            $incomeAmountFree = $amount - $balanceAmount;
+            Db::name("user_wallet")
+                ->where("id", $userWallet["id"])
+                ->dec("balance_amount", $balanceAmount)
+                ->dec("income_amount", $incomeAmountFree)
+                ->dec("total_balance", $amount)
+                ->update();
+        } else {
+            Db::name("user_wallet")
+                ->where("id", $userWallet["id"])
+                ->dec("balance_amount", $amount)
+                ->dec("total_balance", $amount)
+                ->update();
+        }
+
+        // 增加收礼人钱包余额
+        $rUserWallet = Db::name("user_wallet")->where("u_id", $rUId)->find();
+        Db::name("user_wallet")
+            ->where("id", $rUserWallet["id"])
+            ->inc("income_amount", $rUIncome)
+            ->inc("income_total_amount", $rUIncome)
+            ->inc("total_balance", $rUIncome)
+            ->update();
+
+        // 红包赠送纪录
+        $rPGiveId = Db::name("gift_rp_give_log")->insertGetId([
+            "s_u_id" => $user["id"],
+            "r_u_id" => $rUId,
+            "give_time" => time(),
+            "amount" => $amount,
+            "r_u_income" => $rUIncome,
+        ]);
+
+        // 纪录送礼、收礼双方钱包流水
+        Db::name("user_wallet_flow")->insertAll([
+            [
+                "u_id" => $user["id"],
+                "flow_type" => FlowTypeEnum::REDUCE,
+                "amount" => $amount,
+                "add_type" => WalletReduceEnum::RED_PACKAGE,
+                "object_source_id" => $rPGiveId,
+                "before_balance" => $userWallet["total_balance"],
+                "after_balance" => $userWallet["total_balance"] - $amount,
+                "create_date" => date("Y-m-d"),
+            ],
+            [
+                "u_id" => $rUId,
+                "flow_type" => FlowTypeEnum::ADD,
+                "amount" => $rUIncome,
+                "add_type" => WalletAddEnum::RED_PACKAGE,
+                "object_source_id" => $rPGiveId,
+                "before_balance" => $rUserWallet["total_balance"],
+                "after_balance" => $rUserWallet["total_balance"] + $rUIncome,
+                "create_date" => date("Y-m-d"),
+            ]
+        ]);
+
+        return [
+            "s_u_after_balance" => $userWallet["total_balance"] - $amount,
             "t_u_after_balance" => $rUserWallet["total_balance"] + $rUIncome,
         ];
     }

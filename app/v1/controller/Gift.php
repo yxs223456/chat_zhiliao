@@ -9,9 +9,11 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
+use app\common\Constant;
 use app\common\service\GiftService;
 use app\v1\transformer\gift\GetAll;
 use app\v1\transformer\gift\Give;
+use app\v1\transformer\gift\RedPackage;
 
 class Gift extends Base
 {
@@ -55,15 +57,18 @@ class Gift extends Base
     {
         $request = $this->query["content"];
         $amount = $request["amount"]??0;
-        $r_user_id = $request["r_user_id"]??"";
-        if (!checkInt($amount, false) || !checkInt($r_user_id, false)) {
+        $rUId = $request["r_user_id"]??"";
+        if (!checkInt($amount, false) || !checkInt($rUId, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if ($amount < Constant::RED_PACKAGE_MIN_AMOUNT) {
+            throw AppException::factory(AppException::GIFT_RED_PACKAGE_AMOUNT_LESS);
         }
 
         $user = $this->query["user"];
         $service = new GiftService();
-        $returnData = $service->give($user, $r_user_id, $gift_id);
+        $returnData = $service->sendRedPackage($user, $rUId, $amount);
 
-        return $this->jsonResponse($returnData, new Give());
+        return $this->jsonResponse($returnData, new RedPackage());
     }
 }

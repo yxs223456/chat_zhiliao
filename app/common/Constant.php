@@ -86,4 +86,13 @@ class Constant
 
     // 男神女神私聊收费金额 条/10聊币
     const PRETTY_MESSAGE_PRICE_COIN = 10;
+
+    // 守护获取分润比例
+    const GUARD_SHARE_RATE = 0.05;
+
+    // 守护分润最小金额
+    const GUARD_SHARE_MIN_COIN = 1;
+
+    // 守护最小贡献聊币数
+    const GUARD_MIN_AMOUNT = 15000;
 }

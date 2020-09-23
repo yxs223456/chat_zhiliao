@@ -62,7 +62,12 @@ function chatEndCallbackConsumer($callback)
     RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
 }
 
-// 用户访问后续处理
+/**
+ * 用户访问后续处理
+ *
+ * @param $userId
+ * @param $visitorId
+ */
 function userVisitorCallbackProduce($userId, $visitorId)
 {
     $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
@@ -77,6 +82,31 @@ function userVisitorCallBackConsumer($callback)
     $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
     $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_visitor_callback";
     $routingKey = "user_visitor_callback";
+
+    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
+}
+
+/**
+ * 聊天送礼物计算魅力值回调
+ *
+ * @param $incomeUserId
+ * @param $spendUserId
+ * @param $coin
+ */
+function userGuardCallbackProduce($incomeUserId, $spendUserId, $coin)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_guard_callback";
+    $routingKey = "user_guard_callback";
+    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+        'incomeUserId' => $incomeUserId, 'spendUserId' => $spendUserId, 'coin' => $coin
+    ]));
+}
+
+function userGuardCallBackConsumer($callback)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_guard_callback";
+    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_guard_callback";
+    $routingKey = "user_guard_callback";
 
     RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
 }

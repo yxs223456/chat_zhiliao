@@ -896,3 +896,29 @@ function getUserVisitorSumCount($userId, Redis $redis)
 }
 
 
+/**
+ * 缓存用户本周守护人信息(上周角逐出来的)
+ */
+define("REDIS_USER_GUARD_INFO", REDIS_KEY_PREFIX . "userUserGuardInfo:");
+//缓存用户本周守护
+function cacheUserGuard($userId, $guardInfo, Redis $redis)
+{
+    $key = REDIS_USER_GUARD_INFO . $userId . ":" . getLastWeekStartDate() . "-" . getLastWeekEndDate();
+    $redis->set($key, json_encode($guardInfo));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//获取用户本周守护
+function getUserGuard($userId, Redis $redis)
+{
+    $key = REDIS_USER_GUARD_INFO . $userId . ":" . getLastWeekStartDate() . "-" . getLastWeekEndDate();
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}
+
+

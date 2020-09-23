@@ -16,7 +16,6 @@ use think\console\Command;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Db;
-use think\Exception;
 use think\facade\Log;
 
 /**

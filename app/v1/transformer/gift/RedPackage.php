@@ -10,7 +10,7 @@ namespace app\v1\transformer\gift;
 
 use app\common\transformer\TransformerAbstract;
 
-class Give extends TransformerAbstract
+class RedPackage extends TransformerAbstract
 {
 
     public function __construct(array $params = null)
@@ -23,7 +23,7 @@ class Give extends TransformerAbstract
         $returnData = [
             "gift_name" => (string) $data["gift_name"],
             "gift_image_url" => (string) $data["gift_image_url"],
-            "gift_price" => (int) $data["gift_price"],
+            "amount" => (int) $data["amount"],
             "r_u_income" => (int) $data["r_u_income"],
         ];
 

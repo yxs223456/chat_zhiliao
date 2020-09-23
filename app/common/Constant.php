@@ -13,6 +13,15 @@ class Constant
     // 默认头像
     const USER_DEFAULT_PORTRAIT = "https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTI2ypuOuCibDFf8xy6ktq5wZM2iamlkibbib0tv78hoicbdL7XsZMXasiaRvTApuzvHGo64qZcCiavicTiaoyw/132";
 
+    // 红包最小金额
+    const RED_PACKAGE_MIN_AMOUNT = 10;
+
+    // 红包配置
+    const RED_PACKAGE_CONFIG = [
+        "name" => "红包",
+        "image_url" => "",
+    ];
+
     // 提现手续费比例
     const WITHDRAW_POUNDAGE_RATE = 0.01;
 
@@ -30,6 +39,9 @@ class Constant
 
     // 邀请女生成为女神奖励人民币（元）
     const INVITE_PRETTY_FEMALE_REWARD_MONEY = 3;
+
+    // 红包分润比例
+    const RED_PACKAGE_BONUS_RATE = 0.6;
 
     // 收礼人礼物分润比例
     const GIFT_BONUS_RATE = 0.6;

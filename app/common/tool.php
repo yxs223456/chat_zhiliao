@@ -239,15 +239,3 @@ function getLastWeekEndDate()
 {
     return date("Y-m-d", time() - date("w") * 86400);
 }
-
-// 获取本周一
-function getToWeekStartDate()
-{
-    return date("Y-m-d", time() - ((date("w") - 1) * 86400));
-}
-
-// 获取本周日
-function getToWeekEndDate()
-{
-    return date("Y-m-d", time() + (7 - date("w")) * 86400);
-}

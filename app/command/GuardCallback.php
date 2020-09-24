@@ -117,7 +117,7 @@ class GuardCallback extends Command
                 ]);
 
             // 添加需要统计的
-            $startEndDate = getToWeekStartDate() . "-" . getToWeekEndDate();
+            $startEndDate = implode("-",getWeekStartAndEnd());
             $exists = Db::name("guard_user_callback")->where("u_id", $this->incomeUserId)
                 ->where("start_end_date", $startEndDate)->find();
             if (!$exists) {

@@ -107,4 +107,7 @@ class Constant
 
     // 守护最小贡献聊币数
     const GUARD_MIN_AMOUNT = 15000;
+
+    // 女神魅力榜最多排名查询到500名
+    const CHARM_LIST_MAX_NUM = 500;
 }

@@ -9,8 +9,10 @@ namespace app\command;
 
 use app\common\Constant;
 use app\common\enum\FlowTypeEnum;
+use app\common\enum\UserSexEnum;
 use app\common\enum\WalletAddEnum;
 use app\common\helper\RabbitMQ;
+use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
 use app\common\service\GuardService;
 use app\common\service\UserService;
@@ -104,6 +106,7 @@ class GuardCallback extends Command
         $spendUser = UserService::getUserById($this->spendUserId);
         // 上周守护人
         $guardUser = GuardService::getGuard($this->incomeUserId);
+
         Db::startTrans();
         try {
             // 添加魅力值贡献记录
@@ -162,6 +165,13 @@ class GuardCallback extends Command
             }
 
             Db::commit();
+
+            // 当前业务规则逻辑(只有男生送女神才互相计算魅力值，参加魅力排行，符合条件删除女神本周的排行缓存)
+            if ($prettyUser['sex'] == UserSexEnum::FEMALE && $spendUser['sex'] == UserSexEnum::MALE) {
+                list($startDate, $endDate) = getWeekStartAndEnd();
+                deletePrettyWeekContributionList($this->incomeUserId, $startDate, $endDate, Redis::factory());
+            }
+
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;

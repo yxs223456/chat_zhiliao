@@ -74,7 +74,7 @@ class AliSms
                     'RegionId' => "cn-hangzhou",
                     'PhoneNumbers' => $mobile,
                     'SignName' => self::CODE_SIGN,
-                    'TemplateCode' => self::getTemplate($type, $scene),
+                    'TemplateCode' => self::getTemplate($scene, $type),
                 ]
             ];
             if (!empty($param)) {

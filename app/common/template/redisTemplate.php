@@ -922,3 +922,86 @@ function getUserGuard($userId, Redis $redis)
 }
 
 
+/**
+ * 缓存女神魅力榜(根据时间段缓存一天)
+ */
+define("REDIS_FEMALE_CHARM_LIST", REDIS_KEY_PREFIX . "user_female_charm_list:");
+//缓存月魅力榜单分页数据
+function cacheUserFemaleCharmList($pageNum, $pageSize, $startTime, $endTime, $data, Redis $redis)
+{
+    $key = REDIS_FEMALE_CHARM_LIST . $startTime . "-" . $endTime . ":" . $pageSize . "-" . $pageNum;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//获取女神魅力榜单分页数据
+function getUserFemaleCharmList($pageNum, $pageSize, $startTime, $endTime, Redis $redis)
+{
+    $key = REDIS_FEMALE_CHARM_LIST . $startTime . "-" . $endTime . ":" . $pageSize . "-" . $pageNum;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}
+
+/**
+ * 缓存自己魅力值信息(根据时间段缓存一天)
+ */
+define("REDIS_FEMALE_CHARM_INFO", REDIS_KEY_PREFIX . "user_female_charm_info:");
+//缓存当前登陆女神用户自己魅力信息
+function cacheUserFemaleCharmInfo($userId, $startTime, $endTime, $data, Redis $redis)
+{
+    $key = REDIS_FEMALE_CHARM_INFO . $startTime . "-" . $endTime . ":" . $userId;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//获取当前登陆女神魅力信息
+function getUserFemaleCharmInfo($userId, $startTime, $endTime, Redis $redis)
+{
+    $key = REDIS_FEMALE_CHARM_INFO . $startTime . "-" . $endTime . ":" . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}
+
+/**
+ * 缓存女神周贡献榜单信息(缓存一天)
+ */
+define("REDIS_PRETTY_WEEK_CONTRIBUTION_LIST", REDIS_KEY_PREFIX . "user_pretty_week_contribution_list:");
+//缓存女神周贡献榜单
+function cachePrettyWeekContributionList($userId, $startDate, $endDate, $data, Redis $redis)
+{
+    $key = REDIS_PRETTY_WEEK_CONTRIBUTION_LIST . $userId . ":" . $startDate . "-" . $endDate;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//获取女神周贡献榜
+function getPrettyWeekContributionList($userId, $startDate, $endDate, Redis $redis)
+{
+    $key = REDIS_PRETTY_WEEK_CONTRIBUTION_LIST . $userId . ":" . $startDate . "-" . $endDate;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}
+
+// 删除女神周角逐榜缓存，本周角逐榜需要实时
+function deletePrettyWeekContributionList($userId, $startDate, $endDate, Redis $redis)
+{
+    $key = REDIS_PRETTY_WEEK_CONTRIBUTION_LIST . $userId . ":" . $startDate . "-" . $endDate;
+    $redis->del($key);
+}
+
+

@@ -23,7 +23,7 @@ class User extends Base
         ],
         "checkSex" => [
             "except" => "sendVerifyCode,register,passwordLogin,codeLogin,phoneLogin,weChatLogin,resetPassword,
-                        setSex",
+                        setSex,info",
         ]
     ];
 
@@ -316,6 +316,9 @@ class User extends Base
         $nickname = $request["nickname"] ?? "";
         $birthday = $request["birthday"] ?? "";
         $occupation = $request["occupation"] ?? 0;
+        $city = $request["city"] ?? "";
+        $sex = $request["sex"] ?? null;
+
         $photo = $request["photos"] ?? [];
         if (!empty($birthday) && !checkDateFormat($birthday)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -329,8 +332,26 @@ class User extends Base
 
         $user = $this->query["user"];
         $service = new UserService();
-        $update = ["portrait" => $avatar, "nickname" => $nickname, "birthday" => $birthday, "occupation" => $occupation, "photos" => json_encode($photo)];
+        $update = ["portrait" => $avatar, "nickname" => $nickname,
+            "birthday" => $birthday, "occupation" => $occupation,
+            "photos" => json_encode($photo), "city" => $city];
+        // 修改用户头像，昵称，生日，照片，城市
         $service->editInfo($user, array_filter($update));
+
+        // 如果提交性别信息，修改用户性别
+        if (isset($sex)) {
+            if (!in_array(
+                $sex,
+                [
+                    UserSexEnum::MALE,
+                    UserSexEnum::FEMALE
+                ]
+            )
+            ) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
+            return $this->jsonResponse($service->setSex($sex, $user));
+        }
         return $this->jsonResponse(new \stdClass());
     }
 

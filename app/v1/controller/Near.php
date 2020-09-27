@@ -17,6 +17,9 @@ class Near extends Base
     protected $beforeActionList = [
         "getUser" => [
             "except" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
         ]
     ];
 

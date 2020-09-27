@@ -20,6 +20,9 @@ class Pretty extends Base
     protected $beforeActionList = [
         "getUser" => [
             "except" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
         ]
     ];
 

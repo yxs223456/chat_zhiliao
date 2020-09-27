@@ -22,6 +22,8 @@ class InfoTransformer extends TransformerAbstract
             "nickname" => (string)$data["nickname"] ?? "",
             "birthday" => (string)$data["birthday"] ?? "",
             "occupation" => $this->getOccupation($data["occupation"]),
+            "sex" => $data["sex"] ?? 0,
+            "user_number" => $data["user_number"] ?? "",
             "photos" => empty($data["photos"]) ? [] : json_decode($data["photos"], true),
         ];
     }

@@ -250,7 +250,6 @@ class CharmService extends Base
      * 获取上周贡献排行
      *
      * @param $uid int 女神用户ID
-     * @param int $retry
      * @param string $startDate
      * @param string $endDate
      * @param int $retry

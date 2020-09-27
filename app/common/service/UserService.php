@@ -850,7 +850,10 @@ class UserService extends Base
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
         Db::name("user_info")->where("u_id", $user["id"])->update($info);
-        // TODO 调用融云接口
+        // 修改头像和昵称更新融云信息
+        if (!empty($info["nickname"]) || !empty($info["portrait"])) {
+            RongCloudApp::updateUserInfo($user["user_number"], $info["nickname"], $info["portrait"]);
+        }
         deleteUserInfoDataByUId($user["id"], $redis);
         return;
     }

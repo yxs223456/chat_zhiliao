@@ -11,7 +11,7 @@ namespace app\common\enum;
 /**
  * 用户性别类型
  */
-class UserSexTypeEnum
+class InteractSexTypeEnum
 {
     use EnumTrait;
 

@@ -200,4 +200,50 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
         $ret["guardList"] = $data;
         return $ret;
     }
+
+    /**
+     * 男生等待守护
+     *
+     * @param $user
+     * @return array
+     * @throws AppException
+     */
+    public function maleWait($user)
+    {
+        $userInfo = UserInfoService::getUserInfoById($user['id']);
+        // 男生的等待守护
+        if ($userInfo["sex"] != UserSexEnum::MALE) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+
+        $ret = [
+            "amountList" => [],
+            "userInfoList" => []
+        ];
+
+        list($startDate, $endDate) = getWeekStartAndEnd();
+        $data = Db::query("select u_id,sum(amount) as total_amount from guard_charm_log where guard_u_id = {$user['id']} 
+and sex_type = :sexType and create_date >= :startDate and create_date <= :endDate GROUP by u_id ORDER by total_amount DESC limit 0,20", [
+            "sexType" => InteractSexTypeEnum::FEMALE_TO_MALE,
+            "startDate" => $startDate,
+            "endDate" => $endDate
+        ]);
+
+        if (empty($data)) {
+            return $ret;
+        }
+
+        $guardUserInfo = Db::name("user_info")
+            ->field("u_id,portrait,nickname")
+            ->whereIn("u_id", array_column($data, 'u_id'))
+            ->select()->toArray();
+        $ret["amountList"] = $data;
+        $ret["userInfoList"] = $guardUserInfo;
+        return $ret;
+    }
+
+    public function current($user)
+    {
+//        $data = Db::name("user")
+    }
 }

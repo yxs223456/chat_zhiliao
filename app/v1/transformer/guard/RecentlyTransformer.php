@@ -6,7 +6,7 @@
  * Time: 下午1:12
  */
 
-namespace app\v1\transformer\pretty;
+namespace app\v1\transformer\guard;
 
 use app\common\transformer\TransformerAbstract;
 

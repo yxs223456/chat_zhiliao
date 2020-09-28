@@ -6,11 +6,11 @@
  * Time: 下午1:12
  */
 
-namespace app\v1\transformer\pretty;
+namespace app\v1\transformer\guard;
 
 use app\common\transformer\TransformerAbstract;
 
-class RecentlyTransformer extends TransformerAbstract
+class CurrentTransformer extends TransformerAbstract
 {
 
     public function transformData(array $data): array

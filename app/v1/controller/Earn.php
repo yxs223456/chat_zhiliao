@@ -9,112 +9,58 @@
 namespace app\v1\controller;
 
 
-class Guard extends Base
+use app\common\AppException;
+use app\common\service\EarnService;
+
+class Earn extends Base
 {
 
-    /**************************************************男（收入总榜）***************************************************/
+    protected $beforeActionList = [
+        "getUser" => [
+            "except" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
+        ]
+    ];
+
+    /**************************************************（男收入总榜）***************************************************/
 
     /**
      * 周榜
      */
     public function weekRank()
     {
+        $request = $this->query["content"];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 20;
+        $user = $this->query["user"];
 
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new EarnService();
+        $data = $service->weekRank($pageNum, $pageSize, $user);
+        return $this->jsonResponse($data);
     }
 
     /**
      * 总榜
      */
-    public function rank(){
-
-    }
-
-    /**************************************************男(守护列表)****************************************************/
-
-    /**
-     * 等待守护
-     */
-    public function wait()
+    public function rank()
     {
+        $request = $this->query["content"];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 20;
+        $user = $this->query["user"];
 
-    }
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
-    /**
-     * 正在守护
-     */
-    public function current()
-    {
-
-    }
-
-    /**
-     * 最近守护 (三个月)
-     */
-    public function recently()
-    {
-
-    }
-
-    /**************************************************公共(女神上周贡献)*************************************************/
-
-    /**
-     * 上周贡献列表 10个
-     */
-    public function preContribution()
-    {
-
-    }
-
-    /**
-     * 本周角逐列表 10个
-     */
-    public function contribution()
-    {
-
-    }
-
-
-    /**************************************************女(女神魅力榜)*************************************************/
-
-    /**
-     * 月榜
-     */
-    public function monthCharm(){
-
-    }
-
-    /**
-     * 周榜
-     */
-    public function weekCharm()
-    {
-
-    }
-
-    /**
-     * 日榜
-     */
-    public function dayCharm()
-    {
-
-    }
-
-
-    /**************************************************女(守护列表)*************************************************/
-
-    /**
-     * 等待守护
-     */
-    public function waitG()
-    {
-
-    }
-
-    /**
-     * 最近守护
-     */
-    public function recentlyG()
-    {
-
+        $service = new EarnService();
+        $data = $service->rank($pageNum, $pageSize, $user);
+        return $this->jsonResponse($data);
     }
 }

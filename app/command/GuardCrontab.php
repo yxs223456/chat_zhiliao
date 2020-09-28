@@ -9,8 +9,8 @@
 namespace app\command;
 
 use app\common\Constant;
+use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
-use app\common\enum\UserSexTypeEnum;
 use app\common\helper\WeChatWork;
 use app\common\service\UserService;
 use think\console\Command;
@@ -96,7 +96,7 @@ and create_date >= :start_date and create_date <= :end_date
 and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
                 [
                     'uid' => $user['u_id'],
-                    'sex' => UserSexTypeEnum::FEMALE_TO_MALE,
+                    'sex' => InteractSexTypeEnum::FEMALE_TO_MALE,
                     'start_date' => getLastWeekStartDate(),
                     'end_date' => getLastWeekEndDate(),
                     's' => Constant::GUARD_MIN_AMOUNT
@@ -112,7 +112,7 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             Db::name("guard_history")->insert([
                 'u_id' => $user['u_id'],
                 'guard_u_id' => $guard['guard_u_id'],
-                'sex_type' => UserSexTypeEnum::FEMALE_TO_MALE,
+                'sex_type' => InteractSexTypeEnum::FEMALE_TO_MALE,
                 'charm_amount' => $guard['s'],
                 'start_date' => getLastWeekStartDate(),
                 'end_date' => getLastWeekEndDate()

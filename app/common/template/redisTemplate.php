@@ -1056,4 +1056,56 @@ function deletePrettyWeekContributionList($userId, $startDate, $endDate, Redis $
     $redis->del($key);
 }
 
+/**
+ * 男生收入总排行榜缓存(缓存一天)
+ */
+define("REDIS_MALE_ALL_EARN_LIST", REDIS_KEY_PREFIX . "user_male_all_earn_list:");
+//男生收入总排行分页缓存
+function cacheMaleAllEarnList($pageNum, $pageSize, $data, Redis $redis)
+{
+    $key = REDIS_MALE_ALL_EARN_LIST . $pageSize . ":" . $pageNum;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 3600);// 缓存一天
+    }
+}
 
+//获取男生收入总排行分页缓存
+function getMaleAllEarnList($pageNum, $pageSize, Redis $redis)
+{
+    $key = REDIS_MALE_ALL_EARN_LIST . $pageSize . ":" . $pageNum;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}
+
+/**
+ * 男生收入本周排行榜缓存(缓存一小时)
+ */
+define("REDIS_MALE_WEEK_EARN_LIST", REDIS_KEY_PREFIX . "user_male_week_earn_list:");
+//男生收入本周排行分页缓存
+function cacheMaleWeekEarnList($pageNum, $pageSize, $data, Redis $redis)
+{
+    // 获取本周开始结束时间
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_WEEK_EARN_LIST . $startDate . "-" . $endDate . ":" . $pageSize . ":" . $pageNum;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 3600);// 缓存一小时
+    }
+}
+
+//获取男生收入本周排行分页缓存
+function getMaleWeekEarnList($pageNum, $pageSize, Redis $redis)
+{
+    // 获取本周开始结束时间
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_WEEK_EARN_LIST . $startDate . "-" . $endDate . ":" . $pageSize . ":" . $pageNum;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}

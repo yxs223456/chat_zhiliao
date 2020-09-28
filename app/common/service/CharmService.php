@@ -11,8 +11,8 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\Constant;
+use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
-use app\common\enum\UserSexTypeEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -72,7 +72,7 @@ class CharmService extends Base
         $charm = Db::name("guard_charm_log")
             ->where("create_date", ">=", $startTime)
             ->where("create_date", "<=", $endTime)
-            ->where("sex_type", "=", UserSexTypeEnum::FEMALE_TO_MALE)
+            ->where("sex_type", "=", InteractSexTypeEnum::FEMALE_TO_MALE)
             ->where('u_id', '=', $user['id'])
             ->sum('amount');
         if (empty($charm)) {
@@ -238,7 +238,7 @@ class CharmService extends Base
         $charm = Db::name("guard_charm_log")
             ->where("u_id", '=', $uid)
             ->where("guard_u_id", '=', $currentId)
-            ->where('sex_type', '=', UserSexTypeEnum::FEMALE_TO_MALE)
+            ->where('sex_type', '=', InteractSexTypeEnum::FEMALE_TO_MALE)
             ->where('create_date', '>=', $startDate)
             ->where('create_date', '<=', $endDate)
             ->sum('amount');
@@ -272,7 +272,7 @@ class CharmService extends Base
         if ($redis->setnx($lockKey, 1)) {
             $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
 
-            $userIdTotalAmount = Db::query("select guard_u_id,sum(amount) as total_amount from guard_charm_log where u_id = {$uid} and create_date >= '" . $startDate . "' and create_date <= '" . $endDate . "' and sex_type = " . UserSexTypeEnum::FEMALE_TO_MALE . " group by guard_u_id order by total_amount desc limit 0,10");
+            $userIdTotalAmount = Db::query("select guard_u_id,sum(amount) as total_amount from guard_charm_log where u_id = {$uid} and create_date >= '" . $startDate . "' and create_date <= '" . $endDate . "' and sex_type = " . InteractSexTypeEnum::FEMALE_TO_MALE . " group by guard_u_id order by total_amount desc limit 0,10");
             if (empty($userIdTotalAmount)) {
                 cachePrettyWeekContributionList($uid,$startDate,$endDate, $ret, $redis);
                 $redis->del($lockKey);

@@ -99,6 +99,8 @@ class BusinessWorkerCallback
                     $returnData = [];
                     $responseJson = self::jsonData($scene, $returnData);
                     Gateway::sendToClient($client_id, $responseJson);
+
+                    loginAndLogoutCallbackProduce($user["id"], "login");
                 }
             }
         } catch (\Throwable $e) {
@@ -134,7 +136,9 @@ class BusinessWorkerCallback
      */
     public static function onClose($client_id)
     {
-
+        if (isset($_SESSION["user"])) {
+            loginAndLogoutCallbackProduce($_SESSION["user"]["id"], "logout");
+        }
     }
 
     /**

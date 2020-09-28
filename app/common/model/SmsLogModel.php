@@ -24,8 +24,8 @@ class SmsLogModel extends Base
         $data['area_code'] = $areaCode;
         $data['phone'] = $mobile;
         $data['scene'] = $scene;
-        $data['content'] = json_encode($msgContent);
-        $data['return_data'] = json_encode($responseData);
+        $data['content'] = json_encode($msgContent, JSON_UNESCAPED_UNICODE);
+        $data['return_data'] = json_encode($responseData, JSON_UNESCAPED_UNICODE);
         $data['code'] = isset($msgContent['code']) ? $msgContent['code'] : "";
         $data['ip'] = request()->ip();
         return $this->data($data)->save();

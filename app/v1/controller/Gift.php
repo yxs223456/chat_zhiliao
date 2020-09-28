@@ -20,6 +20,9 @@ class Gift extends Base
     protected $beforeActionList = [
         "getUser" => [
             "except" => "getAll",
+        ],
+        "checkSex" => [
+            "except" => "getAll",
         ]
     ];
 
@@ -40,15 +43,15 @@ class Gift extends Base
     public function give()
     {
         $request = $this->query["content"];
-        $gift_id = $request["gift_id"]??0;
-        $r_user_id = $request["r_user_id"]??"";
-        if (!checkInt($gift_id, false) || !checkInt($r_user_id, false)) {
+        $giftId = $request["gift_id"]??0;
+        $rUId = $request["r_user_id"]??"";
+        if (!checkInt($giftId, false) || !checkInt($rUId, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $user = $this->query["user"];
         $service = new GiftService();
-        $returnData = $service->give($user, $r_user_id, $gift_id);
+        $returnData = $service->give($user, $rUId, $giftId);
 
         return $this->jsonResponse($returnData, new Give());
     }

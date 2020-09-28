@@ -16,6 +16,9 @@ class Banner extends Base
     protected $beforeActionList = [
         "getUser" => [
             "only" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
         ]
     ];
 

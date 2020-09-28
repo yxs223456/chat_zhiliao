@@ -17,6 +17,27 @@ define("RABBIT_MQ_FANOUT_EXCHANGE_PREFIX", "chat_fanout_exchange:");
 // rabbitmq 队列名前缀
 define("RABBIT_MQ_QUEUE_PREFIX", "chat_queue:");
 
+/**
+ * 用户登录、退出后回调
+ */
+function loginAndLogoutCallbackProduce($userId, $do)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "loginAndLogout";
+    $routingKey = "loginAndLogout";
+    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+        "u_id" => $userId,
+        "do" => $do
+    ]));
+}
+
+function loginAndLogoutCallbackConsumer($callback)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "loginAndLogout";
+    $queueName = RABBIT_MQ_QUEUE_PREFIX . "loginAndLogout";
+    $routingKey = "loginAndLogout";
+
+    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);;
+}
 
 /**
  * 用户填写邀请人后续处理

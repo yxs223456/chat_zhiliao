@@ -23,6 +23,9 @@ class Chat extends Base
     protected $beforeActionList = [
         "getUser" => [
             "except" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
         ]
     ];
 

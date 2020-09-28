@@ -5,6 +5,58 @@
 define("REDIS_KEY_PREFIX", "chat_zhiliao:");
 
 /**
+ * 首页推荐集合
+ */
+define("REDIS_KEY_HOME_RECOMMEND_LIST", REDIS_KEY_PREFIX . "homeRecommendList");
+
+// 将用户放入首页推荐集合
+function addUserToHomeRecommendList($userId, $score, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_RECOMMEND_LIST;
+    $redis->zAdd($key, $score, $userId);
+}
+
+// 首页推荐集合删除用户
+function deleteUserFromHomeRecommendList($userId, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_RECOMMEND_LIST;
+    $redis->zRem($key, $userId);
+}
+
+// 首页推荐集合获取分页数据
+function getUserListFromHomeRecommendList($pageNum, $pageSize, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_RECOMMEND_LIST;
+    return $redis->zRange($key, ($pageNum-1)*$pageSize, $pageSize);
+}
+
+/**
+ * 首页新人集合
+ */
+define("REDIS_KEY_HOME_NEW_USER_LIST", REDIS_KEY_PREFIX . "homeNewUserList");
+
+// 将用户放入首页新人列表
+function addUserToHomeNewUserList($userId, $score, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_NEW_USER_LIST;
+    $redis->zAdd($key, $score, $userId);
+}
+
+// 首页新人集合删除用户
+function deleteUserFromHomeNewUserList($userId, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_NEW_USER_LIST;
+    $redis->zRem($key, $userId);
+}
+
+// 首页新人集合获取分页数据
+function getUserListFromHomeNewUserList($pageNum, $pageSize, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_NEW_USER_LIST;
+    return $redis->zRange($key, ($pageNum-1)*$pageSize, $pageSize);
+}
+
+/**
  * banner 列表
  */
 define("REDIS_KEY_BANNER_LIST_BY_POSITION", REDIS_KEY_PREFIX . "bannerListByPosition:");

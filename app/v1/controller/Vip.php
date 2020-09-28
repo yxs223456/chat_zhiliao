@@ -18,6 +18,9 @@ class Vip extends Base
     protected $beforeActionList = [
         "getUser" => [
             "except" => "",
+        ],
+        "checkSex" => [
+            "except" => "",
         ]
     ];
 

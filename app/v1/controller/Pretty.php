@@ -11,8 +11,11 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\CharmService;
+use app\common\service\GuardService;
 use app\v1\transformer\pretty\LastWeekTransformer;
+use app\v1\transformer\pretty\RecentlyTransformer;
 use app\v1\transformer\pretty\ThisWeekTransformer;
+use app\v1\transformer\pretty\WaitTransformer;
 
 class Pretty extends Base
 {
@@ -66,5 +69,29 @@ class Pretty extends Base
         $service = new CharmService();
         $data = $service->thisWeekContributeList($uid, $this->query['user']['id']);
         return $this->jsonResponse($data, new ThisWeekTransformer());
+    }
+
+    /**
+     * 等待被守护
+     */
+    public function wait()
+    {
+        $user = $this->query["user"];
+
+        $service = new GuardService();
+        $data = $service->wait($user);
+        return $this->jsonResponse($data, new WaitTransformer());
+    }
+
+    /**
+     * 最近被守护
+     */
+    public function recently()
+    {
+        $user = $this->query["user"];
+
+        $service = new GuardService();
+        $data = $service->recently($user);
+        return $this->jsonResponse($data, new RecentlyTransformer());
     }
 }

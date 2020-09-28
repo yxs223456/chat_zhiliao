@@ -9,6 +9,7 @@
 namespace app\common\service;
 
 
+use app\common\AppException;
 use app\common\Constant;
 use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
@@ -121,5 +122,82 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
 
         cacheUserGuard($userId, $data, $redis);
         return $data;
+    }
+
+    /**
+     * 女神本周等待被守护用户排名
+     *
+     * @param $user
+     * @throws AppException
+     * @return array
+     */
+    public function wait($user)
+    {
+        $userInfo = UserInfoService::getUserInfoById($user['id']);
+        // 只有女的才有等待守护
+        if ($userInfo["sex"] != UserSexEnum::FEMALE) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        $ret = [
+            "guard" => GuardService::getGuard($user["id"]),
+            "amountList" => [],
+            "userInfoList" => []
+        ];
+
+        list($startDate, $endDate) = getWeekStartAndEnd();
+        $data = Db::query("select guard_u_id,sum(amount) as total_amount from guard_charm_log where u_id = {$user['id']} 
+and sex_type = :sexType and create_date >= :startDate and create_date <= :endDate GROUP by guard_u_id ORDER by total_amount DESC limit 0,20", [
+            "sexType" => InteractSexTypeEnum::FEMALE_TO_MALE,
+            "startDate" => $startDate,
+            "endDate" => $endDate
+        ]);
+
+        if (empty($data)) {
+            return $ret;
+        }
+
+        $guardUserInfo = Db::name("user_info")
+            ->field("u_id,portrait,nickname")
+            ->whereIn("u_id", array_column($data, 'guard_u_id'))
+            ->select()->toArray();
+        $ret["amountList"] = $data;
+        $ret["userInfoList"] = $guardUserInfo;
+        return $ret;
+    }
+
+    /**
+     * 最近三个月守护的人
+     *
+     * @param $user
+     * @return array
+     * @throws AppException
+     */
+    public function recently($user)
+    {
+        $userInfo = UserInfoService::getUserInfoById($user['id']);
+        // 只有女的才有最近守护
+        if ($userInfo["sex"] != UserSexEnum::FEMALE) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        $ret = [
+            "guard" => GuardService::getGuard($user["id"]),
+            "guardList" => []
+        ];
+
+        $startDate = date("Y-m-d", strtotime("-3 month"));
+        $data = Db::name("guard_history")->alias("gh")
+            ->leftJoin("user_info ui", "ui.u_id = gh.guard_u_id")
+            ->field("gh.*,ui.portrait,ui.nickname")
+            ->where("gh.u_id", "=", $user["id"])
+            ->where("start_date", "=", $startDate)
+            ->order("gh.start_date", "desc")
+            ->select()->toArray();
+
+        if (empty($data)) {
+            return $ret;
+        }
+
+        $ret["guardList"] = $data;
+        return $ret;
     }
 }

@@ -57,6 +57,35 @@ function getUserListFromHomeNewUserList($pageNum, $pageSize, \Redis $redis)
 }
 
 /**
+ * 首页对应地区用户集合
+ */
+define("REDIS_KEY_HOME_SITE_LIST", REDIS_KEY_PREFIX . "homeSiteList:");
+
+// 将用户放入首页对应地区用户集合
+function addUserToHomeSiteList($userId, $score, $site, \Redis $redis)
+{
+    $siteMd5 = md5($site);
+    $key = REDIS_KEY_HOME_SITE_LIST . $siteMd5;
+    $redis->zAdd($key, $score, $userId);
+}
+
+// 首页对应地区用户集合删除用户
+function deleteUserFromHomeSiteList($userId, $site, \Redis $redis)
+{
+    $siteMd5 = md5($site);
+    $key = REDIS_KEY_HOME_SITE_LIST . $siteMd5;
+    $redis->zRem($key, $userId);
+}
+
+// 首页对应地区用户集合获取分页数据
+function getUserListFromHomeSiteList($pageNum, $pageSize, $site, \Redis $redis)
+{
+    $siteMd5 = md5($site);
+    $key = REDIS_KEY_HOME_SITE_LIST . $siteMd5;
+    return $redis->zRange($key, ($pageNum-1)*$pageSize, $pageSize);
+}
+
+/**
  * banner 列表
  */
 define("REDIS_KEY_BANNER_LIST_BY_POSITION", REDIS_KEY_PREFIX . "bannerListByPosition:");

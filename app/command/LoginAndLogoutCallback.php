@@ -8,11 +8,14 @@
 
 namespace app\command;
 
+use app\common\enum\UserIsStealthEnum;
 use app\common\enum\UserSexEnum;
 use app\common\helper\RabbitMQ;
 use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
+use app\common\service\UserInfoService;
 use app\common\service\UserService;
+use app\common\service\UserSetService;
 use PhpAmqpLib\Message\AMQPMessage;
 use think\console\Command;
 use think\console\Input;
@@ -130,6 +133,13 @@ class LoginAndLogoutCallback extends Command
             if (time() - strtotime($user["create_time"]) <= 7 * 86400) {
                 addUserToHomeNewUserList($userId, $userWallet["income_total_amount"], $redis);
             }
+
+            // 如果没有设置隐身，把用户放入地区列表
+            $userSet = UserSetService::getUserSetByUId($userId, $redis);
+            if ($userSet["is_stealth"] == UserIsStealthEnum::NO && $userInfo["city"]) {
+                addUserToHomeSiteList($userId, $userWallet["income_total_amount"], $userInfo["city"], $redis);
+            }
+
         }
 
         // 修改用户最后登录时间、重新生成用户缓存
@@ -151,6 +161,10 @@ class LoginAndLogoutCallback extends Command
 
         // 把用户移出首页新人集合（不验证用户是否在集合内）
         deleteUserFromHomeNewUserList($userId, $redis);
+
+        // 把用户移出首页地区集合（不验证用户是否在集合内）
+        $userInfo = UserInfoService::getUserInfoById($userId, $redis);
+        deleteUserFromHomeSiteList($userId, $userInfo["city"], $redis);
 
         $redis->close();
     }

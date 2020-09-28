@@ -10,8 +10,9 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\HomeService;
-use app\v1\transformer\home\NewList;
-use app\v1\transformer\home\RecommendList;
+use app\v1\transformer\home\NewUserList;
+use app\v1\transformer\home\RecommendUserList;
+use app\v1\transformer\home\SiteUserList;
 
 class Home extends Base
 {
@@ -27,7 +28,7 @@ class Home extends Base
     /**
      * 首页推荐列表
      */
-    public function recommendList()
+    public function recommendUserList()
     {
         $request = $this->query["content"];
         $pageNum = $request["page_num"]??1;
@@ -37,15 +38,15 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->recommendList($pageNum, $pageSize);
+        $returnData = $service->recommendUserList($pageNum, $pageSize);
 
-        return $this->jsonResponse($returnData, new RecommendList());
+        return $this->jsonResponse($returnData, new RecommendUserList());
     }
 
     /**
      * 首页活跃列表
      */
-    public function activeList()
+    public function activeUserList()
     {
         $request = $this->query["content"];
         $pageNum = $request["page_num"]??1;
@@ -55,15 +56,15 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->recommendList($pageNum, $pageSize);
+        $returnData = $service->recommendUserList($pageNum, $pageSize);
 
-        return $this->jsonResponse($returnData, new RecommendList());
+        return $this->jsonResponse($returnData, new RecommendUserList());
     }
 
     /**
      * 首页新人列表
      */
-    public function newList()
+    public function newUserList()
     {
         $request = $this->query["content"];
         $pageNum = $request["page_num"]??1;
@@ -73,15 +74,15 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->newList($pageNum, $pageSize);
+        $returnData = $service->newUserList($pageNum, $pageSize);
 
-        return $this->jsonResponse($returnData, new NewList());
+        return $this->jsonResponse($returnData, new NewUserList());
     }
 
     /**
-     * 首页新人列表
+     * 首页对应地区用户列表
      */
-    public function siteList()
+    public function siteUserList()
     {
         $request = $this->query["content"];
         $site = $request["site"]??"";
@@ -95,8 +96,8 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->siteList($site, $pageNum, $pageSize);
+        $returnData = $service->siteUserList($site, $pageNum, $pageSize);
 
-        return $this->jsonResponse($returnData, new NewList());
+        return $this->jsonResponse($returnData, new SiteUserList());
     }
 }

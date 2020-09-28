@@ -10,7 +10,7 @@ namespace app\v1\transformer\home;
 
 use app\common\transformer\TransformerAbstract;
 
-class RecommendList extends TransformerAbstract
+class NewUserList extends TransformerAbstract
 {
 
     public function __construct(array $params = null)

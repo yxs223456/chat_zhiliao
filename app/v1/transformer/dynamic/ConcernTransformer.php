@@ -10,7 +10,6 @@ namespace app\v1\transformer\dynamic;
 
 use app\common\helper\Redis;
 use app\common\transformer\TransformerAbstract;
-use League\Geotools\Coordinate\Coordinate;
 
 class ConcernTransformer extends TransformerAbstract
 {
@@ -91,25 +90,8 @@ class ConcernTransformer extends TransformerAbstract
 
         $redis = Redis::factory();
         // 获取当前登陆用户和动态用户的geohash
-        $dynamicUser = getUserLongLatInfo($this->userInfo[$userId]['id'], $redis);
-        $loginUser = getUserLongLatInfo($this->userId, $redis);
-        if (empty($dynamicUser) || empty($loginUser)) {
-            return 0;
-        }
 
-        $geotools = app('geotools');
-        $decodedDynamicUser = $geotools->geohash()->decode($dynamicUser);
-        $userLat = $decodedDynamicUser->getCoordinate()->getLatitude();
-        $userLong = $decodedDynamicUser->getCoordinate()->getLongitude();
-        $dynamicCoordUser = new Coordinate([$userLat, $userLong]);
-
-        $loginUser = $geotools->geohash()->decode($loginUser);
-        $lat = $loginUser->getCoordinate()->getLatitude();
-        $long = $loginUser->getCoordinate()->getLongitude();
-        $loginCoordUser = new Coordinate([$lat, $long]);
-
-        $distance = $geotools->distance()->setFrom($dynamicCoordUser)->setTo($loginCoordUser);
-        return sprintf("%.2f", $distance->in('km')->haversine());
+        return sprintf("%.2f", getDistanceByTwoUserId($this->userId, $this->userInfo[$userId]['id'], $redis));
     }
 
     private function getIsLike($dynamicId)

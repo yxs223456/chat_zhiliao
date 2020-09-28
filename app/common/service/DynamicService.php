@@ -14,8 +14,6 @@ use app\common\Constant;
 use app\common\enum\DbDataIsDeleteEnum;
 use app\common\enum\DynamicIsReportEnum;
 use app\common\helper\Redis;
-use League\Geotools\Coordinate\Coordinate;
-use League\Geotools\Geotools;
 use think\facade\Db;
 
 class DynamicService extends Base
@@ -827,20 +825,20 @@ class DynamicService extends Base
         // 缓存当前用户坐标
         cacheUserLongLatInfo($userId, $lat, $long, $redis);
         // 获取附近用户ID
-        $nearUserIds = getNearUserLongLatInfo($lat, $long, $redis);
+        $nearUserIds = getNearUserLongLatInfo($userId, $redis);
 
         if (empty($nearUserIds)) {
             cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
             return [];
         }
 
-        // 重新整理geohash 到userID的数组 删除当前用户的ID
+        // 重新整理 删除当前用户的ID $value[0] = userId $value[1] = distance
         $userIds = [];
-        foreach ($nearUserIds as $key => $value) {
-            if ($value == $userId) {
+        foreach ($nearUserIds as $value) {
+            if ($value[0] == $userId) {
                 continue;
             }
-            $userIds[$key] = $value;
+            $userIds[$value[0]] = $value[1];
         }
 
         if (empty($userIds)) {
@@ -849,9 +847,8 @@ class DynamicService extends Base
         }
         // 获取动态数据
         $dynamics = Db::name("dynamic")
-            ->whereIn("u_id", array_values($userIds))
+            ->whereIn("u_id", array_keys($userIds))
             ->where("is_delete", DbDataIsDeleteEnum::NO)
-            ->order("id", "desc")
             ->limit(300)
             ->select()->toArray();
 
@@ -886,24 +883,13 @@ class DynamicService extends Base
         }, $dynamicIdToUserIds);
 
 
-        $geotools = app('geotools');
-        $coordCurrentUser = new Coordinate([$lat, $long]);// 当前用户经纬度
-
         foreach ($dynamics as &$item) {
             $item["userInfo"] = isset($userIdToUserInfo[$item['u_id']]) ? $userIdToUserInfo[$item['u_id']] : [];
             $item["dynamicCount"] = isset($dynamicIdToDynamicCount[$item['id']]) ? $dynamicIdToDynamicCount[$item['id']] : [];
             $item["likeDynamicUserIds"] = isset($likeDynamicUserIds[$item['id']]) ? $likeDynamicUserIds[$item['id']] : [];
 
             // 计算距离
-            $coordUserGeoHashAndUserId = array_search($item['u_id'], $userIds);
-            $coordUserGeoHashArr = explode("|", $coordUserGeoHashAndUserId);
-            $coordUserGeoHash = $coordUserGeoHashArr[0];
-            $decoded = $geotools->geohash()->decode($coordUserGeoHash);
-            $userLat = $decoded->getCoordinate()->getLatitude();
-            $userLong = $decoded->getCoordinate()->getLongitude();
-            $coordUser = new Coordinate([$userLat, $userLong]);
-            $distance = $geotools->distance()->setFrom($coordCurrentUser)->setTo($coordUser);
-            $item["distance"] = $distance->in('km')->haversine();
+            $item["distance"] = $userIds[$item["u_id"]] ?? 0;
         }
 
         $distanceSort = array_column($dynamics, 'distance');
@@ -911,7 +897,6 @@ class DynamicService extends Base
 
         // 添加更新锁
         setNearUserDynamicInfoLock($userId, $redis);
-
         return $dynamics;
     }
 

@@ -457,6 +457,12 @@ class UserService extends Base
         ];
         Db::name("user_info")->insert($userInfoData);
 
+        // user_set 表
+        $userSetData = [
+            "u_id" => $newUser["id"],
+        ];
+        Db::name("user_set")->insert($userSetData);
+
         // user_rc_info 表
         $userRcInfoData = [
             "u_id" => $newUser["id"],
@@ -571,6 +577,21 @@ class UserService extends Base
             // 纪录用户性别
             $user->sex = $sex;
             $user->save();
+
+            //根据性别初始化设置
+            $sexInitConfig = Constant::SEX_INIT_CONFIG;
+            if ($sex == UserSexEnum::FEMALE) {
+                $userSetUpdate = [
+                    "video_chat_price" => $sexInitConfig["female"]["video_chat_price"],
+                    "voice_chat_price" => $sexInitConfig["female"]["voice_chat_price"],
+                ];
+            } else {
+                $userSetUpdate = [
+                    "video_chat_price" => $sexInitConfig["male"]["video_chat_price"],
+                    "voice_chat_price" => $sexInitConfig["male"]["voice_chat_price"],
+                ];
+            }
+            Db::name("user_set")->where("u_id", $userBase["id"])->update($userSetUpdate);
 
             // 男生注册，奖励邀请人1元
             if ($sex == UserSexEnum::MALE) {

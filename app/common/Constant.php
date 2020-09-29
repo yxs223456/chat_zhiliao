@@ -22,6 +22,18 @@ class Constant
         "image_url" => "",
     ];
 
+    // 性别初始化信息
+    const SEX_INIT_CONFIG = [
+        "male" => [
+            "video_chat_price" => 0,
+            "voice_chat_price" => 0,
+        ],
+        "female" => [
+            "video_chat_price" => 100,
+            "voice_chat_price" => 100,
+        ],
+    ];
+
     // 提现手续费比例
     const WITHDRAW_POUNDAGE_RATE = 0.01;
 

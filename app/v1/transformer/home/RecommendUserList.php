@@ -25,7 +25,7 @@ class RecommendUserList extends TransformerAbstract
         ];
 
         foreach ($data["list"] as $item) {
-            $returnData["list"] = [
+            $returnData["list"][] = [
                 "id" => (int) $item["id"],
                 "user_number" => (string) $item["user_number"],
                 "photo" => (string) $item["photo"],

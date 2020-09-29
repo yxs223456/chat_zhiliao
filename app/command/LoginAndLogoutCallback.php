@@ -144,9 +144,7 @@ class LoginAndLogoutCallback extends Command
             if ($userSet["is_stealth"] == UserIsStealthEnum::NO && $userInfo["city"]) {
                 addUserToHomeSiteList($userId, $userWallet["income_total_amount"], $userInfo["city"], $redis);
             }
-
         }
-
 
         $userInfo["last_login_time"] = time();
         cacheUserInfoDataByUId($userInfo, $redis);

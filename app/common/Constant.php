@@ -110,4 +110,7 @@ class Constant
 
     // 女神魅力榜最多排名查询到500名
     const CHARM_LIST_MAX_NUM = 500;
+
+    // 地理位置查询的半径区间 200 km
+    const GEO_SEARCH_DISTANCE_KILOMETER = 200;
 }

@@ -546,61 +546,44 @@ function getNearUserDynamicInfoLock($userId, Redis $redis)
 /**
  * 附近用户geohash缓存相关(并发)
  */
-define("REDIS_USER_LONG_LAT_INFO", REDIS_KEY_PREFIX . 'userLongLatInfo:');
+define("REDIS_ALL_USER_LONG_LAT_INFO", REDIS_KEY_PREFIX . 'allUserLongLatInfo:');
 // 缓存数据
 function cacheUserLongLatInfo($userId, $lat, $long, \Redis $redis)
 {
-    $geotools = new \League\Geotools\Geotools();
-    $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
-    $geoHash = $geotools->geohash()->encode($coordToGeohash, 12)->getGeohash();
-    $key = REDIS_USER_LONG_LAT_INFO . '|' . $geoHash . "|" . $userId;
-    $redis->set($key, $userId, 86400);
+
+    $key = REDIS_ALL_USER_LONG_LAT_INFO;
+    // 添加当前用户经纬度
+    $redis->rawCommand("geoadd", $key, $long, $lat, $userId);
 }
 
-// 获取附近用户坐标缓存
-function getNearUserLongLatInfo($lat, $long, \Redis $redis)
+// 获取某个用户查询200km半斤内用户ID和之间的距离
+function getNearUserLongLatInfo($userId, \Redis $redis)
 {
-    $geotools = new \League\Geotools\Geotools();
-    $coordToGeohash = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
-    $geoHash = $geotools->geohash()->encode($coordToGeohash, 1)->getGeohash();
-    $key = REDIS_USER_LONG_LAT_INFO . '|' . $geoHash . "*";
-    $keys = $redis->keys($key);
-    if (empty($keys)) {
+    $key = REDIS_ALL_USER_LONG_LAT_INFO;
+    $ret = $redis->rawCommand("georadiusbymember", $key, $userId, \app\common\Constant::GEO_SEARCH_DISTANCE_KILOMETER, "km", "WITHDIST", "COUNT", "300", "ASC");
+    if (empty($ret)) {
         return null;
     }
-    $ret = [];
-    foreach ($keys as $item) {
-        $keyArr = explode("|", $item);
-        $ret[$keyArr[1] . "|" . $keyArr[2]] = $keyArr[2];
-    }
+
     return $ret;
 }
 
-// 获取某个用户坐标缓存
-function getUserLongLatInfo($userId, \Redis $redis)
+// 计算两个用户间的距离
+function getDistanceByTwoUserId($userId1, $userId2, Redis $redis)
 {
-    $key = REDIS_USER_LONG_LAT_INFO . "|*|" . $userId;
-    $keys = $redis->keys($key);
-    if (empty($keys)) {
-        return null;
-    }
-    $first = array_shift($keys);
-    $keyArr = explode("|", $first);
-    return $keyArr[1];
+    return $redis->rawCommand("geodist", REDIS_ALL_USER_LONG_LAT_INFO, $userId1, $userId2, "km");
 }
 
 // 删除所有用户坐标缓存
 function deleteUserLongLatInfo(\Redis $redis)
 {
-    $keys = $redis->keys(REDIS_USER_LONG_LAT_INFO . "*");
-    $redis->del($keys);
+    $redis->del(REDIS_ALL_USER_LONG_LAT_INFO);
 }
 
 // 删除一个用户坐标缓存
 function deleteUserLongLatInfoByUserId($userId, \Redis $redis)
 {
-    $keys = $redis->keys(REDIS_USER_LONG_LAT_INFO . "|*|" . $userId);
-    $redis->del($keys);
+    $redis->zRem(REDIS_ALL_USER_LONG_LAT_INFO, $userId);
 }
 
 /**
@@ -611,38 +594,17 @@ define("REDIS_NEAR_USER_SORT_SET", REDIS_KEY_PREFIX . "nearUserSortSet:");
 function cacheNearUserSortSet($userId, \Redis $redis)
 {
     $key = REDIS_NEAR_USER_SORT_SET . $userId;
-    $geoHash = getUserLongLatInfo($userId, $redis);
-    if (empty($geoHash)) {
-        return;
-    }
-    $searchKey = REDIS_USER_LONG_LAT_INFO . "|" . substr($geoHash, 0, 1) . "*";
-    $keys = $redis->keys($searchKey);
-    if (empty($keys)) {
+    $userIdAndDistance = getNearUserLongLatInfo($userId, $redis);
+    if (empty($userIdAndDistance)) {
         return;
     }
 
     // 计算距离放入有序集合
-    foreach ($keys as $item) {
-        $keyArr = explode("|", $item);
-        // 排除当前用户自己
-        if ($keyArr[2] == $userId) {
+    foreach ($userIdAndDistance as $item) {
+        if ($item[0] == $userId) {
             continue;
         }
-        $geotools = app('geotools');
-        $decodedDynamicUser = $geotools->geohash()->decode($keyArr[1]);
-        $userLat = $decodedDynamicUser->getCoordinate()->getLatitude();
-        $userLong = $decodedDynamicUser->getCoordinate()->getLongitude();
-        $dynamicCoordUser = new \League\Geotools\Coordinate\Coordinate([$userLat, $userLong]);
-
-        $loginUser = $geotools->geohash()->decode($geoHash);
-        $lat = $loginUser->getCoordinate()->getLatitude();
-        $long = $loginUser->getCoordinate()->getLongitude();
-        $loginCoordUser = new \League\Geotools\Coordinate\Coordinate([$lat, $long]);
-
-        $distance = $geotools->distance()->setFrom($dynamicCoordUser)->setTo($loginCoordUser);
-        $km = sprintf("%.2f", $distance->in('km')->haversine());
-
-        $redis->zAdd($key, $km, $keyArr[2]);
+        $redis->zAdd($key, $item[1], $item[0]);
     }
     $redis->expire($key, 86400); // 缓存一天
 }

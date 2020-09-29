@@ -40,7 +40,7 @@ class HomeService extends Base
             ->field("u.id,u.user_number,
                 ui.photos,ui.city,ui.signatures,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
-            ->select();
+            ->select()->toArray();
         foreach ($users as $key => $user) {
             $photos = json_decode($user["photos"], true);
             $users[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
@@ -82,7 +82,7 @@ class HomeService extends Base
             ->field("u.id,u.user_number,
                 ui.photos,ui.city,ui.signatures,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
-            ->select();
+            ->select()->toArray();
         foreach ($users as $key => $user) {
             $photos = json_decode($user["photos"], true);
             $users[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
@@ -125,7 +125,7 @@ class HomeService extends Base
             ->field("u.id,u.user_number,
                 ui.photos,ui.city,ui.signatures,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
-            ->select();
+            ->select()->toArray();
         foreach ($users as $key => $user) {
             $photos = json_decode($user["photos"], true);
             $users[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";

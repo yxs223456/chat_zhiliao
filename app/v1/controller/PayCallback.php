@@ -14,6 +14,7 @@ use app\common\enum\PayOrderSceneEnum;
 use app\common\enum\PayOrderStatusEnum;
 use app\common\helper\AliPay;
 use app\common\helper\WechatPay;
+use app\common\service\RechargeService;
 use app\common\service\VipService;
 use think\facade\Db;
 
@@ -75,6 +76,9 @@ class PayCallback extends BaseController
             switch ($userPayOrder["scene"]) {
                 case PayOrderSceneEnum::VIP:
                     VipService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                    break;
+                case PayOrderSceneEnum::COIN:
+                    RechargeService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                     break;
             }
 
@@ -153,6 +157,9 @@ XML;
                 switch ($userPayOrder["scene"]) {
                     case PayOrderSceneEnum::VIP:
                         VipService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                        break;
+                    case PayOrderSceneEnum::COIN:
+                        RechargeService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                         break;
                 }
 

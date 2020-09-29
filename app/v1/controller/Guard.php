@@ -11,6 +11,7 @@ namespace app\v1\controller;
 
 use app\common\service\GuardService;
 use app\v1\transformer\guard\CurrentTransformer;
+use app\v1\transformer\guard\RecentlyTransformer;
 use app\v1\transformer\guard\WaitTransformer;
 
 class Guard extends Base
@@ -54,7 +55,11 @@ class Guard extends Base
      */
     public function recently()
     {
+        $user = $this->query['user'];
 
+        $service = new GuardService();
+        $data = $service->maleRecently($user);
+        return $this->jsonResponse($data, new RecentlyTransformer());
     }
 
 }

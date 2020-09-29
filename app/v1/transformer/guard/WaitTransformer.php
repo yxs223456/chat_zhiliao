@@ -23,7 +23,6 @@ class WaitTransformer extends TransformerAbstract
             'list' => []
         ];
 
-
         $userIdToInfo = [];
         if (!empty($userInfoList)) {
             $userIdToInfo = array_combine(array_column($userInfoList, 'u_id'), $userInfoList);

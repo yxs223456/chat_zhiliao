@@ -1100,3 +1100,54 @@ function getMaleWeekEarnList($pageNum, $pageSize, Redis $redis)
     }
     return null;
 }
+
+
+/**
+ * 男生正在守护的女神列表(缓存一天)
+ */
+define("REDIS_MALE_CURRENT_GUARD_PRETTY", REDIS_KEY_PREFIX . "user_male_current_guard_pretty:");
+//男生正在守护的女神列表
+function cacheMaleCurrentGuardPretty($uid, $data, Redis $redis)
+{
+    $key = REDIS_MALE_CURRENT_GUARD_PRETTY . $uid;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//获取男生正在守护的女神列表
+function getMaleCurrentGuardPretty($uid, Redis $redis)
+{
+    $key = REDIS_MALE_CURRENT_GUARD_PRETTY . $uid;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}
+
+/**
+ * 男生最近三个月守护的女神列表(缓存一天)
+ */
+define("REDIS_MALE_RECENTLY_GUARD_PRETTY", REDIS_KEY_PREFIX . "user_male_recently_guard_pretty:");
+//男生最近三个月守护的女神列表
+function cacheMaleRecentlyGuardPretty($uid, $data, Redis $redis)
+{
+    $key = REDIS_MALE_RECENTLY_GUARD_PRETTY. $uid;
+    $redis->set($key, json_encode($data));
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400);// 缓存一天
+    }
+}
+
+//获取男生最近三个月守护的女神列表
+function getMaleRecentlyGuardPretty($uid, Redis $redis)
+{
+    $key = REDIS_MALE_RECENTLY_GUARD_PRETTY . $uid;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}

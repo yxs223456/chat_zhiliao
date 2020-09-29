@@ -121,16 +121,21 @@ class LoginAndLogoutCallback extends Command
     {
         $redis = Redis::factory();
 
+        // 修改用户最后登录时间、重新生成用户缓存
+        Db::name("user_info")->where("u_id", $userId)->update([
+            "last_login_time" => time(),
+        ]);
+        deleteUserInfoDataByUId($userId, $redis);
+
         // 如果用户是女生并且设置了相册，把用户放入首页推荐列表
-        $user = UserService::getUserById($userId, $redis);
-        $userInfo = Db::name("user_info")->where("u_id", $userId)->find();
+        $userInfo = UserInfoService::getUserInfoById($userId, $redis);
         $photos = json_decode($userInfo["photos"], true);
-        if ($user["sex"] == UserSexEnum::FEMALE && count($photos) > 0) {
+        if ($userInfo["sex"] == UserSexEnum::FEMALE && is_array($photos) && count($photos) > 0) {
             $userWallet = Db::name("user_wallet")->where("u_id", $userId)->find();
             addUserToHomeRecommendList($userId, $userWallet["income_total_amount"], $redis);
 
             // 如果是一周内新注册女生，把用户放入首页新人列表
-            if (time() - strtotime($user["create_time"]) <= 7 * 86400) {
+            if (time() - strtotime($userInfo["create_time"]) <= 7 * 86400) {
                 addUserToHomeNewUserList($userId, $userWallet["income_total_amount"], $redis);
             }
 
@@ -142,10 +147,7 @@ class LoginAndLogoutCallback extends Command
 
         }
 
-        // 修改用户最后登录时间、重新生成用户缓存
-        Db::name("user_info")->where("id", $userInfo["id"])->update([
-            "last_login_time" => time(),
-        ]);
+
         $userInfo["last_login_time"] = time();
         cacheUserInfoDataByUId($userInfo, $redis);
 

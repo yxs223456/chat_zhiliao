@@ -242,8 +242,85 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
         return $ret;
     }
 
+    /**
+     * 获取当前登陆的男生正在守护的女神列表
+     *
+     * @param $user
+     * @return array|mixed|null
+     * @throws AppException
+     */
     public function current($user)
     {
-//        $data = Db::name("user")
+        $userInfo = UserInfoService::getUserInfoById($user['id']);
+        // 男生的正在守护
+        if ($userInfo["sex"] != UserSexEnum::MALE) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        $redis = Redis::factory();
+        if ($data = getMaleCurrentGuardPretty($user["id"], $redis)) {
+            return $data;
+        }
+
+        $ret = [
+            "u_id" => $user['id'],
+            "data" => []
+        ];
+
+        $data = Db::name("guard_history")->alias("gh")
+            ->leftJoin("user_info ui", "gh.u_id = ui.u_id")
+            ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname")
+            ->where("start_date", ">=", getLastWeekStartDate())
+            ->where("end_date", "<=", getLastWeekEndDate())
+            ->where("guard_u_id", "=", $user["id"])
+            ->select()->toArray();
+        if (empty($data)) {
+            cacheMaleCurrentGuardPretty($user['id'], $ret, $redis);
+            return $ret;
+        }
+
+        $ret["data"] = $data;
+        cacheMaleCurrentGuardPretty($user['id'], $ret, $redis);
+        return $ret;
+    }
+
+    /**
+     * 男生最近三个月守护的女神列表
+     *
+     * @param $user
+     * @return array|mixed|null
+     * @throws AppException
+     */
+    public function maleRecently($user)
+    {
+        $userInfo = UserInfoService::getUserInfoById($user['id']);
+        // 男生的正在守护
+        if ($userInfo["sex"] != UserSexEnum::MALE) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+
+        $redis = Redis::factory();
+        if ($data = getMaleRecentlyGuardPretty($user["id"], $redis)) {
+            return $data;
+        }
+
+        $ret = [
+            "u_id" => $user['id'],
+            "data" => []
+        ];
+
+        $data = Db::name("guard_history")->alias("gh")
+            ->leftJoin("user_info ui", "gh.u_id = ui.u_id")
+            ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname")
+            ->where("start_date", ">=", date("Y-m-d", strtotime("-3 month")))
+            ->where("guard_u_id", "=", $user["id"])
+            ->select()->toArray();
+        if (empty($data)) {
+            cacheMaleRecentlyGuardPretty($user['id'], $ret, $redis);
+            return $ret;
+        }
+
+        $ret["data"] = $data;
+        cacheMaleRecentlyGuardPretty($user['id'], $ret, $redis);
+        return $ret;
     }
 }

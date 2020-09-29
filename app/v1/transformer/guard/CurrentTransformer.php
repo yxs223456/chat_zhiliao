@@ -15,31 +15,26 @@ class CurrentTransformer extends TransformerAbstract
 
     public function transformData(array $data): array
     {
-        $guard = $data['guard'] ?? [];
-        $amountList = $data['guardList'] ?? [];
-
-        $retData = [
-            'guard' => new \stdClass(),
-            'list' => []
-        ];
-
-        if (!empty($guard)) {
-            $retData["guard"]["avatar"] = $guard["portrait"] ?? "";
+        $data = $data["data"] ?? [];
+        if(empty($data)) {
+            return [
+                "list" => []
+            ];
         }
-
 
         $ret = [];
-        foreach ($amountList as $item) {
+        foreach ($data as $item)
+        {
             $tmp = [];
-            $tmp['u_id'] = $item['guard_u_id'] ?? '';
-            $tmp['avatar'] = $item["portrait"] ?? "";
-            $tmp['nickname'] = $item['nickname'] ?? '';
-            $tmp['charm'] = $this->getCharm($item['charm_amount']);
+            $tmp["u_id"] = $item["u_id"] ?? 0;
+            $tmp["avatar"] = $item["portrait"] ?? "";
+            $tmp["nickname"] = $item["nickname"] ?? "";
+            $tmp["charm"] = $this->getCharm($item["charm_amount"]);
             $ret[] = $tmp;
         }
-
-        $retData['list'] = $ret;
-        return $retData;
+        return [
+            "list" => $ret
+        ];
     }
 
     // 处理魅力值

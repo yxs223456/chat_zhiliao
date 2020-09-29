@@ -15,21 +15,16 @@ class RecentlyTransformer extends TransformerAbstract
 
     public function transformData(array $data): array
     {
-        $guard = $data['guard'] ?? [];
-        $amountList = $data['guardList'] ?? [];
+        $data = $data["data"] ?? [];
 
-        $retData = [
-            'guard' => new \stdClass(),
-            'list' => []
-        ];
-
-        if (!empty($guard)) {
-            $retData["guard"]["avatar"] = $guard["portrait"] ?? "";
+        if (empty($data)) {
+            return [
+                'list' => []
+            ];
         }
 
-
         $ret = [];
-        foreach ($amountList as $item) {
+        foreach ($data as $item) {
             $tmp = [];
             $tmp['u_id'] = $item['guard_u_id'] ?? '';
             $tmp['avatar'] = $item["portrait"] ?? "";
@@ -38,8 +33,9 @@ class RecentlyTransformer extends TransformerAbstract
             $ret[] = $tmp;
         }
 
-        $retData['list'] = $ret;
-        return $retData;
+        return [
+            "list" => $ret
+        ];
     }
 
     // 处理魅力值

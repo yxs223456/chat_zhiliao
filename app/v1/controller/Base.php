@@ -30,7 +30,7 @@ class Base extends BaseController
 
     protected $beforeActionList = [
         "getUser" => [
-            "only" => "",
+            "except" => "",
         ],
         "checkSex" => [
             "except" => "",

@@ -39,6 +39,7 @@ class CertificationService extends Base
         Db::startTrans();
         try {
             Db::name("user_certification")->insert([
+                "u_id" => $user["id"],
                 "certification_image" => $certificationImage,
                 "audit_status" => CertificateStatusEnum::WAIT_AUDIT,
             ]);

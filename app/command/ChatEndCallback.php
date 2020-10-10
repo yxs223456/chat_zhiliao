@@ -48,7 +48,7 @@ class ChatEndCallback extends Command
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
-                "u_id" => $this->chatId,
+                "chat_id" => $this->chatId,
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),

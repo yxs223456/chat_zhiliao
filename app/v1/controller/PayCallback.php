@@ -84,6 +84,15 @@ class PayCallback extends BaseController
 
 
             Db::commit();
+
+            /**
+             * 支付后的异步处理
+             */
+            switch ($userPayOrder["scene"]) {
+                case PayOrderSceneEnum::COIN:
+                    rechargeCallbackProduce($userPayOrder["u_id"]);
+                    break;
+            }
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;

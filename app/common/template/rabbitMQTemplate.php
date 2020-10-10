@@ -17,6 +17,28 @@ define("RABBIT_MQ_FANOUT_EXCHANGE_PREFIX", "chat_fanout_exchange:");
 // rabbitmq 队列名前缀
 define("RABBIT_MQ_QUEUE_PREFIX", "chat_queue:");
 
+
+/**
+ * 用户充值后回调
+ */
+function rechargeCallbackProduce($userId)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "recharge";
+    $routingKey = "recharge";
+    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+        "u_id" => $userId,
+    ]));
+}
+
+function rechargeCallbackConsumer($callback)
+{
+    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "recharge";
+    $queueName = RABBIT_MQ_QUEUE_PREFIX . "recharge";
+    $routingKey = "recharge";
+
+    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);;
+}
+
 /**
  * 用户登录、退出后回调
  */

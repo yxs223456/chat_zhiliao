@@ -25,7 +25,7 @@ class GuardService extends Base
      * @param $userId
      * @return array
      */
-    public static function getGuard($userId)
+    public static function getGuard1($userId)
     {
         $redis = Redis::factory();
         // 缓存有返回
@@ -50,17 +50,17 @@ class GuardService extends Base
 
 
     /**
-     * 获取用户守护人信息没有时创建
+     * 获取用户守护人信息没有时创建(不添加历史记录，因为有脚本添加，这里只获取)
      *
      * @param $userId
      * @return array
      */
-    public static function getGuard1($userId)
+    public static function getGuard($userId)
     {
         $redis = Redis::factory();
         // 缓存有返回
         if (!empty($data = getUserGuard($userId, $redis))) {
-            return $data;
+            return $data["data"];
         }
 
         // 没有缓存查历史记录
@@ -73,7 +73,7 @@ class GuardService extends Base
             ->where("end_date", getLastWeekEndDate())
             ->find();
         if (!empty($data)) {
-            cacheUserGuard($userId, $data, $redis);
+            cacheUserGuard($userId, ["data" => $data], $redis);
             return $data;
         }
 
@@ -82,7 +82,7 @@ class GuardService extends Base
         $userInfo = UserService::getUserById($userId);
         // 男生直接删除记录
         if ($userInfo['sex'] == UserSexEnum::MALE) {
-            cacheUserGuard($userId, [], $redis);
+            cacheUserGuard($userId, ["data" => []], $redis);
             return [];
         }
 
@@ -100,19 +100,9 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
 
         // 没有达到守护条件直接返回
         if (empty($guard)) {
-            cacheUserGuard($userId, [], $redis);
+            cacheUserGuard($userId, ["data" => []], $redis);
             return [];
         }
-
-        // 达到守护条件的添加守护历史记录,查询守护人信息
-        Db::name("guard_history")->insert([
-            'u_id' => $userId,
-            'guard_u_id' => $guard['guard_u_id'],
-            'sex_type' => InteractSexTypeEnum::FEMALE_TO_MALE,
-            'charm_amount' => $guard['s'],
-            'start_date' => getLastWeekStartDate(),
-            'end_date' => getLastWeekEndDate()
-        ]);
 
         $data = Db::name("user_info")->alias("ui")
             ->leftJoin("user u", "ui.u_id = u.id")
@@ -120,7 +110,7 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             ->where("ui.u_id", $guard['guard_u_id'])
             ->find();
 
-        cacheUserGuard($userId, $data, $redis);
+        cacheUserGuard($userId, ["data" => $data], $redis);
         return $data;
     }
 

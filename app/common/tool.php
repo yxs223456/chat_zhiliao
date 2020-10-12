@@ -239,3 +239,18 @@ function getLastWeekEndDate()
 {
     return date("Y-m-d", time() - date("w") * 86400);
 }
+
+// 获取文件内容
+function read_file($fname)
+{
+    $content = '';
+    if (!file_exists($fname)) {
+        return "";
+    }
+    $handle = fopen($fname, "rb");
+    while (!feof($handle)) {
+        $content .= fread($handle, 10000);
+    }
+    fclose($handle);
+    return $content;
+}

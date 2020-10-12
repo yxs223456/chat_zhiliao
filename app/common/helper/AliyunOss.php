@@ -8,6 +8,10 @@
 namespace app\common\helper;
 
 use OSS\OssClient;
+use Sts\Request\V20150401\AssumeRoleRequest;
+use think\facade\App;
+
+include_once App::getRootPath() . "/extend/sts-server/aliyun-php-sdk-core/Config.php";
 
 class AliyunOss
 {
@@ -15,6 +19,9 @@ class AliyunOss
     protected static $accessKeySecret = "";
     protected static $endpoint = "";
     protected static $bucket = "";
+    protected static $roleArn = "";
+    protected static $tokenExpireTime = 900;
+    protected static $policyFile = "";
 
     private static function getConfig()
     {
@@ -23,6 +30,9 @@ class AliyunOss
         self::$accessKeySecret = $config["key_secret"];
         self::$endpoint = $config["endpoint"];
         self::$bucket = $config["bucket"];
+        self::$roleArn = $config["role_arn"];
+        self::$tokenExpireTime = $config["token_expire_time"];
+        self::$policyFile = app()->getRootPath() . "/extend/" . trim($config["policy_file"], "/");
     }
 
     /**
@@ -43,5 +53,44 @@ class AliyunOss
         } else {
             return "";
         }
+    }
+
+    /**
+     * 前端上传获取token
+     *
+     * @return array
+     */
+    public static function getToken()
+    {
+        // 加载配置文件
+        self::getConfig();
+
+        $policy = read_file(self::$policyFile);
+        $iClientProfile = \DefaultProfile::getProfile("cn-hangzhou", self::$accessKeyId, self::$accessKeySecret);
+        $client = new \DefaultAcsClient($iClientProfile);
+
+        $request = new AssumeRoleRequest();
+        $request->setRoleSessionName("client_name");
+        $request->setRoleArn(self::$roleArn);
+        $request->setPolicy($policy);
+        $request->setDurationSeconds(self::$tokenExpireTime);
+        $response = $client->doAction($request);
+
+        $rows = array();
+        $body = $response->getBody();
+        $content = json_decode($body);
+
+        if ($response->getStatus() == 200) {
+            $rows['StatusCode'] = 200;
+            $rows['AccessKeyId'] = $content->Credentials->AccessKeyId;
+            $rows['AccessKeySecret'] = $content->Credentials->AccessKeySecret;
+            $rows['Expiration'] = $content->Credentials->Expiration;
+            $rows['SecurityToken'] = $content->Credentials->SecurityToken;
+        } else {
+            $rows['StatusCode'] = 500;
+            $rows['ErrorCode'] = $content->Code;
+            $rows['ErrorMessage'] = $content->Message;
+        }
+        return $rows;
     }
 }

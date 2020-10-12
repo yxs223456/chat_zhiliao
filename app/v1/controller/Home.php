@@ -9,6 +9,7 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
+use app\common\helper\AliyunOss;
 use app\common\service\HomeService;
 use app\v1\transformer\home\NewUserList;
 use app\v1\transformer\home\RecommendUserList;
@@ -99,5 +100,15 @@ class Home extends Base
         $returnData = $service->siteUserList($site, $pageNum, $pageSize);
 
         return $this->jsonResponse($returnData, new SiteUserList());
+    }
+
+    /**
+     * 获取oss前端上传token
+     *
+     * @return \think\response\Json
+     */
+    public function ossToken()
+    {
+        return json(AliyunOss::getToken());
     }
 }

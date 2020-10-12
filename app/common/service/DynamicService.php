@@ -8,7 +8,6 @@
 
 namespace app\common\service;
 
-
 use app\common\AppException;
 use app\common\Constant;
 use app\common\enum\DbDataIsDeleteEnum;
@@ -75,7 +74,9 @@ class DynamicService extends Base
         }
 
         // 删除缓存
-        deleteUserDynamicInfo($id, Redis::factory());
+        $redis = Redis::factory();
+        deleteUserDynamicInfo($id, $redis);
+        deleteUserIndexDataByUId($user["id"], $redis);
 
         return Db::name("dynamic")->where("id", $id)->update(["is_delete" => DbDataIsDeleteEnum::YES]);
 

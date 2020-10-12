@@ -1151,3 +1151,37 @@ function getMaleRecentlyGuardPretty($uid, Redis $redis)
     }
     return null;
 }
+
+
+/**
+ * 城市小视频列表缓存相关(并发)
+ */
+define("REDIS_CITY_VIDEO_LIST", REDIS_KEY_PREFIX . 'cityVideoList:');
+// 缓存数据
+function cacheCityVideoList($city, $startId, $pageSize, $data, \Redis $redis)
+{
+    $key = REDIS_CITY_VIDEO_LIST . $city . ":" . $startId . ":" . $pageSize;
+    $redis->set($key, json_encode($data), 3600);
+}
+
+// 获取缓存
+function getCityVideoList($city, $startId, $pageSize, \Redis $redis)
+{
+    $key = REDIS_CITY_VIDEO_LIST . $city . ":" . $startId . ":" . $pageSize;
+    $data = $redis->get($key);
+    return $data ? json_decode($data, true) : null;
+}
+
+// 删除所有缓存
+function deleteCityVideoList(\Redis $redis)
+{
+    $keys = $redis->keys(REDIS_CITY_VIDEO_LIST . "*");
+    $redis->del($keys);
+}
+
+// 删除首页缓存
+function deleteFirstCityVideoList($city, $pageSize, \Redis $redis)
+{
+    $key = REDIS_CITY_VIDEO_LIST . $city . ":0:" . $pageSize;
+    $redis->del($key);
+}

@@ -50,6 +50,8 @@ class AppException extends \Exception
     const CHAT_NOT_CALLING = [7007, "不在通话中"];
     const CHAT_NOT_WAIT_ANSWER = [7008, "通话状态不为待接听"];
 
+    const VIDEO_NOT_EXISTS = [8001, "视频不存在"];
+
     public static function factory($errConst, $message = "")
     {
         $code = $errConst[0];

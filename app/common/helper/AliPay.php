@@ -905,9 +905,13 @@ class AliPay
         if (empty($params['sign'])) {
             throw new \Exception("签名错误");
         }
+        $signType = self::getConfig("sign_type");
+        if ($signType == "RSA") {
+            $params['sign_type'] = null;
+        }
         $sign = $params['sign'];
         $params['sign'] = null;
-        return self::verify(self::getSignContent($params), $sign, self::getConfig("sign_type"));
+        return self::verify(self::getSignContent($params), $sign, $signType);
     }
 
 }

@@ -910,8 +910,7 @@ class AliPay
         $sign = $params['sign'];
         $params['sign_type'] = null;
         $params['sign'] = null;
-        
-        Log::write(self::getSignContent($params),"info");
+
         return self::verify(self::getSignContent($params), $sign, $signType);
     }
 

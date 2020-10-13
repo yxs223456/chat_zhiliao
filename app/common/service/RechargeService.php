@@ -147,7 +147,7 @@ class RechargeService extends Base
                 "u_id" => $user["id"],
                 "scene" => PayOrderSceneEnum::VIP,
                 "source_id" => $rechargeId,
-                "trade_no" => $outTradeNo,
+                "out_trade_no" => $outTradeNo,
                 "is_pay" => IsPayEnum::NO,
                 "pay_method" => PayMethodEnum::ALI,
                 "amount" => $money,

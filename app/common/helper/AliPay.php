@@ -12,10 +12,6 @@ use think\facade\Log;
  */
 class AliPay
 {
-    //网关
-    private static $gatewayUrl = "https://openapi.alipay.com/gateway.do";
-    // 沙箱环境
-    private static $gatewayDevUrl = "https://openapi.alipaydev.com/gateway.do";
     //返回数据格式
     private static $format = "json";
     //api版本
@@ -57,26 +53,8 @@ class AliPay
         if (empty(self::$config)) {
             self::$config = config('account.alipay');
         }
-        $currentEnv = self::$config['env'] ?? 'dev';
 
-        return isset(self::$config[$currentEnv][$key]) ? self::$config[$currentEnv][$key] : "";
-    }
-
-    /**
-     * 获取当前请求网关地址
-     *
-     * @return string
-     */
-    protected static function getGatewayUrl()
-    {
-        if (empty(self::$config)) {
-            self::$config = config('account.alipay');
-        }
-        $currentEnv = self::$config['env'] ?? 'dev';
-        if ($currentEnv == 'dev') {
-            return self::$gatewayDevUrl;
-        }
-        return self::$gatewayUrl;
+        return isset(self::$config[$key]) ? self::$config[$key] : "";
     }
 
     /**
@@ -320,7 +298,7 @@ class AliPay
         if ("GET" == $httpmethod) {
 
             //拼接GET请求串
-            $requestUrl = self::getGatewayUrl() . "?" . $preSignStr . "&sign=" . urlencode($sysParams["sign"]);
+            $requestUrl = self::getConfig("gateway_url") . "?" . $preSignStr . "&sign=" . urlencode($sysParams["sign"]);
 
             return $requestUrl;
         } else {
@@ -370,7 +348,7 @@ class AliPay
         $sysParams["sign"] = self::generateSign($sysParams, self::getConfig("sign_type"));
 
         //系统参数放入GET请求串
-        $requestUrl = self::getGatewayUrl() . "?";
+        $requestUrl = self::getConfig("gateway_url") . "?";
         foreach ($sysParams as $sysParamKey => $sysParamValue) {
             $requestUrl .= "$sysParamKey=" . urlencode(self::characet($sysParamValue, self::$postCharset)) . "&";
         }
@@ -585,7 +563,7 @@ class AliPay
     protected static function buildRequestForm($para_temp)
     {
 
-        $sHtml = "<form id='alipaysubmit' name='alipaysubmit' action='" . self::getGatewayUrl() . "?charset=" . trim(self::$postCharset) . "' method='POST'>";
+        $sHtml = "<form id='alipaysubmit' name='alipaysubmit' action='" . self::getConfig("gateway_url") . "?charset=" . trim(self::$postCharset) . "' method='POST'>";
         while (list ($key, $val) = each($para_temp)) {
             if (false === self::checkEmpty($val)) {
                 //$val = $this->characet($val, self::$postCharset);
@@ -646,9 +624,7 @@ class AliPay
 
     private static function verify($data, $sign, $signType = 'RSA')
     {
-
         if (self::checkEmpty(self::getConfig('ali_public_key_file_path'))) {
-
             $pubKey = self::getConfig("ali_public_key");
             $res = "-----BEGIN PUBLIC KEY-----\n" .
                 wordwrap($pubKey, 64, "\n", true) .

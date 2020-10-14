@@ -11,7 +11,6 @@ namespace app\v1\controller;
 use app\common\AppException;
 use app\common\service\DynamicService;
 use app\common\service\VideoService;
-use app\v1\transformer\dynamic\NewestTransformer;
 use app\v1\transformer\video\CityListTransformer;
 
 class Video extends Base
@@ -42,7 +41,7 @@ class Video extends Base
         $city = $request["city"] ?? "";
         $user = $this->query["user"];
 
-        if (!checkInt($pageSize, false) || !checkInt($startId, false) || empty($city)) {
+        if (!checkInt($pageSize, false) || !checkInt($startId) || empty($city)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new VideoService();

@@ -27,12 +27,12 @@ class VideoService extends Base
      */
     public function post($source, $user)
     {
+        // TODO 验证规则
         Db::startTrans();
         try {
             // 添加动态
             $videoData = [
                 'u_id' => $user["id"],
-                'u_sex' => $user['sex'],
                 'source' => $source,
                 'create_time' => date("Y-m-d H:i:s")
             ];

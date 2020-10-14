@@ -721,7 +721,7 @@ class UserService extends Base
     }
 
     /**
-     * 设置视频和音频
+     * 设置消息收费
      *
      * @param $switch int
      * @param $user array

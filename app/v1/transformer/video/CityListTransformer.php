@@ -8,7 +8,6 @@
 
 namespace app\v1\transformer\video;
 
-use app\common\enum\UserOccupationEnum;
 use app\common\transformer\TransformerAbstract;
 
 class CityListTransformer extends TransformerAbstract

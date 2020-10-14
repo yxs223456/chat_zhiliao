@@ -12,7 +12,9 @@ namespace app\v1\controller;
 use app\common\AppException;
 use app\common\service\RechargeService;
 use app\v1\transformer\recharge\IndexTransformer;
+use app\v1\transformer\recharge\PayByAliTransformer;
 use app\v1\transformer\recharge\PayByWeChatTransformer;
+use think\facade\Db;
 
 class Recharge extends Base
 {
@@ -77,6 +79,6 @@ class Recharge extends Base
 
         $service = new RechargeService();
         $data = $service->payByAli($rechargeId, $user);
-        return $data;
+        return $this->jsonResponse(["url" => $data], new PayByAliTransformer());
     }
 }

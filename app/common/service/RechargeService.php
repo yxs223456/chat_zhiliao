@@ -178,7 +178,7 @@ class RechargeService extends Base
      */
     public static function afterPay($userId, $rechargeId)
     {
-        $wallet = Db::name("user_wallet")->where("u_id", $userId)->force(true)->find();
+        $wallet = Db::name("user_wallet")->where("u_id", $userId)->lock(true)->find();
         $rechargeConfig = Db::name("config_coin")->where('id', $rechargeId)->find();
         if (empty($wallet)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);

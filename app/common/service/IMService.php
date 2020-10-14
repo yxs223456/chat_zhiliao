@@ -18,12 +18,24 @@ use think\facade\Db;
 
 class IMService extends Base
 {
+    /**
+     * 判断是否可以发送私聊
+     * @param $user
+     * @param $tUId
+     * @return \stdClass
+     * @throws \Throwable
+     */
     public function checkSendMessage($user, $tUId)
     {
         $redis = Redis::factory();
-        $tUSet = UserSetService::getUserSetByUId($tUId, $redis);
+
+        // 消息接收者拉黑用户时无法发送
+        if (BlackListService::inUserBlackList($tUId, $user["id"], $redis)) {
+            throw AppException::factory(AppException::USER_IN_BLACK_LIST);
+        }
 
         // 消息接收者私聊免费无需处理
+        $tUSet = UserSetService::getUserSetByUId($tUId, $redis);
         if ($tUSet["direct_message_free"] == UserSwitchEnum::OFF) {
             return new \stdClass();
         }

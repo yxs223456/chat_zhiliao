@@ -22,7 +22,10 @@ class IM extends Base
         ]
     ];
 
-    public function sendMessage()
+    /**
+     * 判断是否可以发送私聊
+     */
+    public function checkSendMessage()
     {
         $request = $this->query["content"];
         $tUId = $request["t_u_id"] ?? 0;
@@ -32,7 +35,7 @@ class IM extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new IMService();
-        $returnData = $service->sendMessage($user, $tUId);
+        $returnData = $service->checkSendMessage($user, $tUId);
         return $this->jsonResponse($returnData);
     }
 }

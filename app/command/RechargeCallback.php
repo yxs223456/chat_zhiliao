@@ -8,23 +8,15 @@
 
 namespace app\command;
 
-use app\common\Constant;
 use app\common\enum\ChatStatusEnum;
-use app\common\enum\ChatTypeEnum;
-use app\common\enum\UserIsPrettyEnum;
-use app\common\enum\WalletAddEnum;
 use app\common\helper\RabbitMQ;
-use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
-use app\common\model\UserWalletFlowModel;
-use app\common\service\UserInfoService;
 use app\gateway\GatewayClient;
 use PhpAmqpLib\Message\AMQPMessage;
 use think\console\Command;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Db;
-use think\Exception;
 use think\facade\Log;
 
 /**
@@ -139,6 +131,7 @@ class RechargeCallback extends Command
         }
 
         $data = [
+            "chat_id" => $chat["id"],
             "is_free" => $isFree,
             "current_time" => time(),
             "deadline" => $chat["chat_begin_time"] + ($minutes * 60),

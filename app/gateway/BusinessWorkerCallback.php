@@ -96,7 +96,9 @@ class BusinessWorkerCallback
                     $_SESSION["user"] = $user;
                     Gateway::bindUid($client_id, $user["id"]);
                     $scene = "init_user";
-                    $returnData = [];
+                    $returnData = [
+                        "id" => $user["id"],
+                    ];
                     $responseJson = self::jsonData($scene, $returnData);
                     Gateway::sendToClient($client_id, $responseJson);
 

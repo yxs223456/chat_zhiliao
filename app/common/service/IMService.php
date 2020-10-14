@@ -18,7 +18,7 @@ use think\facade\Db;
 
 class IMService extends Base
 {
-    public function sendMessage($user, $tUId)
+    public function checkSendMessage($user, $tUId)
     {
         $redis = Redis::factory();
         $tUSet = UserSetService::getUserSetByUId($tUId, $redis);

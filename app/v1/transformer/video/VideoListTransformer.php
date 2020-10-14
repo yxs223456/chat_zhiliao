@@ -10,7 +10,7 @@ namespace app\v1\transformer\video;
 
 use app\common\transformer\TransformerAbstract;
 
-class CityListTransformer extends TransformerAbstract
+class VideoListTransformer extends TransformerAbstract
 {
     // 当前用户
     private $user = null;

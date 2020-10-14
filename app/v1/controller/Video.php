@@ -9,9 +9,8 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
-use app\common\service\DynamicService;
 use app\common\service\VideoService;
-use app\v1\transformer\video\CityListTransformer;
+use app\v1\transformer\video\VideoListTransformer;
 
 class Video extends Base
 {
@@ -46,7 +45,31 @@ class Video extends Base
         }
         $service = new VideoService();
         list($video, $likeVideoUserIds) = $service->cityList($startId, $pageSize, $city, $isFlush);
-        return $this->jsonResponse($video, new CityListTransformer(
+        return $this->jsonResponse($video, new VideoListTransformer(
+            ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds]
+        ));
+    }
+
+    /**
+     * 推荐列表
+     *
+     * @return \think\response\Json
+     * @throws AppException
+     */
+    public function recommendList()
+    {
+        $request = $this->query["content"];
+        $startId = $request["start_id"] ?? 0;
+        $pageSize = $request["page_size"] ?? 20;
+        $isFlush = $request["is_flush"] ?? 0;
+        $user = $this->query["user"];
+
+        if (!checkInt($pageSize, false) || !checkInt($startId)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $service = new VideoService();
+        list($video, $likeVideoUserIds) = $service->recommendList($startId, $pageSize, $isFlush);
+        return $this->jsonResponse($video, new VideoListTransformer(
             ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds]
         ));
     }
@@ -88,7 +111,7 @@ class Video extends Base
         }
 
         $user = $this->query["user"];
-        $service = new DynamicService();
+        $service = new VideoService();
         $service->unlike($id, $user);
         return $this->jsonResponse(new \stdClass());
     }

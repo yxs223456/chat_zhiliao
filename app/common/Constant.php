@@ -58,6 +58,9 @@ class Constant
     // 收礼人礼物分润比例
     const GIFT_BONUS_RATE = 0.6;
 
+    // 私聊收费分润比例
+    const MESSAGE_BONUS_RATE = 0.6;
+
     // 普通人通话分润比例
     const ORDINARY_CHAT_DIVIDED_RATE = 0.5;
 

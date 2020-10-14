@@ -19,7 +19,7 @@ class WalletReduceEnum
     const VIDEO_CHAT = 2;
     const VOICE_CHAT = 3;
     const RED_PACKAGE = 4;
-    const SECRET_MESSAGE = 5;
+    const DIRECT_MESSAGE = 5;
     const WITHDRAW = 6;
 
     protected static $desc = [
@@ -35,7 +35,7 @@ class WalletReduceEnum
         self::RED_PACKAGE => [
             "cn" => "发红包",
         ],
-        self::SECRET_MESSAGE => [
+        self::DIRECT_MESSAGE => [
             "cn" => "私聊收费",
         ],
         self::WITHDRAW => [

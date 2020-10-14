@@ -21,7 +21,7 @@ class WalletAddEnum
     const VIDEO_CHAT = 4;
     const VOICE_CHAT = 5;
     const RED_PACKAGE = 6;
-    const SECRET_MESSAGE = 7;
+    const DIRECT_MESSAGE = 7;
     const ANGEL = 8;
 
     protected static $desc = [
@@ -43,7 +43,7 @@ class WalletAddEnum
         self::RED_PACKAGE => [
             "cn" => "收红包",
         ],
-        self::SECRET_MESSAGE => [
+        self::DIRECT_MESSAGE => [
             "cn" => "付费私聊",
         ],
         self::ANGEL => [

@@ -145,7 +145,7 @@ class RechargeService extends Base
 
             Db::name("pay_order")->insert([
                 "u_id" => $user["id"],
-                "scene" => PayOrderSceneEnum::VIP,
+                "scene" => PayOrderSceneEnum::COIN,
                 "source_id" => $rechargeId,
                 "out_trade_no" => $outTradeNo,
                 "is_pay" => IsPayEnum::NO,

@@ -10,6 +10,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\helper\AliyunOss;
+use app\common\helper\Redis;
 use app\common\service\HomeService;
 use app\v1\transformer\home\NewUserList;
 use app\v1\transformer\home\RecommendUserList;
@@ -19,10 +20,10 @@ class Home extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
-            "only" => "",
+            "only" => "geo",
         ],
         "checkSex" => [
-            "except" => "",
+            "except" => "geo",
         ]
     ];
 
@@ -110,5 +111,19 @@ class Home extends Base
     public function ossToken()
     {
         return json(AliyunOss::getToken());
+    }
+
+    /**
+     * 用户上报地理位置
+     */
+    public function geo()
+    {
+        $request = $this->query["content"];
+        $long = $request["long"] ?? 0; // 经度
+        $lat = $request["lat"] ?? 0; // 纬度
+        $userId = $this->query["user"]['id'];
+        // 缓存当前用户坐标
+        cacheUserLongLatInfo($userId, $lat, $long, Redis::factory());
+        return $this->jsonResponse(new \stdClass());
     }
 }

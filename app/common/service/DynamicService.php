@@ -850,7 +850,7 @@ class DynamicService extends Base
         $dynamics = Db::name("dynamic")
             ->whereIn("u_id", array_keys($userIds))
             ->where("is_delete", DbDataIsDeleteEnum::NO)
-            ->limit(300)
+            ->limit(600)
             ->select()->toArray();
 
         if (empty($dynamics)) {

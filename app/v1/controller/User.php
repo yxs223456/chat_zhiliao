@@ -81,7 +81,7 @@ class User extends Base
         $us = new UserService();
         $returnData = $us->register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber);
 
-        return $this->jsonResponse($returnData, new LoginTransformer);
+        return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
 
     /**
@@ -102,7 +102,7 @@ class User extends Base
         $us = new UserService();
         $returnData = $us->passwordLogin($account, $password);
 
-        return $this->jsonResponse($returnData, new LoginTransformer);
+        return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
 
     /**
@@ -126,7 +126,7 @@ class User extends Base
         $us = new UserService();
         $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber);
 
-        return $this->jsonResponse($returnData, new LoginTransformer);
+        return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
 
     /**
@@ -144,7 +144,7 @@ class User extends Base
         $us = new UserService();
         $returnData = $us->phoneLogin($accessToken, $inviteUserNumber);
 
-        return $this->jsonResponse($returnData, new LoginTransformer());
+        return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
 
     /**
@@ -163,7 +163,7 @@ class User extends Base
         $us = new UserService();
         $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber);
 
-        return $this->jsonResponse($returnData, new LoginTransformer());
+        return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
 
     /**

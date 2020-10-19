@@ -254,3 +254,13 @@ function read_file($fname)
     fclose($handle);
     return $content;
 }
+
+// 获取语言
+function getLanguage()
+{
+    $lang = config("app.api_language");
+    if (!$lang) {
+        $lang = "zh-cn";
+    }
+    return $lang;
+}

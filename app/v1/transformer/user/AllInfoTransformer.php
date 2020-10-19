@@ -23,8 +23,8 @@ class AllInfoTransformer extends TransformerAbstract
     public function transformData(array $data): array
     {
         $user = $data["user"] ?? [];
-        $userInfo = $data["userInfo"] ?? [];
-        $userSet = $data["userSet"] ?? [];
+        $userInfo = $data["user_info"] ?? [];
+        $userSet = $data["user_set"] ?? [];
         return [
             "user" => [ // 用户数据
                 'id' => $user["id"] ?? 0,

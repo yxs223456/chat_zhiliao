@@ -23,9 +23,9 @@ class MineTransformer extends TransformerAbstract
     public function transformData(array $data): array
     {
         $user = $data["user"] ?? [];
-        $userInfo = $data["userInfo"] ?? [];
-        $userSet = $data['userSet'] ?? [];
-        $userWallet = $data["userWallet"] ?? [];
+        $userInfo = $data["user_info"] ?? [];
+        $userSet = $data['user_set'] ?? [];
+        $userWallet = $data["user_wallet"] ?? [];
         return [
             "user" => [ // 用户数据
                 'id' => $user["id"] ?? 0,

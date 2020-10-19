@@ -262,12 +262,12 @@ class UserService extends Base
         $userNumber = $this->createUserNumber(6);
         $nickname = $weChatUserInfo["nickname"]?$weChatUserInfo["nickname"]:"用户" . $userNumber;
         $portrait = $weChatUserInfo["headimgurl"]?$weChatUserInfo["headimgurl"]:Constant::USER_DEFAULT_PORTRAIT;
-        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
-        if (!empty($rongCloudResponse["token"])) {
-            $rongCloudToken = $rongCloudResponse["token"];
-        } else {
-            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
-        }
+//        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
+//        if (!empty($rongCloudResponse["token"])) {
+//            $rongCloudToken = $rongCloudResponse["token"];
+//        } else {
+//            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
+//        }
 
         Db::startTrans();
         try {
@@ -284,7 +284,7 @@ class UserService extends Base
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
             // 后续处理
-            $this->registerAfter($newUser, $parent, $rongCloudToken, $nickname, $portrait);
+            $this->registerAfter($newUser, $parent, $nickname, $portrait);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -298,12 +298,7 @@ class UserService extends Base
             $this->registerCallback($newUser["id"]);
         }
 
-        return [
-            "user_number" => $newUser["user_number"],
-            "token" => $newUser["token"],
-            "sex" => $newUser["sex"],
-            "rc_token" => $rongCloudToken,
-        ];
+        return self::getUserAllInfo($newUser["id"]);
     }
 
     /**
@@ -337,12 +332,12 @@ class UserService extends Base
         $userNumber = $this->createUserNumber(6);
         $nickname = "用户" . $userNumber;
         $portrait = Constant::USER_DEFAULT_PORTRAIT;
-        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
-        if (!empty($rongCloudResponse["token"])) {
-            $rongCloudToken = $rongCloudResponse["token"];
-        } else {
-            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
-        }
+//        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
+//        if (!empty($rongCloudResponse["token"])) {
+//            $rongCloudToken = $rongCloudResponse["token"];
+//        } else {
+//            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
+//        }
 
         Db::startTrans();
         try {
@@ -359,7 +354,7 @@ class UserService extends Base
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
             // 后续处理
-            $this->registerAfter($newUser, $parent, $rongCloudToken, $nickname, $portrait);
+            $this->registerAfter($newUser, $parent, $nickname, $portrait);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -373,12 +368,7 @@ class UserService extends Base
             $this->registerCallback($newUser["id"]);
         }
 
-        return [
-            "token" => $newUser["token"],
-            "sex" => $newUser["sex"],
-            "user_number" => $newUser["user_number"],
-            "rc_token" => $rongCloudToken,
-        ];
+        return self::getUserAllInfo($newUser["id"]);
     }
 
     // 通过手机号注册用户
@@ -403,12 +393,12 @@ class UserService extends Base
         $userNumber = $this->createUserNumber(6);
         $nickname = "用户" . $userNumber;
         $portrait = Constant::USER_DEFAULT_PORTRAIT;
-        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
-        if (!empty($rongCloudResponse["token"])) {
-            $rongCloudToken = $rongCloudResponse["token"];
-        } else {
-            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
-        }
+//        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
+//        if (!empty($rongCloudResponse["token"])) {
+//            $rongCloudToken = $rongCloudResponse["token"];
+//        } else {
+//            throw new \Exception("融云用户创建失败：" . json_encode($rongCloudResponse, JSON_UNESCAPED_UNICODE));
+//        }
 
         Db::startTrans();
         try {
@@ -424,7 +414,7 @@ class UserService extends Base
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
             // 后续处理
-            $this->registerAfter($newUser, $parent, $rongCloudToken, $nickname, $portrait);
+            $this->registerAfter($newUser, $parent, $nickname, $portrait);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -438,16 +428,11 @@ class UserService extends Base
             $this->registerCallback($newUser["id"]);
         }
 
-        return [
-            "token" => $newUser["token"],
-            "sex" => $newUser["sex"],
-            "user_number" => $newUser["user_number"],
-            "rc_token" => $rongCloudToken,
-        ];
+        return self::getUserAllInfo($newUser["id"]);
     }
 
     // 封装新用户注册公共处理部分
-    private function registerAfter($newUser, $parent, $rongCloudToken, $nickname, $portrait)
+    private function registerAfter($newUser, $parent, $nickname, $portrait)
     {
         // user_info 表
         $userInfoData = [
@@ -464,13 +449,13 @@ class UserService extends Base
         Db::name("user_set")->insert($userSetData);
 
         // user_rc_info 表
-        $userRcInfoData = [
-            "u_id" => $newUser["id"],
-            "rc_user_id" => $newUser["user_number"],
-            "token" => $rongCloudToken,
-            "token_expire" => 0,
-        ];
-        Db::name("user_rc_info")->insert($userRcInfoData);
+//        $userRcInfoData = [
+//            "u_id" => $newUser["id"],
+//            "rc_user_id" => $newUser["user_number"],
+//            "token" => $rongCloudToken,
+//            "token_expire" => 0,
+//        ];
+//        Db::name("user_rc_info")->insert($userRcInfoData);
 
         // invite_reward 表
         $userInviteRewardData = [
@@ -544,20 +529,10 @@ class UserService extends Base
             ->where("id", $user["id"])
             ->update(["token"=> $user["token"]]);
 
-        // 用户融云信息
-        $rcUser = Db::name("user_rc_info")
-            ->where("u_id", $user["id"])
-            ->find();
-
         // 缓存用户登陆信息
         cacheUserInfoByToken($user, Redis::factory(), $oldToken);
 
-        return [
-            "user_number" => $user["user_number"],
-            "token" => $user["token"],
-            "sex" => $user["sex"],
-            "rc_token" => $rcUser["token"],
-        ];
+        return self::getUserAllInfo($user["id"]);
     }
 
     /**

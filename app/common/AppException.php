@@ -41,7 +41,7 @@ class AppException extends \Exception
     const WALLET_MONEY_LESS = [6000, "余额不足", "餘額不足"];
 
     const CHAT_VIDEO_CLOSE = [7000, "对方关闭视频接听", "對方關閉視頻接聽"];
-    const CHAT_VOICE_CLOSE = [7001, "对方关闭语言接听", "對方關閉語音接聽"];
+    const CHAT_VOICE_CLOSE = [7001, "对方关闭语音接听", "對方關閉語音接聽"];
     const CHAT_LESS_MONTY = [7002, "余额不足无法发起聊天", "餘額不足無法發起聊天"];
     const CHAT_USER_CHAT_ING = [7003, "您正处于通话中，无法发起新聊天", "您正處於通話中，無法發起新聊天"];
     const CHAT_LINE_BUSY = [7004, "对方正处于通话中", "對法正處於通話中"];

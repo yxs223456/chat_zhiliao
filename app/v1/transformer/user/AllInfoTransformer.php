@@ -17,15 +17,14 @@ use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\transformer\TransformerAbstract;
 
-class MineTransformer extends TransformerAbstract
+class AllInfoTransformer extends TransformerAbstract
 {
 
     public function transformData(array $data): array
     {
         $user = $data["user"] ?? [];
         $userInfo = $data["userInfo"] ?? [];
-        $userSet = $data['userSet'] ?? [];
-        $userWallet = $data["userWallet"] ?? [];
+        $userSet = $data["userSet"] ?? [];
         return [
             "user" => [ // 用户数据
                 'id' => $user["id"] ?? 0,
@@ -58,12 +57,8 @@ class MineTransformer extends TransformerAbstract
                 'direct_message_free' => $userSet['direct_message_free'] ?? UserSwitchEnum::OFF,
                 'direct_message_price' => $userSet['direct_message_price'] ?? 0,
                 'is_stealth' => $userSet['is_stealth'] ?? UserIsStealthEnum::NO,
-            ],
-            "wallet" => [ // 视频
-                'income_amount' => $userWallet["income_amount"] ?? 0,
-                'balance_amount' => $userWallet["balance_amount"] ?? 0,
-                'total_balance' => $userWallet["total_balance"] ?? 0
             ]
         ];
     }
+
 }

@@ -10,6 +10,7 @@ use app\common\enum\UserSwitchEnum;
 use app\common\service\BlackListService;
 use app\common\service\UserService;
 use app\common\service\VisitorService;
+use app\v1\transformer\user\AllInfoTransformer;
 use app\v1\transformer\user\BlackListTransformer;
 use app\v1\transformer\user\IndexTransformer;
 use app\v1\transformer\user\InfoTransformer;
@@ -234,7 +235,7 @@ class User extends Base
 
         $service = new UserService();
         $service->setVideoOrVoice($open, $coin, $user);
-        return $this->jsonResponse(new \stdClass());
+        return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
     }
 
     /**
@@ -255,7 +256,7 @@ class User extends Base
 
         $service = new UserService();
         $service->setVideoOrVoice($open, $coin, $user, 'voice');
-        return $this->jsonResponse(new \stdClass());
+        return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
     }
 
     /**
@@ -273,7 +274,7 @@ class User extends Base
 
         $service = new UserService();
         $service->setMessage($open, $user);
-        return $this->jsonResponse(new \stdClass());
+        return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
     }
 
     /**
@@ -290,7 +291,7 @@ class User extends Base
         $user = $this->query["user"];
         $service = new UserService();
         $service->setStealth($open, $user);
-        return $this->jsonResponse(new \stdClass());
+        return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
     }
 
     /**
@@ -301,7 +302,7 @@ class User extends Base
         $user = $this->query["user"];
         $service = new UserService();
         $userInfo = $service->getInfo($user);
-        return $this->jsonResponse($userInfo, new InfoTransformer());
+        return $this->jsonResponse($userInfo, new AllInfoTransformer());
     }
 
     /**
@@ -351,9 +352,10 @@ class User extends Base
             ) {
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
             }
-            return $this->jsonResponse($service->setSex($sex, $user));
+            $service->setSex($sex, $user);
         }
-        return $this->jsonResponse(new \stdClass());
+        $userInfo = UserService::getUserAllInfo($user['id']);
+        return $this->jsonResponse($userInfo, new AllInfoTransformer());
     }
 
     /**

@@ -965,4 +965,20 @@ class UserService extends Base
         }
         throw AppException::factory(AppException::TRY_AGAIN_LATER);
     }
+
+    /**
+     * 获取用户我的信息
+     *
+     * @param $user
+     * @return array
+     */
+    public function mine($user)
+    {
+        $redis = Redis::factory();
+        $userInfo = UserInfoService::getUserInfoById($user['id'], $redis);
+        $user = UserService::getUserById($user['id'], $redis);
+        $userSet = UserSetService::getUserSetByUId($user['id'], $redis);
+        $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
+        return ['user' => $user, 'userInfo' => $userInfo, 'userSet' => $userSet, 'userWallet' => $userWallet];
+    }
 }

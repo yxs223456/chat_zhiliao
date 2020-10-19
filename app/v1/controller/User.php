@@ -14,6 +14,7 @@ use app\v1\transformer\user\BlackListTransformer;
 use app\v1\transformer\user\IndexTransformer;
 use app\v1\transformer\user\InfoTransformer;
 use app\v1\transformer\user\LoginTransformer;
+use app\v1\transformer\user\MineTransformer;
 
 class User extends Base
 {
@@ -418,5 +419,18 @@ class User extends Base
         $service = new UserService();
         $data = $service->index($uid);
         return $this->jsonResponse($data, new IndexTransformer());
+    }
+
+    /**
+     * 我的信息
+     *
+     * @return \think\response\Json
+     */
+    public function mine()
+    {
+        $user = $this->query['user'];
+        $service = new UserService();
+        $data = $service->mine($user);
+        return $this->jsonResponse($data, new MineTransformer());
     }
 }

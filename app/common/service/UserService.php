@@ -974,15 +974,15 @@ class UserService extends Base
      *
      * @param $user
      * @return array
+     * @throws AppException
      */
-    public function mine($user)
+    public function wallet($user)
     {
-        $redis = Redis::factory();
-        $userInfo = UserInfoService::getUserInfoById($user['id'], $redis);
-        $user = UserService::getUserById($user['id'], $redis);
-        $userSet = UserSetService::getUserSetByUId($user['id'], $redis);
         $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
-        return ['user' => $user, 'user_info' => $userInfo, 'user_set' => $userSet, 'user_wallet' => $userWallet];
+        if (empty($userWallet)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        return $userWallet;
     }
 
     /**

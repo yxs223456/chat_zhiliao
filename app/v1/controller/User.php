@@ -15,7 +15,7 @@ use app\v1\transformer\user\BlackListTransformer;
 use app\v1\transformer\user\IndexTransformer;
 use app\v1\transformer\user\InfoTransformer;
 use app\v1\transformer\user\LoginTransformer;
-use app\v1\transformer\user\MineTransformer;
+use app\v1\transformer\user\WalletTransformer;
 
 class User extends Base
 {
@@ -424,15 +424,15 @@ class User extends Base
     }
 
     /**
-     * 我的信息
+     * 我的钱包
      *
      * @return \think\response\Json
      */
-    public function mine()
+    public function wallet()
     {
         $user = $this->query['user'];
         $service = new UserService();
-        $data = $service->mine($user);
-        return $this->jsonResponse($data, new MineTransformer());
+        $data = $service->wallet($user);
+        return $this->jsonResponse($data, new WalletTransformer());
     }
 }

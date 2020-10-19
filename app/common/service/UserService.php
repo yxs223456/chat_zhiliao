@@ -877,9 +877,9 @@ class UserService extends Base
         }
         Db::name("user_info")->where("u_id", $user["id"])->update($info);
         // 修改头像和昵称更新融云信息
-        if (!empty($info["nickname"]) || !empty($info["portrait"])) {
-            RongCloudApp::updateUserInfo($user["user_number"], $info["nickname"] ?? $user["nickname"], $info["portrait"] ?? $user["portrait"]);
-        }
+//        if (!empty($info["nickname"]) || !empty($info["portrait"])) {
+//            RongCloudApp::updateUserInfo($user["user_number"], $info["nickname"] ?? $user["nickname"], $info["portrait"] ?? $user["portrait"]);
+//        }
         deleteUserInfoDataByUId($user["id"], $redis);
         return;
     }

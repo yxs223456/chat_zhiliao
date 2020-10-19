@@ -24,7 +24,7 @@ class User extends Base
         ],
         "checkSex" => [
             "except" => "sendVerifyCode,register,passwordLogin,codeLogin,phoneLogin,weChatLogin,resetPassword,
-                        setSex,info",
+                        setSex,info,editInfo",
         ]
     ];
 

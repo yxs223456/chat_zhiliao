@@ -957,7 +957,7 @@ class UserService extends Base
         $user = UserService::getUserById($user['id'], $redis);
         $userSet = UserSetService::getUserSetByUId($user['id'], $redis);
         $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
-        return ['user' => $user, 'userInfo' => $userInfo, 'userSet' => $userSet, 'userWallet' => $userWallet];
+        return ['user' => $user, 'user_info' => $userInfo, 'user_set' => $userSet, 'user_wallet' => $userWallet];
     }
 
     /**
@@ -974,8 +974,8 @@ class UserService extends Base
         $userSet = UserSetService::getUserSetByUId($uid, $redis);
         return [
             'user' => $user ?? [],
-            'userInfo' => $userInfo ?? [],
-            'userSet' => $userSet ?? []
+            'user_info' => $userInfo ?? [],
+            'user_set' => $userSet ?? []
         ];
     }
 }

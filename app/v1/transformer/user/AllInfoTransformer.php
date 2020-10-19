@@ -23,8 +23,8 @@ class AllInfoTransformer extends TransformerAbstract
     public function transformData(array $data): array
     {
         $user = $data["user"] ?? [];
-        $userInfo = $data["userInfo"] ?? [];
-        $userSet = $data["userSet"] ?? [];
+        $userInfo = $data["user_info"] ?? [];
+        $userSet = $data["user_set"] ?? [];
         return [
             "user" => [ // 用户数据
                 'id' => $user["id"] ?? 0,
@@ -44,7 +44,7 @@ class AllInfoTransformer extends TransformerAbstract
                 'member_level' => $userInfo['member_level'] ?? 0,
                 'vip_level' => $userInfo['vip_level'] ?? 0,
                 'svip_level' => $userInfo['svip_level'] ?? 0,
-                'signatures' => $userInfo['signatures'] ?? "",
+                'signatures' => empty($userInfo['signatures']) ? [] : json_decode($userInfo['signatures'],true),
                 'vip_deadline' => $userInfo['vip_deadline'] ?? "",
                 'svip_deadline' => $userInfo['svip_deadline'] ?? "",
                 'certificate_status' => $userInfo['certificate_status'] ?? CertificateStatusEnum::NONE,

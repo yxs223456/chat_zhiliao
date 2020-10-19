@@ -45,7 +45,7 @@ class MineTransformer extends TransformerAbstract
                 'member_level' => $userInfo['member_level'] ?? 0,
                 'vip_level' => $userInfo['vip_level'] ?? 0,
                 'svip_level' => $userInfo['svip_level'] ?? 0,
-                'signatures' => $userInfo['signatures'] ?? "",
+                'signatures' => empty($userInfo['signatures']) ? [] : json_decode($userInfo['signatures'],true),
                 'vip_deadline' => $userInfo['vip_deadline'] ?? "",
                 'svip_deadline' => $userInfo['svip_deadline'] ?? "",
                 'certificate_status' => $userInfo['certificate_status'] ?? CertificateStatusEnum::NONE,

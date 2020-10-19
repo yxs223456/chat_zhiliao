@@ -505,6 +505,9 @@ class UserService extends Base
                 "u_id" => $newUser["id"],
             ]);
         }
+
+        // 添加用户总评分表
+        Db::name("user_score")->insert(['u_id' => $newUser['id']]);
     }
 
     // 用户注册后的异步处理
@@ -875,7 +878,7 @@ class UserService extends Base
         Db::name("user_info")->where("u_id", $user["id"])->update($info);
         // 修改头像和昵称更新融云信息
         if (!empty($info["nickname"]) || !empty($info["portrait"])) {
-            RongCloudApp::updateUserInfo($user["user_number"], $info["nickname"], $info["portrait"]);
+            RongCloudApp::updateUserInfo($user["user_number"], $info["nickname"] ?? $user["nickname"], $info["portrait"] ?? $user["portrait"]);
         }
         deleteUserInfoDataByUId($user["id"], $redis);
         return;

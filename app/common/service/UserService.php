@@ -930,6 +930,10 @@ class UserService extends Base
                 ->select()->toArray();
             $data["gifts"] = $gifts;
 
+            // 获取守护人信息
+            $guardUser = GuardService::getGuard($userId);
+            $data['guard'] = $guardUser;
+
             cacheUserIndexDataByUId($userId, $data, $redis);
             $redis->del($lockKey);
             return $data;
@@ -969,6 +973,11 @@ class UserService extends Base
     public static function getUserAllInfo($uid)
     {
         $redis = Redis::factory();
+        // 删除用户缓存
+        deleteUserInfoDataByUId($uid, $redis);
+        deleteUserInfoById($uid, $redis);
+        deleteUserSetByUId($uid, $redis);
+
         $userInfo = UserInfoService::getUserInfoById($uid, $redis);
         $user = UserService::getUserById($uid, $redis);
         $userSet = UserSetService::getUserSetByUId($uid, $redis);

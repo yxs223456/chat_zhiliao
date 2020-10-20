@@ -44,6 +44,8 @@ class AllInfoTransformer extends TransformerAbstract
                 'member_level' => $userInfo['member_level'] ?? 0,
                 'vip_level' => $userInfo['vip_level'] ?? 0,
                 'svip_level' => $userInfo['svip_level'] ?? 0,
+                'is_vip' => !empty($userInfo['svip_level']) ? 1 : empty($userInfo['vip_level']) ? 0 : 1,
+                'is_svip' => empty($userInfo['svip_level']) ? 0 : 1,
                 'signatures' => empty($userInfo['signatures']) ? [] : json_decode($userInfo['signatures'],true),
                 'vip_deadline' => $userInfo['vip_deadline'] ?? "",
                 'svip_deadline' => $userInfo['svip_deadline'] ?? "",

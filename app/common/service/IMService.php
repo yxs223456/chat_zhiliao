@@ -87,7 +87,7 @@ class IMService extends Base
                 "u_id" => $tUId,
                 "flow_type" => FlowTypeEnum::ADD,
                 "amount" => $bonus,
-                "reduce_type" => WalletAddEnum::DIRECT_MESSAGE,
+                "add_type" => WalletAddEnum::DIRECT_MESSAGE,
                 "object_source_id" => $user["id"],
                 "before_balance" => $tUWallet["total_balance"],
                 "after_balance" => $tUWallet["total_balance"] + $bonus,

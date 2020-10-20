@@ -43,7 +43,7 @@ class PrettyMaleLevelEnum
             "cn" => "金牌男神VIP",
         ],
         self::CROWN => [
-            "cn" => "皇冠女神VIP",
+            "cn" => "皇冠男神VIP",
         ],
     ];
 }

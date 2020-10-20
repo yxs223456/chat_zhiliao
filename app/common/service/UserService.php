@@ -740,10 +740,10 @@ class UserService extends Base
 
         // 男神金额逻辑 必须是vip
         $today = date("Y-m-d");
-        $vipDeadline = $userInfo["vip_deadline"] ?? $today;
-        $svipDeadline = $userInfo['svip_deadline'] ?? $today;
-        // vip过期 不是vip不能设置通话聊天金额
-        if ($today >= $vipDeadline && $today >= $svipDeadline) {
+        $vipDeadline = empty($userInfo["vip_deadline"]) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["vip_deadline"];
+        $svipDeadline = empty($userInfo['svip_deadline']) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["svip_deadline"];
+        // vip过期 不是vip不能设置通话聊天金额(不能开启，这里判断是否开启通过coin值判断)
+        if ($today > $vipDeadline && $today > $svipDeadline && $coin > 0) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 

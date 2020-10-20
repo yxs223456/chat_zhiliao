@@ -10,8 +10,9 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\IMService;
+use app\v1\transformer\im\CheckSendMessage;
 
-class IM extends Base
+class Im extends Base
 {
     protected $beforeActionList = [
         "getUser" => [
@@ -36,6 +37,6 @@ class IM extends Base
         }
         $service = new IMService();
         $returnData = $service->checkSendMessage($user, $tUId);
-        return $this->jsonResponse($returnData);
+        return $this->jsonResponse($returnData, new CheckSendMessage());
     }
 }

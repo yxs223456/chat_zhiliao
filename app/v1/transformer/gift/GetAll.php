@@ -21,10 +21,6 @@ class GetAll extends TransformerAbstract
     public function transformData(array $data): array
     {
         $returnData = [
-            "red_package" => [
-                "name" => (string) $data["red_package"]["name"],
-                "image_url" => (string) $data["red_package"]["image_url"],
-            ],
             "gift" => [
 
             ],

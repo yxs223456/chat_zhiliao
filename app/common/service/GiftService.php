@@ -42,10 +42,6 @@ class GiftService extends Base
 
         // 格式化返回数据
         $returnData = [
-            "red_package" => [
-                "name" => Constant::RED_PACKAGE_CONFIG["name"],
-                "image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
-            ],
             "gift" => [],
         ];
         foreach ($gifts as $gift) {

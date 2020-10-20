@@ -11,15 +11,15 @@ namespace app\common;
 class Constant
 {
     // 默认头像
-    const USER_DEFAULT_PORTRAIT = "https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTI2ypuOuCibDFf8xy6ktq5wZM2iamlkibbib0tv78hoicbdL7XsZMXasiaRvTApuzvHGo64qZcCiavicTiaoyw/132";
+    const USER_DEFAULT_PORTRAIT = "http://yxs191202.oss-cn-beijing.aliyuncs.com/chat_zhiliao/6a85e2a14237acb9dea9f30183fbf110.jpeg";
 
     // 红包最小金额
     const RED_PACKAGE_MIN_AMOUNT = 10;
 
     // 红包配置
     const RED_PACKAGE_CONFIG = [
-        "name" => "红包",
-        "image_url" => "",
+        "name" => "紅包",
+        "image_url" => "http://yxs191202.oss-cn-beijing.aliyuncs.com/chat_zhiliao/5817547b4c9b45c9f64a69db1c96d55c.jpeg",
     ];
 
     // 性别初始化信息

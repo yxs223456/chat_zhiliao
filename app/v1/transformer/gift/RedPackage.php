@@ -21,8 +21,6 @@ class RedPackage extends TransformerAbstract
     public function transformData(array $data): array
     {
         $returnData = [
-            "gift_name" => (string) $data["gift_name"],
-            "gift_image_url" => (string) $data["gift_image_url"],
             "amount" => (int) $data["amount"],
             "r_u_income" => (int) $data["r_u_income"],
         ];

@@ -59,8 +59,7 @@ class Vip extends Base
      */
     public function payByAli()
     {
-        $request = $this->query["content"];
-        $id = $request["id"]??0;
+        $id = input("id");
         if (!checkInt($id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }

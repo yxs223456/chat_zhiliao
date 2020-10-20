@@ -329,8 +329,6 @@ class GiftService extends Base
         }
 
         return [
-            "gift_name" => Constant::RED_PACKAGE_CONFIG["name"],
-            "gift_image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
             "amount" => $amount,
             "r_u_income" => $rUIncome,
         ];
@@ -401,8 +399,6 @@ class GiftService extends Base
 
         return [
             "gift" => [
-                "gift_name" => Constant::RED_PACKAGE_CONFIG["name"],
-                "gift_image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
                 "amount" => $amount,
                 "r_u_income" => $rUIncome,
             ],

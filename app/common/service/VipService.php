@@ -199,7 +199,7 @@ class VipService extends Base
                 "u_id" => $user["id"],
                 "scene" => PayOrderSceneEnum::VIP,
                 "source_id" => $id,
-                "trade_no" => $outTradeNo,
+                "out_trade_no" => $outTradeNo,
                 "is_pay" => IsPayEnum::NO,
                 "pay_method" => PayMethodEnum::ALI,
                 "amount" => $money,
@@ -260,6 +260,8 @@ class VipService extends Base
             "svip_deadline" => $newSvipDeadline,
             "vip_deadline" => $newVipDeadline,
         ]);
+        // 删除用户info缓存
+        deleteUserInfoDataByUId($userId, Redis::factory());
     }
 
     /**

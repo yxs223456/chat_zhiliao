@@ -6,11 +6,11 @@
  * Time: 14:15
  */
 
-namespace app\v1\transformer\banner;
+namespace app\v1\transformer\im;
 
 use app\common\transformer\TransformerAbstract;
 
-class Home extends TransformerAbstract
+class CheckSendMessage extends TransformerAbstract
 {
 
     public function __construct(array $params = null)

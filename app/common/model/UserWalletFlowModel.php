@@ -32,7 +32,7 @@ class UserWalletFlowModel extends Base
             "u_id" => $userId,
             "flow_type" => FlowTypeEnum::ADD,
             "amount" => $amount,
-            "reduce_type" => $addType,
+            "add_type" => $addType,
             "object_source_id" => $sourceId,
             "before_balance" => $bBalance,
             "after_balance" => $aBalance,

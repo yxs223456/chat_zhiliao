@@ -257,7 +257,8 @@ class GiftService extends Base
                 "u_id" => $user["id"],
                 "flow_type" => FlowTypeEnum::REDUCE,
                 "amount" => $giftPrice,
-                "add_type" => WalletReduceEnum::GIFT,
+                "add_type" => 0,
+                "reduce_type" => WalletReduceEnum::GIFT,
                 "object_source_id" => $giftGiveId,
                 "before_balance" => $userWallet["total_balance"],
                 "after_balance" => $userWallet["total_balance"] - $giftPrice,
@@ -268,6 +269,7 @@ class GiftService extends Base
                 "flow_type" => FlowTypeEnum::ADD,
                 "amount" => $rUIncome,
                 "add_type" => WalletAddEnum::GIFT,
+                "reduce_type" => 0,
                 "object_source_id" => $giftGiveId,
                 "before_balance" => $rUserWallet["total_balance"],
                 "after_balance" => $rUserWallet["total_balance"] + $rUIncome,
@@ -327,8 +329,6 @@ class GiftService extends Base
         }
 
         return [
-            "gift_name" => Constant::RED_PACKAGE_CONFIG["name"],
-            "gift_image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
             "amount" => $amount,
             "r_u_income" => $rUIncome,
         ];
@@ -399,8 +399,6 @@ class GiftService extends Base
 
         return [
             "gift" => [
-                "gift_name" => Constant::RED_PACKAGE_CONFIG["name"],
-                "gift_image_url" => Constant::RED_PACKAGE_CONFIG["image_url"],
                 "amount" => $amount,
                 "r_u_income" => $rUIncome,
             ],
@@ -475,7 +473,8 @@ class GiftService extends Base
                 "u_id" => $user["id"],
                 "flow_type" => FlowTypeEnum::REDUCE,
                 "amount" => $amount,
-                "add_type" => WalletReduceEnum::RED_PACKAGE,
+                "add_type" => 0,
+                "reduce_type" => WalletReduceEnum::RED_PACKAGE,
                 "object_source_id" => $rPGiveId,
                 "before_balance" => $userWallet["total_balance"],
                 "after_balance" => $userWallet["total_balance"] - $amount,
@@ -486,6 +485,7 @@ class GiftService extends Base
                 "flow_type" => FlowTypeEnum::ADD,
                 "amount" => $rUIncome,
                 "add_type" => WalletAddEnum::RED_PACKAGE,
+                "reduce_type" => 0,
                 "object_source_id" => $rPGiveId,
                 "before_balance" => $rUserWallet["total_balance"],
                 "after_balance" => $rUserWallet["total_balance"] + $rUIncome,

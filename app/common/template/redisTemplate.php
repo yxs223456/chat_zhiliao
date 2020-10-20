@@ -341,6 +341,13 @@ function getUserInfoById($userId, Redis $redis)
     }
 }
 
+// 删除用户缓存
+function deleteUserInfoById($userId,Redis $redis)
+{
+    $key = REDIS_USER_INFO_BY_ID . $userId;
+    $redis->del($key);
+}
+
 /**
  * 短信验证码
  */

@@ -31,6 +31,7 @@ class AllInfoTransformer extends TransformerAbstract
                 'mobile_phone_area' => $user["mobile_phone_area"] ?? "",
                 'mobile_phone' => $user["mobile_phone"] ?? "",
                 'sex' => $user['sex'] ?? UserSexEnum::UNKNOWN,
+                'age' => $this->getUserAge($userInfo['birthday'] ?? null),
                 'user_number' => $user['user_number'] ?? "",
                 'token' => $user['token'] ?? "",
                 'avatar' => $userInfo['portrait'] ?? "",
@@ -63,4 +64,14 @@ class AllInfoTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     *  年龄
+     *
+     * @param $birthday
+     * @return false|int|string
+     */
+    private function getUserAge($birthday)
+    {
+        return isset($birthday) ? date('Y') - substr($birthday, 0, 4) : 0;
+    }
 }

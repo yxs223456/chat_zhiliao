@@ -16,35 +16,12 @@ class IndexTransformer extends TransformerAbstract
     public function transformData(array $data): array
     {
         return [
-            "user" => [ // 用户数据
-                "id" => $data["user"]["id"] ?? 0,
-                "avatar" => $data["userInfo"]["portrait"] ?? "",
-                "nickname" => $data["userInfo"]["nickname"] ?? "",
-                "photos" => empty($data["userInfo"]["photos"]) ? [] : json_decode($data["userInfo"]["photos"], true),
-                "signature" => $data["userInfo"]["personal_signature"] ?? "",
-                "age" => $this->getUserAge($data["userInfo"]["birthday"]),
-                "sex" => $data["user"]["sex"] ?? 0,
-                "city" => $data["userInfo"]["city"] ?? "",
-                "vip_level" => $data["userInfo"]["vip_level"] ?? 0,
-                "svip_level" => $data["userInfo"]["svip_level"] ?? 0,
-                "user_number" => $data["user"]["user_number"] ?? ""
-            ],
+            "score" => $data["score"] ?? "0",
             "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"]),// 动态
-            "videos" => [ // 视频
-
-            ],
-            "gifts" => [ // 礼物
-
-            ],
-            "guard" => [ // 守护
-
-            ]
+            "videos" => $this->getVideos($data['videos'] ?? []), // 视频
+            "gifts" => $this->getGifts($data["gifts"] ?? []),
+            "guard" => $this->getGuard($data["guard"] ?? []),
         ];
-    }
-
-    private function getUserAge($birthday)
-    {
-        return empty($birthday) ? 0 : date('Y') - substr($birthday, 0, 4);
     }
 
     private function getDynamic($dynamic, $dynamicLike)
@@ -57,9 +34,44 @@ class IndexTransformer extends TransformerAbstract
             $tmp = [];
             $tmp["dynamic_id"] = $item["id"];
             $tmp["source"] = json_decode($item["source"],true);
-            $tmp["like"] = isset($dynamicLike[$item["id"]]) ? $dynamicLike[$item['id']] : 0;
+            $tmp["like_count"] = isset($dynamicLike[$item["id"]]) ? $dynamicLike[$item['id']] : 0;
             $ret[] = $tmp;
         }
         return $ret;
+    }
+
+    private function getVideos($videos)
+    {
+        if (empty($videos)) {
+            return [];
+        }
+        $ret = [];
+        foreach ($videos as $item) {
+            $tmp = [];
+            $tmp["id"] = $item["id"];
+            $tmp["source"] = $item["source"];
+            $tmp["like_count"] = $item["like_count"];
+            $ret[] = $tmp;
+        }
+        return $ret;
+    }
+
+    private function getGuard($guard)
+    {
+        if (empty($guard)) {
+            return new \stdClass();
+        }
+        return [
+            'guard_u_id' => $guard["u_id"] ?? 0,
+            'avatar' => $guard["portrait"] ?? "",
+        ];
+    }
+
+    private function getGifts($gifts)
+    {
+        if (empty($gifts)) {
+            return [];
+        }
+        return $gifts;
     }
 }

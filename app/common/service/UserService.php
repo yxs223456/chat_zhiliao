@@ -4,6 +4,7 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\Constant;
+use app\common\enum\DbDataIsDeleteEnum;
 use app\common\enum\InviteRewardAddEnum;
 use app\common\enum\PrettyFemaleLevelEnum;
 use app\common\enum\PrettyMaleLevelEnum;
@@ -849,8 +850,8 @@ class UserService extends Base
     public function editInfo($user, $info)
     {
         $redis = Redis::factory();
-        $user = UserInfoService::getUserInfoById($user["id"], $redis);
-        if (empty($user)) {
+        $userInfo = UserInfoService::getUserInfoById($user["id"], $redis);
+        if (empty($userInfo)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
         Db::name("user_info")->where("u_id", $user["id"])->update($info);
@@ -890,8 +891,10 @@ class UserService extends Base
                 "dynamics" => [],
                 "dynamicLike" => [],
                 "videos" => [],
+                "videoLike" => [],
                 "gifts" => [],
                 "guard" => [], //守护
+                "score" => "0" // 评分
             ];
             $user = self::getUserById($userId, $redis);
             $userInfo = UserInfoService::getUserInfoById($userId,$redis);
@@ -911,18 +914,17 @@ class UserService extends Base
             $dynamic = Db::query("select * from dynamic where u_id=:id and length(source) > 2 order by create_time desc limit 4", ['id' => $userId]);
             $dynamicLike = [];
             if (!empty($dynamic)) {
-                $dynamicLikeData = Db::name("dynamic_like")
+                $dynamicLikeData = Db::name("dynamic_count")
                     ->whereIn("dynamic_id", array_column($dynamic, "id"))
-                    ->group("dynamic_id")
-                    ->field("count(dynamic_id) c,dynamic_id")
+                    ->field("like_count,dynamic_id")
                     ->select()->toArray();
                 if ($dynamicLikeData) {
-                    $dynamicLike = array_column($dynamicLikeData, "c", 'dynamic_id');
+                    $dynamicLike = array_column($dynamicLikeData, "like_count", 'dynamic_id');
                 }
             }
             $data["dynamics"] = $dynamic;
             $data["dynamicLike"] = $dynamicLike;
-            $data["videos"] = [];
+
             // 查询礼物数据
             $gifts = Db::name("gift_give_log")->alias("gl")
                 ->leftJoin("config_gift cg", "gl.g_id = cg.id")
@@ -936,6 +938,20 @@ class UserService extends Base
             // 获取守护人信息
             $guardUser = GuardService::getGuard($userId);
             $data['guard'] = $guardUser;
+
+            // 获取小视频信息
+            $videos = Db::name("video")->alias("v")
+                ->leftJoin("video_count vc","v.id = vc.video_id")
+                ->field("v.*,vc.like_count")
+                ->where("v.u_id",$userId)->where("v.is_delete",DbDataIsDeleteEnum::NO)
+                ->order("v.id","desc")->limit(4)->select()->toArray();
+            $data["videos"] = $videos;
+
+            // 获取评分
+            $score = Db::name("user_score")->where("u_id", $userId)->find();
+            if (!empty($score)) {
+                $data["score"] = bcdiv($score["total_score"], $score["total_users"], 1);
+            }
 
             cacheUserIndexDataByUId($userId, $data, $redis);
             $redis->del($lockKey);

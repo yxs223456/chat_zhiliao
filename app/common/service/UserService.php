@@ -260,7 +260,7 @@ class UserService extends Base
 
         // 创建融云用户
         $userNumber = $this->createUserNumber(6);
-        $nickname = $weChatUserInfo["nickname"]?$weChatUserInfo["nickname"]:"用户" . $userNumber;
+        $nickname = $weChatUserInfo["nickname"]?$weChatUserInfo["nickname"]:$userNumber;
         $portrait = $weChatUserInfo["headimgurl"]?$weChatUserInfo["headimgurl"]:Constant::USER_DEFAULT_PORTRAIT;
 //        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
 //        if (!empty($rongCloudResponse["token"])) {
@@ -330,7 +330,7 @@ class UserService extends Base
 
         // 创建融云用户
         $userNumber = $this->createUserNumber(6);
-        $nickname = "用户" . $userNumber;
+        $nickname = $userNumber;
         $portrait = Constant::USER_DEFAULT_PORTRAIT;
 //        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
 //        if (!empty($rongCloudResponse["token"])) {
@@ -391,7 +391,7 @@ class UserService extends Base
 
         // 创建融云用户
         $userNumber = $this->createUserNumber(6);
-        $nickname = "用户" . $userNumber;
+        $nickname = $userNumber;
         $portrait = Constant::USER_DEFAULT_PORTRAIT;
 //        $rongCloudResponse = RongCloudApp::register($userNumber, $nickname, $portrait);
 //        if (!empty($rongCloudResponse["token"])) {
@@ -527,10 +527,12 @@ class UserService extends Base
         $user["token"] = getRandomString();
         Db::name("user")
             ->where("id", $user["id"])
-            ->update(["token"=> $user["token"]]);
+            ->update(["token" => $user["token"]]);
 
         // 缓存用户登陆信息
-        cacheUserInfoByToken($user, Redis::factory(), $oldToken);
+        $redis = Redis::factory();
+        cacheUserInfoByToken($user, $redis, $oldToken);
+        cacheUserInfoById($user, $redis);
 
         return self::getUserAllInfo($user["id"]);
     }
@@ -588,6 +590,7 @@ class UserService extends Base
             Db::commit();
             $redis = Redis::factory();
             cacheUserInfoByToken($user->toArray(), $redis);
+            cacheUserInfoById($user->toArray(), $redis);
             deleteUserInfoDataByUId($userBase["id"], $redis);
         } catch (\Throwable $e) {
             Db::rollback();

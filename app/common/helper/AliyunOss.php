@@ -22,6 +22,7 @@ class AliyunOss
     protected static $roleArn = "";
     protected static $tokenExpireTime = 900;
     protected static $policyFile = "";
+    protected static $regionId = "cn-hangzhou";
 
     private static function getConfig()
     {
@@ -32,6 +33,7 @@ class AliyunOss
         self::$bucket = $config["bucket"];
         self::$roleArn = $config["role_arn"];
         self::$tokenExpireTime = $config["token_expire_time"];
+        self::$regionId = $config["region_id"];
         self::$policyFile = app()->getRootPath() . "/extend/" . trim($config["policy_file"], "/");
     }
 
@@ -66,7 +68,7 @@ class AliyunOss
         self::getConfig();
 
         $policy = read_file(self::$policyFile);
-        $iClientProfile = \DefaultProfile::getProfile("cn-hangzhou", self::$accessKeyId, self::$accessKeySecret);
+        $iClientProfile = \DefaultProfile::getProfile(self::$regionId, self::$accessKeyId, self::$accessKeySecret);
         $client = new \DefaultAcsClient($iClientProfile);
 
         $request = new AssumeRoleRequest();

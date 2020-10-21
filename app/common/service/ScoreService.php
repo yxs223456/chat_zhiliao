@@ -57,4 +57,20 @@ class ScoreService extends Base
         }
         return true;
     }
+
+    /**
+     * 获取用户评分
+     *
+     * @param $uid
+     * @return string
+     */
+    public static function getScore($uid)
+    {
+        $score = Db::name("user_score")->where("u_id", $uid)->find();
+        if (empty($score) || empty($score["total_users"])) {
+            return "0.0";
+        }
+
+        return bcdiv($score["total_score"], $score["total_users"], 1);
+    }
 }

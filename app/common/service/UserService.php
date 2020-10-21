@@ -951,10 +951,7 @@ class UserService extends Base
             $data["videos"] = $videos;
 
             // 获取评分
-            $score = Db::name("user_score")->where("u_id", $userId)->find();
-            if (!empty($score)) {
-                $data["score"] = bcdiv($score["total_score"], $score["total_users"], 1);
-            }
+            $data["score"] = ScoreService::getScore($userId);
 
             cacheUserIndexDataByUId($userId, $data, $redis);
             $redis->del($lockKey);

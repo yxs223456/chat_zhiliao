@@ -24,6 +24,9 @@ class VisitorService extends Base
      */
     public static function addVisitorLog($userId, $visitorId)
     {
+        if ($userId == $visitorId) { // 同一个人不添加记录
+            return;
+        }
         // 放入操作队列
         userVisitorCallbackProduce($userId, $visitorId);
     }

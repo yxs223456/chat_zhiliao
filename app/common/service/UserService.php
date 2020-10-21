@@ -665,18 +665,26 @@ class UserService extends Base
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
         // 关闭操作，计费清零
-        if ($switch == UserSwitchEnum::OFF) {
+        if (isset($switch) && $switch == UserSwitchEnum::OFF) {
             $coin = 0;
         }
         // 女神金额逻辑
         if ($sex == UserSexEnum::FEMALE) {
             $femaleLevel = $userInfo["pretty_female_level"];
             $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
-            if ($coin > $ruleCoin) {
+            if (isset($coin) && $coin > $ruleCoin) {
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
             }
 
-            Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+            $update = [];
+            if (isset($switch)) {
+                $update["{$type}_chat_switch"] = $switch;
+            }
+            if (isset($coin)) {
+                $update["{$type}_chat_price"] = $coin;
+            }
+
+            Db::name("user_set")->where("u_id", $user["id"])->update($update);
             deleteUserSetByUId($user["id"], Redis::factory());
             return;
         }
@@ -689,16 +697,23 @@ class UserService extends Base
         // vip过期 不是vip不能设置通话聊天金额
         if ($today > $vipDeadline
             && $today > $svipDeadline
-            && $coin > 0
+            && isset($coin) && $coin > 0
         ) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $ruleCoin = $this->getMaleCoinRule($maleLevel);
-        if ($coin > $ruleCoin) {
+        if (isset($coin) && $coin > $ruleCoin) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
-        Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+        $update = [];
+        if (isset($switch)) {
+            $update["{$type}_chat_switch"] = $switch;
+        }
+        if (isset($coin)) {
+            $update["{$type}_chat_price"] = $coin;
+        }
+        Db::name("user_set")->where("u_id", $user["id"])->update($update);
         deleteUserSetByUId($user["id"], Redis::factory());
         return;
     }

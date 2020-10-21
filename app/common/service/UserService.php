@@ -481,8 +481,6 @@ class UserService extends Base
         // chat_free_wallet 表
         $chatFreeWallet = [
             "u_id" => $newUser["id"],
-            "free_minutes" => Constant::INIT_FREE_MINUTES,
-            "total_free_minutes" => Constant::INIT_FREE_MINUTES,
         ];
         Db::name("chat_free_wallet")->insert($chatFreeWallet);
 

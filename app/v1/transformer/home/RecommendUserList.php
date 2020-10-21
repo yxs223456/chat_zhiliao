@@ -35,6 +35,7 @@ class RecommendUserList extends TransformerAbstract
                 "video_chat_price" => (int) $item["video_chat_price"],
                 "voice_chat_switch" => (int) $item["voice_chat_switch"],
                 "voice_chat_price" => (int) $item["voice_chat_price"],
+                "score" => (string) $item["score"],
             ];
         }
 

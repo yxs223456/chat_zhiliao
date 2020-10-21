@@ -12,6 +12,7 @@ use app\common\AppException;
 use app\common\helper\AliyunOss;
 use app\common\helper\Redis;
 use app\common\service\HomeService;
+use app\common\service\ToolService;
 use app\v1\transformer\home\NewUserList;
 use app\v1\transformer\home\RecommendUserList;
 use app\v1\transformer\home\SiteUserList;
@@ -110,7 +111,9 @@ class Home extends Base
      */
     public function ossToken()
     {
-        return json(AliyunOss::getToken());
+        $service = new ToolService();
+        $data = $service->ossToken();
+        return json($data);
     }
 
     /**

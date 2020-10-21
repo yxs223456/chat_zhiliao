@@ -486,9 +486,9 @@ class UserService extends Base
         ];
         Db::name("chat_free_wallet")->insert($chatFreeWallet);
 
-        // tmp_user_register_callback 表
+        // tmp_add_parent_callback 表
         if ($parent) {
-            Db::name("tmp_user_register_callback")->insert([
+            Db::name("tmp_add_parent_callback")->insert([
                 "u_id" => $newUser["id"],
             ]);
         }

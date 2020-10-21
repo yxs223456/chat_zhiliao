@@ -86,7 +86,7 @@ class UserAddParentCallback extends Command
     {
         // 判断是否已处理
         $userId = $msgArray["u_id"];
-        $is_callback_sign = Db::name("tmp_user_register_callback")
+        $is_callback_sign = Db::name("tmp_add_parent_callback")
             ->where("u_id", $userId)
             ->find();
         if (empty($is_callback_sign)) {
@@ -123,7 +123,7 @@ class UserAddParentCallback extends Command
             /**
              * 删除临时表数据
              */
-            Db::name("tmp_user_register_callback")
+            Db::name("tmp_add_parent_callback")
                 ->where("id", $is_callback_sign["id"])
                 ->delete();
 

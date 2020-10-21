@@ -28,7 +28,7 @@ class UserTransformer extends TransformerAbstract
         foreach ($list as $item) {
             $tmp = [];
             $tmp["id"] = $item["id"] ?? 0;
-            $tmp["u_id"] = $item["u_id"] ?? 0;
+            $tmp["u_id"] = $item["visitor_u_id"] ?? 0;
             $tmp["sex"] = $item["sex"] ?? 0;
             $tmp["avatar"] = $item["portrait"] ?? "";
             $tmp["nickname"] = $item["nickname"] ?? "";

@@ -148,6 +148,7 @@ class DynamicService extends Base
             $dynamicComment = Db::name("dynamic_comment")->alias("dc")
                 ->leftJoin("user_info ui", "dc.u_id = ui.id")
                 ->field("dc.id,dc.pid,dc.u_id,dc.content,dc.source,dc.create_time,ui.portrait,ui.nickname")
+                ->where("dc.dynamic_id", $id)
                 ->order("dc.id")
                 ->select()->toArray();
             $ret["comment"] = $dynamicComment;

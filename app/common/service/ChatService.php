@@ -70,14 +70,14 @@ class ChatService extends Base
                     break;
                 }
                 // (只有女神有免费接听分钟数)如果接听方是女神，计算接听方今日剩余免费接听分钟数。
-                $tUser = UserService::getUserById($tUId, $redis);
+                /*$tUser = UserService::getUserById($tUId, $redis);
                 if ($tUser["sex"] != UserSexEnum::FEMALE) {
                     break;
-                }
-                $tUInfo = UserInfoService::getUserInfoById($tUId, $redis);
+                }*/
+                /*$tUInfo = UserInfoService::getUserInfoById($tUId, $redis);
                 if ($tUInfo["is_pretty"] == UserIsPrettyEnum::NO) {
                     break;
-                }
+                }*/
                 // 接听方今日免费接听分钟数
                 $tUFreeMinutesInfo = self::getFreeMinutes($tUId, $redis);
                 // 本次通话可以使用的免费分钟数
@@ -172,7 +172,7 @@ class ChatService extends Base
             ];
         } else {
             return [
-                "minutes" => $freeMinutesInfo["free_minutes"],
+                "minutes" => 2,
                 "is_free" => 0,
             ];
         }
@@ -360,6 +360,8 @@ class ChatService extends Base
 
             // 把后续处理任务放入队列
             chatEndCallbackProduce($chatId);
+
+            // 更新接听人免费接听数
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;

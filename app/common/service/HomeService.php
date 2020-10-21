@@ -36,8 +36,10 @@ class HomeService extends Base
         $users = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id=ui.u_id")
             ->leftJoin("user_set us", "u.id=us.u_id")
+            ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->whereIn("ui.u_id", $userIds)
             ->field("u.id,u.user_number,
+                uss.total_score,uss.total_users,
                 ui.photos,ui.city,ui.signatures,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->select()->toArray();
@@ -49,6 +51,11 @@ class HomeService extends Base
             $signatures = json_decode($user["signatures"], true);
             $users[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
             unset($users[$key]["signatures"]);
+
+            $score = $user["total_users"] <= 0 ? 0 : (bcdiv($user["total_score"], $user["total_users"], 1));
+            $users[$key]["score"] = $score;
+            unset($users[$key]["total_score"]);
+            unset($users[$key]["total_users"]);
         }
 
         $returnData["list"] = $users;
@@ -78,8 +85,10 @@ class HomeService extends Base
         $users = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id=ui.u_id")
             ->leftJoin("user_set us", "u.id=us.u_id")
+            ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->whereIn("ui.u_id", $userIds)
             ->field("u.id,u.user_number,
+                uss.total_score,uss.total_users,
                 ui.photos,ui.city,ui.signatures,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->select()->toArray();
@@ -91,6 +100,11 @@ class HomeService extends Base
             $signatures = json_decode($user["signatures"], true);
             $users[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
             unset($users[$key]["signatures"]);
+
+            $score = $user["total_users"] <= 0 ? 0 : (bcdiv($user["total_score"], $user["total_users"], 1));
+            $users[$key]["score"] = $score;
+            unset($users[$key]["total_score"]);
+            unset($users[$key]["total_users"]);
         }
 
         $returnData["list"] = $users;
@@ -121,8 +135,10 @@ class HomeService extends Base
         $users = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id=ui.u_id")
             ->leftJoin("user_set us", "u.id=us.u_id")
+            ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->whereIn("ui.u_id", $userIds)
             ->field("u.id,u.user_number,
+                uss.total_score,uss.total_users,
                 ui.photos,ui.city,ui.signatures,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->select()->toArray();
@@ -134,6 +150,11 @@ class HomeService extends Base
             $signatures = json_decode($user["signatures"], true);
             $users[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
             unset($users[$key]["signatures"]);
+
+            $score = $user["total_users"] <= 0 ? 0 : (bcdiv($user["total_score"], $user["total_users"], 1));
+            $users[$key]["score"] = $score;
+            unset($users[$key]["total_score"]);
+            unset($users[$key]["total_users"]);
         }
 
         $returnData["list"] = $users;

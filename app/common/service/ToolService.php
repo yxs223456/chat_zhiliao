@@ -19,6 +19,7 @@ class ToolService extends Base
         $data["ObjectKey"] = $config["key_id"];
         $data["BucketName"] = $config["bucket"];
         $data["EndPoint"] = $config["endpoint"];
+        $data["RegionId"] = $config["region_id"];
         return $data;
     }
 }

@@ -79,10 +79,6 @@ class BlackListService extends Base
         if ($exists) {
             throw AppException::factory(AppException::QUERY_INVALID);
         }
-        $blackUserNumber = $blackUserData["user_number"];
-        $userData = UserService::getUserById($user['id']);
-        $userNumber = $userData["user_number"];
-        // TODO 调用融云接口
 
         Db::name("black_list")->insertGetId(["u_id" => $user["id"], "black_u_id" => $blackUserId]);
         $redis = Redis::factory();
@@ -109,12 +105,6 @@ class BlackListService extends Base
         if (!$exists) {
             throw AppException::factory(AppException::QUERY_INVALID);
         }
-
-        $blackUserData = UserService::getUserById($blackUserId);
-        $blackUserNumber = $blackUserData["user_number"];
-        $userData = UserService::getUserById($user['id']);
-        $userNumber = $userData["user_number"];
-        // TODO 调用融云接口
 
         Db::name("black_list")->where("u_id", $user["id"])->where("black_u_id", $blackUserId)->delete();
         $redis = Redis::factory();

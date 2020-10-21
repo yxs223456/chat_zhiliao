@@ -22,6 +22,9 @@ class Constant
 //        "image_url" => "http://yxs191202.oss-cn-beijing.aliyuncs.com/chat_zhiliao/5817547b4c9b45c9f64a69db1c96d55c.jpeg",
 //    ];
 
+    // 注册赠送免费通话分钟数
+    const INIT_FREE_MINUTES = 3;
+
     // 性别初始化信息
     const SEX_INIT_CONFIG = [
         "male" => [

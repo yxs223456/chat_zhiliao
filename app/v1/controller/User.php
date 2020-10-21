@@ -228,9 +228,7 @@ class User extends Base
         if (!in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
-        if (!checkInt($coin)) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-        }
+
         $user = $this->query["user"];
 
         $service = new UserService();
@@ -247,9 +245,6 @@ class User extends Base
         $open = $request["switch"] ?? 0;
         $coin = $request["coin"] ?? 0;
         if (!in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-        }
-        if (!checkInt($coin)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $user = $this->query["user"];

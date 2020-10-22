@@ -182,7 +182,8 @@ class DynamicService extends Base
      */
     public function report($id, $user)
     {
-        $dynamic = Db::name("dynamic")->where('id', $id)->find();
+        $dynamic = Db::name("dynamic")->where('id', $id)
+            ->where("is_delete",DbDataIsDeleteEnum::NO)->find();
         if (empty($dynamic)) {
             throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
         }

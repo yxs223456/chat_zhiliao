@@ -24,6 +24,9 @@ class VisitorService extends Base
      */
     public static function addVisitorLog($userId, $visitorId)
     {
+        if ($userId == $visitorId) { // 同一个人不添加记录
+            return;
+        }
         // 放入操作队列
         userVisitorCallbackProduce($userId, $visitorId);
     }
@@ -74,7 +77,7 @@ class VisitorService extends Base
         $query = Db::name("visitor_log")->alias("vl")
             ->leftJoin("user u", "vl.visitor_u_id = u.id")
             ->leftJoin("user_info ui", "vl.visitor_u_id = ui.u_id")
-            ->field("vl.id,vl.u_id,vl.create_time,
+            ->field("vl.id,vl.visitor_u_id,vl.create_time,
             u.sex,u.user_number,
             ui.portrait,ui.nickname,ui.birthday,ui.city")
             ->order("vl.create_time", 'desc');
@@ -83,7 +86,7 @@ class VisitorService extends Base
         }
 
         $ret["list"] = $query->select()->toArray();
-        cacheUserVisitorPageData($userId, $startId, $pageSize, $data, $redis);
+        cacheUserVisitorPageData($userId, $startId, $pageSize, $ret, $redis);
         return $ret;
     }
 

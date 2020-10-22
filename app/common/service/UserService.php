@@ -651,10 +651,10 @@ class UserService extends Base
      * @param $switch int
      * @param $coin int
      * @param $user array
-     * @param $type string (video,voice)
+     * @param $type string (video,voice,all)
      * @throws AppException
      */
-    public function setVideoOrVoice($switch, $coin, $user, $type = "video")
+    public function setVideoOrVoice($switch, $coin, $user, $type = "all")
     {
         $sex = $user["sex"] ?? 0;
         if ($sex == UserSexEnum::UNKNOWN) {
@@ -665,18 +665,55 @@ class UserService extends Base
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
         // 关闭操作，计费清零
-        if ($switch == UserSwitchEnum::OFF) {
+        if (isset($switch) && $switch == UserSwitchEnum::OFF) {
             $coin = 0;
         }
+
+        // 设置费用，判断是否开启
+        if (isset($coin)) {
+            $userSet = UserSetService::getUserSetByUId($user["id"], Redis::factory());
+            $voiceSwitch = $userSet['voice_chat_switch'] ?? 0;
+            $videoSwitch = $userSet['video_chat_switch'] ?? 0;
+            if ($type == "voice" && $voiceSwitch == UserSwitchEnum::OFF) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($type == 'video' && $videoSwitch == UserSwitchEnum::OFF) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+            if ($type == "all" && ($videoSwitch == UserSwitchEnum::OFF || $voiceSwitch == UserSwitchEnum::OFF)) {
+                throw AppException::factory(AppException::QUERY_INVALID);
+            }
+        }
+
+        // 组装更新数据
+        $update = [];
+        if ($type == "all") {
+            if (isset($switch)) {
+                $update["voice_chat_switch"] = $switch;
+                $update["video_chat_switch"] = $switch;
+            }
+            if (isset($coin)) {
+                $update["voice_chat_price"] = $coin;
+                $update["video_chat_price"] = $coin;
+            }
+        } else {
+            if (isset($switch)) {
+                $update["{$type}_chat_switch"] = $switch;
+            }
+            if (isset($coin)) {
+                $update["{$type}_chat_price"] = $coin;
+            }
+        }
+
         // 女神金额逻辑
         if ($sex == UserSexEnum::FEMALE) {
             $femaleLevel = $userInfo["pretty_female_level"];
             $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
-            if ($coin > $ruleCoin) {
+            if (isset($coin) && $coin > $ruleCoin) {
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
             }
 
-            Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+            Db::name("user_set")->where("u_id", $user["id"])->update($update);
             deleteUserSetByUId($user["id"], Redis::factory());
             return;
         }
@@ -689,16 +726,16 @@ class UserService extends Base
         // vip过期 不是vip不能设置通话聊天金额
         if ($today > $vipDeadline
             && $today > $svipDeadline
-            && $coin > 0
+            && isset($coin) && $coin > 0
         ) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $ruleCoin = $this->getMaleCoinRule($maleLevel);
-        if ($coin > $ruleCoin) {
+        if (isset($coin) && $coin > $ruleCoin) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
-        Db::name("user_set")->where("u_id", $user["id"])->update(["{$type}_chat_switch" => $switch, "{$type}_chat_price" => $coin]);
+        Db::name("user_set")->where("u_id", $user["id"])->update($update);
         deleteUserSetByUId($user["id"], Redis::factory());
         return;
     }
@@ -949,10 +986,7 @@ class UserService extends Base
             $data["videos"] = $videos;
 
             // 获取评分
-            $score = Db::name("user_score")->where("u_id", $userId)->find();
-            if (!empty($score)) {
-                $data["score"] = bcdiv($score["total_score"], $score["total_users"], 1);
-            }
+            $data["score"] = ScoreService::getScore($userId);
 
             cacheUserIndexDataByUId($userId, $data, $redis);
             $redis->del($lockKey);

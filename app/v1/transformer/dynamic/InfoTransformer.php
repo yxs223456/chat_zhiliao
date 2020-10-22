@@ -21,6 +21,7 @@ class InfoTransformer extends TransformerAbstract
         $likeUserIds = $data["likeUserIds"] ?? [];
         return [
             'id' => $info['id'] ?? 0,
+            'u_id' => $info["u_id"] ?? 0,
             'avatar' => $info['portrait'] ?? "",
             'nickname' => $info['nickname'] ?? '',
             'sex' => $info['sex'] ?? 0,

@@ -15,6 +15,8 @@ class HomeService extends Base
 {
     /**
      * 首页推荐列表
+     * @param $sex
+     * @param $price
      * @param $pageNum
      * @param $pageSize
      * @return mixed
@@ -22,13 +24,14 @@ class HomeService extends Base
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function recommendUserList($pageNum, $pageSize)
+    public function recommendUserList($sex, $price, $pageNum, $pageSize)
     {
         $redis = Redis::factory();
         $returnData["list"] = [];
 
         // 首页推荐用户
-        $userIds = getUserListFromHomeRecommendList($pageNum, $pageSize, $redis);
+        $condition = $sex . ":" . $price;
+        $userIds = getUserListFromHomeRecommendList($condition, $pageNum, $pageSize, $redis);
         if (empty($userIds)) {
             return $returnData;
         }
@@ -64,6 +67,8 @@ class HomeService extends Base
 
     /**
      * 首页新人列表
+     * @param $sex
+     * @param $price
      * @param $pageNum
      * @param $pageSize
      * @return mixed
@@ -71,13 +76,14 @@ class HomeService extends Base
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function newUserList($pageNum, $pageSize)
+    public function newUserList($sex, $price, $pageNum, $pageSize)
     {
         $redis = Redis::factory();
         $returnData["list"] = [];
 
         // 首页新人用户
-        $userIds = getUserListFromHomeNewUserList($pageNum, $pageSize, $redis);
+        $condition = $sex . ":" . $price;
+        $userIds = getUserListFromHomeNewUserList($condition, $pageNum, $pageSize, $redis);
         if (empty($userIds)) {
             return $returnData;
         }
@@ -114,6 +120,8 @@ class HomeService extends Base
     /**
      * 首页对应地区用户列表
      * @param $site
+     * @param $sex
+     * @param $price
      * @param $pageNum
      * @param $pageSize
      * @return mixed
@@ -121,13 +129,14 @@ class HomeService extends Base
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function siteUserList($site, $pageNum, $pageSize)
+    public function siteUserList($site, $sex, $price, $pageNum, $pageSize)
     {
         $redis = Redis::factory();
         $returnData["list"] = [];
 
         // 首页对应地区用户
-        $userIds = getUserListFromHomeSiteList($pageNum, $pageSize, $site, $redis);
+        $condition = $sex . ":" . $price;
+        $userIds = getUserListFromHomeSiteList($site, $condition, $pageNum, $pageSize, $redis);
         if (empty($userIds)) {
             return $returnData;
         }
@@ -159,5 +168,57 @@ class HomeService extends Base
 
         $returnData["list"] = $users;
         return $returnData;
+    }
+
+    /**
+     * 用户符合的首页搜索条件
+     * @param $userSex
+     * @param $price
+     * @return array
+     */
+    public static function getHomeConditionByUser($userSex, $price)
+    {
+        $priceCondition = self::getHomePriceCondition($price);
+        $conditions = [
+            "0:0",
+            $userSex.":0",
+        ];
+        if ($priceCondition) {
+            $conditions[] = "0:".$priceCondition;
+            $conditions[] = $userSex.":".$priceCondition;
+        }
+        return $conditions;
+    }
+
+    /**
+     * 根据价格判断符合的首页价格条件
+     * @param $price
+     * @return string|null
+     */
+    public static function getHomePriceCondition($price)
+    {
+        if ($price < 200) {
+            return "100_200";
+        } elseif ($price < 350) {
+            return "200_350";
+        } elseif ($price >= 350) {
+            return "350_500";
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 首页全部价格类搜索条件
+     * @return array
+     */
+    public static function getAllHomePriceCondition()
+    {
+        return [
+            "0",
+            "100_200",
+            "200_350",
+            "350_500",
+        ];
     }
 }

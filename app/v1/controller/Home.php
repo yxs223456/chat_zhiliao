@@ -9,7 +9,6 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
-use app\common\helper\AliyunOss;
 use app\common\helper\Redis;
 use app\common\service\HomeService;
 use app\common\service\ToolService;
@@ -34,6 +33,8 @@ class Home extends Base
     public function recommendUserList()
     {
         $request = $this->query["content"];
+        $sex = $request["sex"]??0;
+        $price = $request["price"]??0;
         $pageNum = $request["page_num"]??1;
         $pageSize = $request["page_size"]??10;
         if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
@@ -41,7 +42,7 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->recommendUserList($pageNum, $pageSize);
+        $returnData = $service->recommendUserList($sex, $price, $pageNum, $pageSize);
 
         return $this->jsonResponse($returnData, new RecommendUserList());
     }
@@ -52,6 +53,8 @@ class Home extends Base
     public function activeUserList()
     {
         $request = $this->query["content"];
+        $sex = $request["sex"]??0;
+        $price = $request["price"]??0;
         $pageNum = $request["page_num"]??1;
         $pageSize = $request["page_size"]??10;
         if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
@@ -59,7 +62,7 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->recommendUserList($pageNum, $pageSize);
+        $returnData = $service->recommendUserList($sex, $price, $pageNum, $pageSize);
 
         return $this->jsonResponse($returnData, new RecommendUserList());
     }
@@ -70,6 +73,8 @@ class Home extends Base
     public function newUserList()
     {
         $request = $this->query["content"];
+        $sex = $request["sex"]??0;
+        $price = $request["price"]??0;
         $pageNum = $request["page_num"]??1;
         $pageSize = $request["page_size"]??10;
         if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
@@ -77,7 +82,7 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->newUserList($pageNum, $pageSize);
+        $returnData = $service->newUserList($sex, $price, $pageNum, $pageSize);
 
         return $this->jsonResponse($returnData, new NewUserList());
     }
@@ -88,6 +93,8 @@ class Home extends Base
     public function siteUserList()
     {
         $request = $this->query["content"];
+        $sex = $request["sex"]??0;
+        $price = $request["price"]??0;
         $site = $request["site"]??"";
         $pageNum = $request["page_num"]??1;
         $pageSize = $request["page_size"]??10;
@@ -99,7 +106,7 @@ class Home extends Base
         }
 
         $service = new HomeService();
-        $returnData = $service->siteUserList($site, $pageNum, $pageSize);
+        $returnData = $service->siteUserList($site, $sex, $price, $pageNum, $pageSize);
 
         return $this->jsonResponse($returnData, new SiteUserList());
     }

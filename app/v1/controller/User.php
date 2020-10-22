@@ -434,7 +434,7 @@ class User extends Base
     {
         $request = $this->query["content"];
         $uid = $request["u_id"] ?? 0;
-        if (!checkInt($uid)) {
+        if (!checkInt($uid,true)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (empty($uid)) {

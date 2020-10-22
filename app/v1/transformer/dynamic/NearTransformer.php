@@ -25,6 +25,7 @@ class NearTransformer extends TransformerAbstract
     {
         return [
             'id' => $data['id'] ?? 0,
+            'u_id' => $data['userInfo']['id'] ?? 0,
             'avatar' => $data['userInfo']['portrait'] ?? '',
             'nickname' => $data['userInfo']['nickname'] ?? '',
             'sex' => $data['userInfo']['sex'] ?? 0,

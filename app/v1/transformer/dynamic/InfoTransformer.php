@@ -61,6 +61,7 @@ class InfoTransformer extends TransformerAbstract
         foreach ($comment as $item) {
             $tmp = [];
             $tmp['id'] = $item['id'] ?? 0;
+            $tmp['u_id'] = $item['u_id'] ?? 0;
             $tmp["avatar"] = $item['portrait'] ?? '';
             $tmp["nickname"] = $item['nickname'] ?? '';
             $tmp['create_time'] = empty($item['create_time']) ? '' : substr($item["create_time"], 5, 11);

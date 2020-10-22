@@ -235,7 +235,7 @@ class User extends Base
         $user = $this->query["user"];
 
         $service = new UserService();
-        $service->setVideoOrVoice($open, $coin, $user);
+        $service->setVideoOrVoice($open, $coin, $user,"video");
         return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
     }
 
@@ -258,6 +258,28 @@ class User extends Base
 
         $service = new UserService();
         $service->setVideoOrVoice($open, $coin, $user, 'voice');
+        return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
+    }
+
+    /**
+     * 设置语音通话金额，开启关闭
+     */
+    public function setCall()
+    {
+        $request = $this->query["content"];
+        $open = $request["switch"] ?? null;
+        $coin = $request["coin"] ?? null;
+        if (isset($open) && !in_array($open, [UserSwitchEnum::ON, UserSwitchEnum::OFF])) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        if (isset($coin) && !checkInt($coin)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $user = $this->query["user"];
+
+        $service = new UserService();
+        $service->setVideoOrVoice($open, $coin, $user);
         return $this->jsonResponse(UserService::getUserAllInfo($user['id']), new AllInfoTransformer());
     }
 

@@ -651,10 +651,10 @@ class UserService extends Base
      * @param $switch int
      * @param $coin int
      * @param $user array
-     * @param $type string (video,voice)
+     * @param $type string (video,voice,all)
      * @throws AppException
      */
-    public function setVideoOrVoice($switch, $coin, $user, $type = "video")
+    public function setVideoOrVoice($switch, $coin, $user, $type = "all")
     {
         $sex = $user["sex"] ?? 0;
         if ($sex == UserSexEnum::UNKNOWN) {
@@ -668,20 +668,33 @@ class UserService extends Base
         if (isset($switch) && $switch == UserSwitchEnum::OFF) {
             $coin = 0;
         }
+
+        // 组装更新数据
+        $update = [];
+        if ($type == "all") {
+            if (isset($switch)) {
+                $update["voice_chat_switch"] = $switch;
+                $update["video_chat_switch"] = $switch;
+            }
+            if (isset($coin)) {
+                $update["voice_chat_price"] = $coin;
+                $update["video_chat_price"] = $coin;
+            }
+        } else {
+            if (isset($switch)) {
+                $update["{$type}_chat_switch"] = $switch;
+            }
+            if (isset($coin)) {
+                $update["{$type}_chat_price"] = $coin;
+            }
+        }
+
         // 女神金额逻辑
         if ($sex == UserSexEnum::FEMALE) {
             $femaleLevel = $userInfo["pretty_female_level"];
             $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
             if (isset($coin) && $coin > $ruleCoin) {
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-            }
-
-            $update = [];
-            if (isset($switch)) {
-                $update["{$type}_chat_switch"] = $switch;
-            }
-            if (isset($coin)) {
-                $update["{$type}_chat_price"] = $coin;
             }
 
             Db::name("user_set")->where("u_id", $user["id"])->update($update);
@@ -706,13 +719,6 @@ class UserService extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
-        $update = [];
-        if (isset($switch)) {
-            $update["{$type}_chat_switch"] = $switch;
-        }
-        if (isset($coin)) {
-            $update["{$type}_chat_price"] = $coin;
-        }
         Db::name("user_set")->where("u_id", $user["id"])->update($update);
         deleteUserSetByUId($user["id"], Redis::factory());
         return;

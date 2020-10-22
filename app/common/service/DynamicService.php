@@ -146,7 +146,7 @@ class DynamicService extends Base
 
             // 获取评论数据
             $dynamicComment = Db::name("dynamic_comment")->alias("dc")
-                ->leftJoin("user_info ui", "dc.u_id = ui.id")
+                ->leftJoin("user_info ui", "dc.u_id = ui.u_id")
                 ->field("dc.id,dc.pid,dc.u_id,dc.content,dc.source,dc.create_time,ui.portrait,ui.nickname")
                 ->where("dc.dynamic_id", $id)
                 ->where("dc.is_delete", DbDataIsDeleteEnum::NO)

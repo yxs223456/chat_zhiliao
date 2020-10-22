@@ -7,7 +7,7 @@
         "oss:AbortMultipartUpload"
       ],
       "Effect": "Allow",
-      "Resource": ["acs:oss:*:*:$BUCKET_NAME/$OBJECT_PREFIX*"]
+      "Resource": ["acs:oss:*:*:yanglc/*"]
     }
   ],
   "Version": "1"

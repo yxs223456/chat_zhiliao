@@ -22,7 +22,7 @@ class ToolService extends Base
         $config = config("account.oss");
         $data = [];
         $data["bucket"] = $config["bucket"];
-        $data["endpoint"] = "https://" . $config['endpoint'];
+        $data["endpoint"] = $config['endpoint'];
         return $data;
     }
 }

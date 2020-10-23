@@ -344,7 +344,7 @@ class User extends Base
         $occupation = $request["occupation"] ?? 0;
         $city = $request["city"] ?? "";
         $sex = $request["sex"] ?? null;
-        $photo = $request["photos"] ?? "";
+        $photo = $request["photos"] ?? null;
 
         if (!empty($birthday) && !checkDateFormat($birthday)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -359,15 +359,14 @@ class User extends Base
             "birthday" => $birthday, "occupation" => $occupation,
             "city" => $city];
 
-        $photo = array_filter(explode(",", $photo));
-        if (!empty($photo)) {
+        if (isset($photo)) {
+            $photo = array_filter(explode(",", $photo));
             $update["photos"] = json_encode($photo);
         }
 
         if (empty(array_filter($update))) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
-
         // 修改用户头像，昵称，生日，照片，城市
         $service->editInfo($user, array_filter($update));
 

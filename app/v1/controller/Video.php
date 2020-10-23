@@ -59,7 +59,7 @@ class Video extends Base
     {
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
-        $pageSize = $request["page_size"] ?? 20;=
+        $pageSize = $request["page_size"] ?? 20;
         $user = $this->query["user"];
 
         if (!checkInt($pageSize, false) || !checkInt($startId)) {

@@ -344,15 +344,12 @@ class User extends Base
         $occupation = $request["occupation"] ?? 0;
         $city = $request["city"] ?? "";
         $sex = $request["sex"] ?? null;
+        $photo = $request["photos"] ?? "";
 
-        $photo = $request["photos"] ?? [];
         if (!empty($birthday) && !checkDateFormat($birthday)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (!empty($occupation) && !in_array($occupation, UserOccupationEnum::getAllValues())) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-        }
-        if (!empty($photo) && !is_array($photo)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
@@ -360,7 +357,17 @@ class User extends Base
         $service = new UserService();
         $update = ["portrait" => $avatar, "nickname" => $nickname,
             "birthday" => $birthday, "occupation" => $occupation,
-            "photos" => json_encode($photo), "city" => $city];
+            "city" => $city];
+
+        $photo = array_filter(explode(",", $photo));
+        if (!empty($photo)) {
+            $update["photos"] = json_encode($photo);
+        }
+
+        if (empty(array_filter($update))) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
         // 修改用户头像，昵称，生日，照片，城市
         $service->editInfo($user, array_filter($update));
 

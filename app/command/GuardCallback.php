@@ -119,7 +119,7 @@ class GuardCallback extends Command
                     'create_date' => date("Y-m-d"),
                 ]);
 
-            // 添加需要统计的
+            // 添加需要统计守护的女神ID
             $startEndDate = implode("-",getWeekStartAndEnd());
             $exists = Db::name("guard_user_callback")->where("u_id", $this->incomeUserId)
                 ->where("start_end_date", $startEndDate)->find();

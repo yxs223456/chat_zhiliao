@@ -107,6 +107,10 @@ class IMService extends Base
                 Db::name("user_wallet_flow")->insertAll([$uWalletFlowData, $tUWalletFlowData]);
 
                 Db::commit();
+
+                // 计算魅力值放入队列
+                userGuardCallbackProduce($tUId, $user["id"], $bonus);
+
             } catch (\Throwable $e) {
                 Db::rollback();
                 throw $e;

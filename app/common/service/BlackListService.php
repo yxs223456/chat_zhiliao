@@ -70,6 +70,9 @@ class BlackListService extends Base
      */
     public function addBlack($user, $blackUserId)
     {
+        if ($user["id"] == $blackUserId) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
         $blackUserData = UserService::getUserById($blackUserId);
         if (empty($blackUserData)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
@@ -101,6 +104,9 @@ class BlackListService extends Base
      */
     public function removeBlack($user, $blackUserId)
     {
+        if ($user["id"] == $blackUserId) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
         $exists = Db::name("black_list")->where("u_id", $user['id'])->where("black_u_id", $blackUserId)->find();
         if (!$exists) {
             throw AppException::factory(AppException::QUERY_INVALID);

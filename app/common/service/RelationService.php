@@ -66,13 +66,13 @@ class RelationService extends Base
     /**
      * 好友列表
      *
-     * @param $pageNum int 页码
+     * @param $startId int 查询ID
      * @param $pageSize int 分页大小
      * @param $userId int 用户ID
      * @return array
      * @throws AppException
      */
-    public function friendList($pageNum, $pageSize, $userId)
+    public function friendList($startId, $pageSize, $userId)
     {
         // 获取当前用户关注用户id
         $followUserIds = Db::name("user_follow")
@@ -88,12 +88,15 @@ class RelationService extends Base
             return [];
         }
 
-        $data = Db::name("user")->alias("u")
+        $query = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
             ->field("u.id,u.sex,ui.portrait,ui.nickname,ui.birthday,ui.city")
             ->whereIn("u.id", $friendIds)
-            ->order("u.id","desc")
-            ->limit(($pageNum - 1) * $pageSize, $pageSize)
+            ->order("u.id", "desc");
+        if ($startId) {
+            $query = $query->where("u.id", "<", $startId);
+        }
+        $data = $query->limit($pageSize)
             ->select()->toArray();
 
         return $data;
@@ -108,6 +111,9 @@ class RelationService extends Base
      */
     public function unfollow($followId, $userId)
     {
+        if ($followId == $userId) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
         $followUser = UserService::getUserById($followId);
         if (empty($followUser)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
@@ -131,6 +137,9 @@ class RelationService extends Base
      */
     public function follow($followId, $userId)
     {
+        if ($followId == $userId) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
         $followUser = UserService::getUserById($followId);
         if (empty($followUser)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);

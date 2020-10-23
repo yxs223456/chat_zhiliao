@@ -36,7 +36,6 @@ class Video extends Base
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
-        $isFlush = $request["is_flush"] ?? 0;
         $city = $request["city"] ?? "";
         $user = $this->query["user"];
 
@@ -44,7 +43,7 @@ class Video extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new VideoService();
-        list($video, $likeVideoUserIds) = $service->cityList($startId, $pageSize, $city, $isFlush);
+        list($video, $likeVideoUserIds) = $service->cityList($startId, $pageSize, $city);
         return $this->jsonResponse($video, new VideoListTransformer(
             ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds]
         ));
@@ -60,15 +59,14 @@ class Video extends Base
     {
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
-        $pageSize = $request["page_size"] ?? 20;
-        $isFlush = $request["is_flush"] ?? 0;
+        $pageSize = $request["page_size"] ?? 20;=
         $user = $this->query["user"];
 
         if (!checkInt($pageSize, false) || !checkInt($startId)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new VideoService();
-        list($video, $likeVideoUserIds) = $service->recommendList($startId, $pageSize, $isFlush);
+        list($video, $likeVideoUserIds) = $service->recommendList($startId, $pageSize);
         return $this->jsonResponse($video, new VideoListTransformer(
             ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds]
         ));

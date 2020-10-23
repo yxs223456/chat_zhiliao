@@ -124,6 +124,18 @@ class Home extends Base
     }
 
     /**
+     * 获取oss配置
+     *
+     * @return \think\response\Json
+     */
+    public function ossConfig()
+    {
+        $service = new ToolService();
+        $data = $service->ossConfig();
+        return $this->jsonResponse($data);
+    }
+
+    /**
      * 用户上报地理位置
      */
     public function geo()

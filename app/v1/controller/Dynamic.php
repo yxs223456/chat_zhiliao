@@ -37,14 +37,13 @@ class Dynamic extends Base
     public function near()
     {
         $request = $this->query["content"];
-        $pageNum = $request["page_num"] ?? 1;
+        $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
         $long = $request["long"] ?? 0; // 经度
         $lat = $request["lat"] ?? 0; // 纬度
-        $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         $userId = $this->query["user"]["id"]; // 当前登陆用户ID
 
-        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+        if (!checkInt($startId) || !checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         if (empty($long) && empty($lat)) {
@@ -52,7 +51,7 @@ class Dynamic extends Base
         }
         $service = new DynamicService();
 
-        $dynamic = $service->near($pageNum, $pageSize, $long, $lat, $isFlush, $userId);
+        $dynamic = $service->near($startId, $pageSize, $long, $lat, $userId);
         return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
     }
 
@@ -92,14 +91,13 @@ class Dynamic extends Base
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
-        $isFlush = $request["is_flush"] ?? 0; //是否刷新0-否，1-是
         $userId = $this->query["user"]['id'];
         if (!checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new DynamicService();
-        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->concern($startId, $pageSize, $isFlush, $userId);
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->concern($startId, $pageSize, $userId);
         return $this->jsonResponse($dynamic, new ConcernTransformer(
             ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
                 'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds]
@@ -206,7 +204,6 @@ class Dynamic extends Base
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
         $requestUserId = $request["user_id"] ?? 0;
-        $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         if (empty($userId)) {
             $requestUserId = $this->query["user"]["id"];
         }
@@ -216,7 +213,7 @@ class Dynamic extends Base
         }
 
         $service = new DynamicService();
-        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->personal($startId, $pageSize, $isFlush, $requestUserId);
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->personal($startId, $pageSize, $requestUserId);
         return $this->jsonResponse($dynamic, new PersonalTransformer(
             ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
                 'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds]

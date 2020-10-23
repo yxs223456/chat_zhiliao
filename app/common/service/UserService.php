@@ -664,26 +664,6 @@ class UserService extends Base
         if (empty($userInfo)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
-        // 关闭操作，计费清零
-        if (isset($switch) && $switch == UserSwitchEnum::OFF) {
-            $coin = 0;
-        }
-
-        // 设置费用，判断是否开启
-        if (isset($coin)) {
-            $userSet = UserSetService::getUserSetByUId($user["id"], Redis::factory());
-            $voiceSwitch = $userSet['voice_chat_switch'] ?? 0;
-            $videoSwitch = $userSet['video_chat_switch'] ?? 0;
-            if ($type == "voice" && $voiceSwitch == UserSwitchEnum::OFF) {
-                throw AppException::factory(AppException::QUERY_INVALID);
-            }
-            if ($type == 'video' && $videoSwitch == UserSwitchEnum::OFF) {
-                throw AppException::factory(AppException::QUERY_INVALID);
-            }
-            if ($type == "all" && ($videoSwitch == UserSwitchEnum::OFF || $voiceSwitch == UserSwitchEnum::OFF)) {
-                throw AppException::factory(AppException::QUERY_INVALID);
-            }
-        }
 
         // 组装更新数据
         $update = [];

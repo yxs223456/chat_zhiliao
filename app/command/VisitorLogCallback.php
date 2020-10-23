@@ -54,7 +54,7 @@ class VisitorLogCallback extends Command
             foreach ($error as $key=>$value) {
                 $errorMessage .= "$key: " . $value . "\n";
             }
-            $this->sendWeChatWorkMessage($errorMessage, WeChatWork::$user["yangxiushan"]);
+            $this->sendWeChatWorkMessage($errorMessage, WeChatWork::$user["yanglichao"]);
         }
     }
 

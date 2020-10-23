@@ -37,6 +37,7 @@ class PersonalTransformer extends TransformerAbstract
     {
         return [
             'id' => $data['id'] ?? 0,
+            'u_id' => (int)$this->getUserInfo('id'),
             'avatar' => $this->getUserInfo('portrait'),
             'nickname' => $this->getUserInfo("nickname"),
             'sex' => (int)$this->getUserInfo("sex"),

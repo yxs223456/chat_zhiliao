@@ -75,8 +75,8 @@ class DynamicService extends Base
 
         // 删除缓存
         $redis = Redis::factory();
-        deleteUserDynamicInfo($id, $redis);
-        deleteUserIndexDataByUId($user["id"], $redis);
+        deleteUserDynamicInfo($id, $redis); // 删除动态缓存
+        deleteUserIndexDataByUId($user["id"], $redis); // 删除用户主页缓存
 
         return Db::name("dynamic")->where("id", $id)->update(["is_delete" => DbDataIsDeleteEnum::YES]);
 
@@ -146,10 +146,10 @@ class DynamicService extends Base
 
             // 获取评论数据
             $dynamicComment = Db::name("dynamic_comment")->alias("dc")
-                ->leftJoin("user_info ui", "dc.u_id = ui.id")
+                ->leftJoin("user_info ui", "dc.u_id = ui.u_id")
                 ->field("dc.id,dc.pid,dc.u_id,dc.content,dc.source,dc.create_time,ui.portrait,ui.nickname")
                 ->where("dc.dynamic_id", $id)
-                ->where("dc.is_delete",DbDataIsDeleteEnum::NO)
+                ->where("dc.is_delete", DbDataIsDeleteEnum::NO)
                 ->order("dc.id")
                 ->select()->toArray();
             $ret["comment"] = $dynamicComment;
@@ -181,7 +181,8 @@ class DynamicService extends Base
      */
     public function report($id, $user)
     {
-        $dynamic = Db::name("dynamic")->where('id', $id)->find();
+        $dynamic = Db::name("dynamic")->where('id', $id)
+            ->where("is_delete",DbDataIsDeleteEnum::NO)->find();
         if (empty($dynamic)) {
             throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
         }
@@ -313,147 +314,65 @@ class DynamicService extends Base
      *
      * @param $startId int 查询开始ID
      * @param $pageSize int 分页大小
-     * @param $isFlush int 是否刷新缓存
      * @param $user array 当前登陆用户
      *
      * @return array|mixed|null
      * @throws AppException
      */
-    public function newest($startId, $pageSize, $isFlush, $user)
-    {
-        // 需要刷新更新缓存内容
-        if ($isFlush) {
-            return $this->newestUpdate($pageSize, $user);
-        }
-        // 不需要刷新查询缓存数据
-        return $this->newestPage($startId, $pageSize, $user);
-    }
-
-    /**
-     * 刷新最新动态缓存数据
-     * 1. 判断是否需要更新缓存
-     * 2. 需要更新缓存，删除所有缓存，返回新数据
-     * 3. 不需要更新缓存，直接返回
-     *
-     * @param $pageSize int 分页大小
-     * @param $user array  用户
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function newestUpdate($pageSize, $user)
-    {
-        $searchSex = $user["sex"] == 1 ? 2 : 1;
-        // 获取最新动态ID
-        $newDynamicId = Db::name("dynamic")
-            ->where("u_sex", $searchSex)
-            ->where('is_delete', DbDataIsDeleteEnum::NO)
-            ->order("id", "desc")
-            ->value("id");
-        // 为空，没有动态数据，返回缓存的第一页
-        if (empty($newDynamicId)) {
-            return $this->newestPage(0, $pageSize, $user);
-        }
-
-        // 不为空并且和缓存最新一条相同直接返回缓存数据
-        $firstPage = $this->newestPage(0, $pageSize, $user);
-        $dynamic = array_shift($firstPage);
-        if (isset($dynamic[0]["id"]) && $dynamic[0]["id"] == $newDynamicId) {
-            return $this->newestPage(0, $pageSize, $user);
-        }
-
-        // 不同删除首页缓存
-        deleteFirstNewestDynamicInfo($searchSex, $pageSize, Redis::factory());
-        return $this->newestPage(0, $pageSize, $user);
-    }
-
-    /**
-     * 获取最新的分页数据
-     *
-     * @param $startId int 起始查询ID
-     * @param $pageSize int 分页大小
-     * @param $user array 当前用户
-     * @param int $retry 锁等待尝试次数
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function newestPage($startId, $pageSize, $user, $retry = 0)
+    public function newest($startId, $pageSize, $user)
     {
         // 数据搜索条件，redis key
         $searchSex = $user["sex"] == 1 ? 2 : 1;
 
-        // 读缓存
-        $redis = Redis::factory();
-        if ($data = getNewestDynamicInfo($searchSex, $startId, $pageSize, $redis)) {
-            return $data;
+        $ret = [
+            "dynamic" => [],
+            "userInfo" => [],
+            "dynamicCount" => [],
+            "likeDynamicUserIds" => []
+        ];
+
+        // 获取动态数据
+        $dynamicQuery = Db::name("dynamic")
+            ->where("u_sex", $searchSex)
+            ->where("is_delete", DbDataIsDeleteEnum::NO)
+            ->order("id", "desc");
+        if (!empty($startId)) {
+            $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
         }
+        $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
 
-        $lockKey = REDIS_KEY_PREFIX . "newestDynamicInfoLock:" . $searchSex . ":" . $startId . ":" . $pageSize;
-        if ($redis->setnx($lockKey, 1)) {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-            $ret = [
-                "dynamic" => [],
-                "userInfo" => [],
-                "dynamicCount" => [],
-                "likeDynamicUserIds" => []
-            ];
-
-            // 获取动态数据
-            $dynamicQuery = Db::name("dynamic")
-                ->where("u_sex", $searchSex)
-                ->where("is_delete", DbDataIsDeleteEnum::NO)
-                ->order("id", "desc");
-            if (!empty($startId)) {
-                $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
-            }
-            $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
-
-            if (empty($dynamics)) {
-                $redis->del($lockKey);
-                cacheNewestDynamicInfo($searchSex, $startId, $pageSize, array_values($ret), $redis);
-                return array_values($ret);
-            }
-            $ret["dynamic"] = $dynamics;
-
-            // 获取动态用户数据
-            $userInfo = Db::name("user")->alias("u")
-                ->leftJoin("user_info ui", "u.id = ui.u_id")
-                ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
-                ->whereIn("u.id", array_column($dynamics, 'u_id'))
-                ->select()->toArray();
-            $ret["userInfo"] = $userInfo;
-
-            // 获取动态统计数据
-            $dynamicCount = Db::name("dynamic_count")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->select()->toArray();
-            $ret["dynamicCount"] = $dynamicCount;
-
-            // 获取动态点赞的用户ID
-            $dynamicIdToUserIds = Db::name("dynamic_like")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->field("dynamic_id,u_id")
-                ->select()->toArray();
-            $likeDynamicUserIds = [];
-            // 点赞用户ID根据动态ID分组
-            array_map(function ($item) use (&$likeDynamicUserIds) {
-                $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
-            }, $dynamicIdToUserIds);
-            $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
-
-            cacheNewestDynamicInfo($searchSex, $startId, $pageSize, array_values($ret), $redis);
-            $redis->del($lockKey);
+        if (empty($dynamics)) {
             return array_values($ret);
-        } else {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
         }
+        $ret["dynamic"] = $dynamics;
 
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
-            return $this->newestPage($startId, $pageSize, $user, ++$retry);
-        }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        // 获取动态用户数据
+        $userInfo = Db::name("user")->alias("u")
+            ->leftJoin("user_info ui", "u.id = ui.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->whereIn("u.id", array_column($dynamics, 'u_id'))
+            ->select()->toArray();
+        $ret["userInfo"] = $userInfo;
+
+        // 获取动态统计数据
+        $dynamicCount = Db::name("dynamic_count")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->select()->toArray();
+        $ret["dynamicCount"] = $dynamicCount;
+
+        // 获取动态点赞的用户ID
+        $dynamicIdToUserIds = Db::name("dynamic_like")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->field("dynamic_id,u_id")
+            ->select()->toArray();
+        $likeDynamicUserIds = [];
+        // 点赞用户ID根据动态ID分组
+        array_map(function ($item) use (&$likeDynamicUserIds) {
+            $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
+        }, $dynamicIdToUserIds);
+        $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
+
+        return array_values($ret);
     }
 
     /*************************************************用户动态列表相关**************************************************/
@@ -462,142 +381,61 @@ class DynamicService extends Base
      *
      * @param $startId int 查询开始ID
      * @param $pageSize int 分页大小
-     * @param $isFlush int 是否刷新缓存
      * @param $userId int 查询用户ID
      *
      * @return array|mixed|null
      * @throws AppException
      */
-    public function personal($startId, $pageSize, $isFlush, $userId)
+    public function personal($startId, $pageSize, $userId)
     {
-        // 需要刷新更新缓存内容
-        if ($isFlush) {
-            return $this->personalUpdate($pageSize, $userId);
-        }
-        // 不需要刷新查询缓存数据
-        return $this->personalPage($startId, $pageSize, $userId);
-    }
-
-    /**
-     * 刷新最新动态缓存数据
-     * 1. 判断是否需要更新缓存
-     * 2. 需要更新缓存，删除所有缓存，返回新数据
-     * 3. 不需要更新缓存，直接返回
-     *
-     * @param $pageSize int 分页大小
-     * @param $userId int  查询用户ID
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function personalUpdate($pageSize, $userId)
-    {
-        // 获取最新动态ID
-        $newDynamicId = Db::name("dynamic")
+        $ret = [
+            "dynamic" => [],
+            "userInfo" => [],
+            "dynamicCount" => [],
+            "likeDynamicUserIds" => []
+        ];
+        // 获取动态数据
+        $dynamicQuery = Db::name("dynamic")
             ->where("u_id", $userId)
-            ->where('is_delete', DbDataIsDeleteEnum::NO)
-            ->order("id", "desc")
-            ->value("id");
-        // 为空，没有动态数据，返回缓存的第一页
-        if (empty($newDynamicId)) {
-            return $this->personalPage(0, $pageSize, $userId);
+            ->where("is_delete", DbDataIsDeleteEnum::NO)
+            ->order("id", "desc");
+        if (!empty($startId)) {
+            $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
         }
+        $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
 
-        // 不为空并且和缓存最新一条相同直接返回缓存数据
-        $firstPage = $this->personalPage(0, $pageSize, $userId);
-        $dynamic = array_shift($firstPage);
-        if (isset($dynamic[0]["id"]) && $dynamic[0]["id"] == $newDynamicId) {
-            return $this->personalPage(0, $pageSize, $userId);
-        }
-
-        // 不同删除首页缓存
-        deleteFirstPersonalDynamicInfo($userId, $pageSize, Redis::factory());
-        return $this->personalPage(0, $pageSize, $userId);
-    }
-
-    /**
-     * 获取用户动态列表
-     *
-     * @param $startId int 开始查询ID
-     * @param $pageSize int 分页数据大小
-     * @param $userId int 查询用户ID
-     * @param int $retry 尝试次数
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function personalPage($startId, $pageSize, $userId, $retry = 0)
-    {
-        // 读缓存
-        $redis = Redis::factory();
-        if ($data = getPersonalDynamicInfo($userId, $startId, $pageSize, $redis)) {
-            return $data;
-        }
-
-        $lockKey = REDIS_KEY_PREFIX . "personalDynamicInfoLock:" . $userId . ":" . $startId . ":" . $pageSize;
-        if ($redis->setnx($lockKey, 1)) {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-
-            $ret = [
-                "dynamic" => [],
-                "userInfo" => [],
-                "dynamicCount" => [],
-                "likeDynamicUserIds" => []
-            ];
-            // 获取动态数据
-            $dynamicQuery = Db::name("dynamic")
-                ->where("u_id", $userId)
-                ->where("is_delete", DbDataIsDeleteEnum::NO)
-                ->order("id", "desc");
-            if (!empty($startId)) {
-                $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
-            }
-            $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
-
-            if (empty($dynamics)) {
-                $redis->del($lockKey);
-                cachePersonalDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-                return array_values($ret);
-            }
-            $ret["dynamic"] = $dynamics;
-
-            // 获取动态用户数据
-            $userInfo = Db::name("user")->alias("u")
-                ->leftJoin("user_info ui", "u.id = ui.u_id")
-                ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
-                ->where("u.id", $userId)
-                ->find();
-            $ret["userInfo"] = $userInfo;
-
-            // 获取动态统计数据
-            $dynamicCount = Db::name("dynamic_count")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->select()->toArray();
-            $ret["dynamicCount"] = $dynamicCount;
-
-            // 获取动态点赞的用户ID
-            $dynamicIdToUserIds = Db::name("dynamic_like")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->field("dynamic_id,u_id")
-                ->select()->toArray();
-            $likeDynamicUserIds = [];
-            // 点赞用户ID根据动态ID分组
-            array_map(function ($item) use (&$likeDynamicUserIds) {
-                $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
-            }, $dynamicIdToUserIds);
-            $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
-
-            cachePersonalDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-            $redis->del($lockKey);
+        if (empty($dynamics)) {
             return array_values($ret);
-        } else {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
         }
+        $ret["dynamic"] = $dynamics;
 
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
-            return $this->personalPage($startId, $pageSize, $userId, ++$retry);
-        }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        // 获取动态用户数据
+        $userInfo = Db::name("user")->alias("u")
+            ->leftJoin("user_info ui", "u.id = ui.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->where("u.id", $userId)
+            ->find();
+        $ret["userInfo"] = $userInfo;
+
+        // 获取动态统计数据
+        $dynamicCount = Db::name("dynamic_count")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->select()->toArray();
+        $ret["dynamicCount"] = $dynamicCount;
+
+        // 获取动态点赞的用户ID
+        $dynamicIdToUserIds = Db::name("dynamic_like")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->field("dynamic_id,u_id")
+            ->select()->toArray();
+        $likeDynamicUserIds = [];
+        // 点赞用户ID根据动态ID分组
+        array_map(function ($item) use (&$likeDynamicUserIds) {
+            $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
+        }, $dynamicIdToUserIds);
+        $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
+
+        return array_values($ret);
     }
 
     /**************************************************关注用户动态列表相关***********************************************/
@@ -606,232 +444,90 @@ class DynamicService extends Base
      *
      * @param $startId
      * @param $pageSize
-     * @param $isFlush
      * @param $userId
      * @return array|mixed|null
      */
-    public function concern($startId, $pageSize, $isFlush, $userId)
+    public function concern($startId, $pageSize, $userId)
     {
-        // 需要刷新更新缓存内容
-        if ($isFlush) {
-            return $this->concernUpdate($pageSize, $userId);
-        }
-        // 不需要刷新查询缓存数据
-        return $this->concernPage($startId, $pageSize, $userId);
-    }
+        $ret = [
+            "dynamic" => [],
+            "userInfo" => [],
+            "dynamicCount" => [],
+            "likeDynamicUserIds" => []
+        ];
 
-    /**
-     * 刷新关注用户动态缓存数据
-     * 1. 判断是否需要更新缓存
-     * 2. 需要更新缓存，删除所有缓存，返回新数据
-     * 3. 不需要更新缓存，直接返回
-     *
-     * @param $pageSize int 分页大小
-     * @param $userId int  用户id
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function concernUpdate($pageSize, $userId)
-    {
-        // 获取最新动态ID
+        // 获取关注用户ID
         $followUserIds = Db::name("user_follow")
             ->where("u_id", $userId)
             ->column("follow_u_id");
         if (empty($followUserIds)) {
-            return $this->concernPage(0, $pageSize, $userId);
-        }
-        $newDynamicId = Db::name("dynamic")
-            ->whereIn("u_id", $followUserIds)
-            ->where('is_delete', DbDataIsDeleteEnum::NO)
-            ->order("id", "desc")
-            ->value("id");
-        // 为空，没有动态数据，返回缓存的第一页
-        if (empty($newDynamicId)) {
-            return $this->concernPage(0, $pageSize, $userId);
-        }
-
-        // 不为空并且和缓存最新一条相同直接返回缓存数据
-        $firstPage = $this->concernPage(0, $pageSize, $userId);
-        $dynamic = array_shift($firstPage);
-        if (isset($dynamic[0]["id"]) && $dynamic[0]["id"] == $newDynamicId) {
-            return $this->concernPage(0, $pageSize, $userId);
-        }
-
-        // 不同删除当前用户关注动态所有缓存
-        deleteUserFollowDynamicInfo($userId, Redis::factory());
-        return $this->concernPage(0, $pageSize, $userId);
-    }
-
-    /**
-     * 获取关注用户的分页数据
-     *
-     * @param $startId int 起始查询ID
-     * @param $pageSize int 分页大小
-     * @param $userId int 当前用户id
-     * @param int $retry 锁等待尝试次数
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function concernPage($startId, $pageSize, $userId, $retry = 0)
-    {
-        // 读缓存
-        $redis = Redis::factory();
-        if ($data = getUserFollowDynamicInfo($userId, $startId, $pageSize, $redis)) {
-            return $data;
-        }
-
-        $lockKey = REDIS_KEY_PREFIX . "userFollowDynamicInfoLock:" . $userId . ":" . $startId . ":" . $pageSize;
-        if ($redis->setnx($lockKey, 1)) {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-            $ret = [
-                "dynamic" => [],
-                "userInfo" => [],
-                "dynamicCount" => [],
-                "likeDynamicUserIds" => []
-            ];
-
-            // 获取关注用户ID
-            $followUserIds = Db::name("user_follow")
-                ->where("u_id", $userId)
-                ->column("follow_u_id");
-            if (empty($followUserIds)) {
-                $redis->del($lockKey);
-                cacheUserFollowDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-                return array_values($ret);
-            }
-
-            // 获取动态数据
-            $dynamicQuery = Db::name("dynamic")
-                ->whereIn("u_id", $followUserIds)
-                ->where("is_delete", DbDataIsDeleteEnum::NO)
-                ->order("id", "desc");
-            if (!empty($startId)) {
-                $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
-            }
-            $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
-
-            if (empty($dynamics)) {
-                $redis->del($lockKey);
-                cacheUserFollowDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-                return array_values($ret);
-            }
-            $ret["dynamic"] = $dynamics;
-
-            // 获取动态用户数据
-            $userInfo = Db::name("user")->alias("u")
-                ->leftJoin("user_info ui", "u.id = ui.u_id")
-                ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
-                ->whereIn("u.id", array_column($dynamics, 'u_id'))
-                ->select()->toArray();
-            $ret["userInfo"] = $userInfo;
-
-            // 获取动态统计数据
-            $dynamicCount = Db::name("dynamic_count")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->select()->toArray();
-            $ret["dynamicCount"] = $dynamicCount;
-
-            // 获取动态点赞的用户ID
-            $dynamicIdToUserIds = Db::name("dynamic_like")
-                ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-                ->field("dynamic_id,u_id")
-                ->select()->toArray();
-            $likeDynamicUserIds = [];
-            // 点赞用户ID根据动态ID分组
-            array_map(function ($item) use (&$likeDynamicUserIds) {
-                $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
-            }, $dynamicIdToUserIds);
-            $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
-
-            cacheUserFollowDynamicInfo($userId, $startId, $pageSize, array_values($ret), $redis);
-            $redis->del($lockKey);
             return array_values($ret);
-        } else {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
         }
 
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
-            return $this->concernPage($startId, $pageSize, $userId, ++$retry);
+        // 获取动态数据
+        $dynamicQuery = Db::name("dynamic")
+            ->whereIn("u_id", $followUserIds)
+            ->where("is_delete", DbDataIsDeleteEnum::NO)
+            ->order("id", "desc");
+        if (!empty($startId)) {
+            $dynamicQuery = $dynamicQuery->where("id", "<", $startId);
         }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        $dynamics = $dynamicQuery->limit($pageSize)->select()->toArray();
+
+        if (empty($dynamics)) {
+            return array_values($ret);
+        }
+        $ret["dynamic"] = $dynamics;
+
+        // 获取动态用户数据
+        $userInfo = Db::name("user")->alias("u")
+            ->leftJoin("user_info ui", "u.id = ui.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->whereIn("u.id", array_column($dynamics, 'u_id'))
+            ->select()->toArray();
+        $ret["userInfo"] = $userInfo;
+
+        // 获取动态统计数据
+        $dynamicCount = Db::name("dynamic_count")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->select()->toArray();
+        $ret["dynamicCount"] = $dynamicCount;
+
+        // 获取动态点赞的用户ID
+        $dynamicIdToUserIds = Db::name("dynamic_like")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->field("dynamic_id,u_id")
+            ->select()->toArray();
+        $likeDynamicUserIds = [];
+        // 点赞用户ID根据动态ID分组
+        array_map(function ($item) use (&$likeDynamicUserIds) {
+            $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
+        }, $dynamicIdToUserIds);
+        $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
+
+        return array_values($ret);
     }
 
     /**************************************************附近用户动态列表相关***********************************************/
     /**
      * 附近人动态列表
      *
-     * @param $pageNum int 起始ID
+     * @param $startId int 起始ID
      * @param $pageSize int 分页
      * @param $long int 经度
      * @param $lat int 纬度
-     * @param $isFlush int 是否刷新
      * @param $userId int 用户ID
      * @return mixed
      */
-    public function near($pageNum, $pageSize, $long, $lat, $isFlush, $userId)
-    {
-        // 需要刷新更新缓存内容
-        if ($isFlush) {
-            return $this->nearUpdate($pageSize, $long, $lat, $userId);
-        }
-        // 不需要刷新查询缓存数据
-        return $this->nearPage($pageNum, $pageSize, $long, $lat, $userId);
-    }
-
-    /**
-     * 刷新附近动态缓存数据
-     * 1. 判断是否需要更新缓存
-     * 2. 需要更新缓存，删除所有缓存，返回新数据
-     * 3. 不需要更新缓存，直接返回
-     *
-     * @param $pageSize int 分页大小
-     * @param $long string 经度
-     * @param $lat string 纬度
-     * @param $userId int  用户id
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function nearUpdate($pageSize, $long, $lat, $userId)
-    {
-        // 获取更新锁 不为空5分钟内更新过，直接返回
-        $redis = Redis::factory();
-        $lock = getNearUserDynamicInfoLock($userId, $redis);
-        if (!empty($lock)) {
-            return $this->nearPage(1, $pageSize, $long, $lat, $userId);
-        }
-
-        // 没有加锁 获取数据库数据 并排序
-        $dynamics = $this->getDbData($pageSize, $lat, $long, $userId);
-
-        // 添加缓存
-        cacheNearUserDynamicInfo($userId, $pageSize, $dynamics, $redis);
-        return array_slice($dynamics, 0, $pageSize);
-    }
-
-    /**
-     * 获取数据库数据并且排序
-     *
-     * @param $pageSize int 分页大小
-     * @param $lat int 纬度
-     * @param $long int 经度
-     * @param $userId int 用户ID
-     * @return array
-     */
-    private function getDbData($pageSize, $lat, $long, $userId)
+    public function near($startId, $pageSize, $long, $lat, $userId)
     {
         $redis = Redis::factory();
-        // 更新前删除之前的缓存
-        deleteNearUserDynamicInfo($userId, $pageSize, $redis);
         // 缓存当前用户坐标
         cacheUserLongLatInfo($userId, $lat, $long, $redis);
         // 获取附近用户ID
         $nearUserIds = getNearUserLongLatInfo($userId, $redis);
 
         if (empty($nearUserIds)) {
-            cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
             return [];
         }
 
@@ -845,18 +541,20 @@ class DynamicService extends Base
         }
 
         if (empty($userIds)) {
-            cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
             return [];
         }
-        // 获取动态数据
-        $dynamics = Db::name("dynamic")
+        // 获取动态数据 id 倒叙
+        $query = Db::name("dynamic")
             ->whereIn("u_id", array_keys($userIds))
             ->where("is_delete", DbDataIsDeleteEnum::NO)
-            ->limit(600)
-            ->select()->toArray();
+            ->order("id", "desc");
 
+        if ($startId != 0) {
+            $query = $query->where("id", "<", $startId);
+        }
+
+        $dynamics = $query->limit($pageSize)->select()->toArray();
         if (empty($dynamics)) {
-            cacheNearUserDynamicInfo($userId, $pageSize, [], $redis);
             return [];
         }
 
@@ -899,41 +597,7 @@ class DynamicService extends Base
         array_multisort($distanceSort, SORT_ASC, $dynamics);
 
         // 添加更新锁
-        setNearUserDynamicInfoLock($userId, $redis);
         return $dynamics;
     }
 
-    /**
-     * 获取附近人动态的分页数据
-     *
-     * @param $pageNum int 分页
-     * @param $pageSize int 分页大小
-     * @param $long int 经度
-     * @param $lat int 纬度
-     * @param $userId int 当前用户id
-     * @return array|mixed|null
-     * @throws AppException
-     */
-    private function nearPage($pageNum, $pageSize, $long, $lat, $userId)
-    {
-        // 读缓存
-        $redis = Redis::factory();
-        $key = REDIS_NEAR_USER_DYNAMIC_INFO . $userId . ":" . $pageSize;
-        // 缓存不存在生成缓存
-        if (!$redis->exists($key)) {
-            // 没有加锁 获取数据库数据 并排序
-            $dynamics = $this->getDbData($pageSize, $lat, $long, $userId);
-            // 添加缓存
-            cacheNearUserDynamicInfo($userId, $pageSize, $dynamics, $redis);
-            return array_slice($dynamics, 0, $pageSize);
-        }
-
-        $data = getNearUserDynamicInfo($userId, $pageSize, $redis);
-
-        if (empty($data)) {
-            return [];
-        }
-
-        return array_slice($data, ($pageNum - 1) * $pageSize, $pageSize);
-    }
 }

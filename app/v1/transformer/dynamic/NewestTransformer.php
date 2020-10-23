@@ -38,6 +38,7 @@ class NewestTransformer extends TransformerAbstract
     {
         return [
             'id' => $data['id'] ?? 0,
+            'u_id' => (int)$this->getUserInfo($data['u_id'], 'id'),
             'avatar' => $this->getUserInfo($data['u_id'], 'portrait'),
             'nickname' => $this->getUserInfo($data['u_id'], "nickname"),
             'sex' => (int)$this->getUserInfo($data['u_id'], "sex"),

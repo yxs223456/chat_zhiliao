@@ -21,6 +21,7 @@ class InfoTransformer extends TransformerAbstract
         $likeUserIds = $data["likeUserIds"] ?? [];
         return [
             'id' => $info['id'] ?? 0,
+            'u_id' => $info["u_id"] ?? 0,
             'avatar' => $info['portrait'] ?? "",
             'nickname' => $info['nickname'] ?? '',
             'sex' => $info['sex'] ?? 0,
@@ -60,6 +61,7 @@ class InfoTransformer extends TransformerAbstract
         foreach ($comment as $item) {
             $tmp = [];
             $tmp['id'] = $item['id'] ?? 0;
+            $tmp['u_id'] = $item['u_id'] ?? 0;
             $tmp["avatar"] = $item['portrait'] ?? '';
             $tmp["nickname"] = $item['nickname'] ?? '';
             $tmp['create_time'] = empty($item['create_time']) ? '' : substr($item["create_time"], 5, 11);

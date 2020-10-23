@@ -14,12 +14,15 @@ class ToolService extends Base
 {
     public function ossToken()
     {
-        $data = AliyunOss::getToken();
-//        $config = config("account.oss");
-//        $data["ObjectKey"] = $config["key_id"];
-//        $data["BucketName"] = $config["bucket"];
-//        $data["EndPoint"] = $config["endpoint"];
-//        $data["RegionId"] = $config["region_id"];
+        return AliyunOss::getToken();
+    }
+
+    public function ossConfig()
+    {
+        $config = config("account.oss");
+        $data = [];
+        $data["bucket"] = $config["bucket"];
+        $data["endpoint"] = $config['endpoint'];
         return $data;
     }
 }

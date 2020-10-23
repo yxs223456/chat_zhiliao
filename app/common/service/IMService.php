@@ -28,6 +28,11 @@ class IMService extends Base
      */
     public function checkSendMessage($user, $tUId)
     {
+        // 不能和自己聊天
+        if ($tUId == $user["id"]) {
+            throw AppException::factory(AppException::IM_SEND_SELF);
+        }
+
         $redis = Redis::factory();
 
         // 消息接收者拉黑用户时无法发送

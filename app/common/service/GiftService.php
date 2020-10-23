@@ -150,6 +150,11 @@ class GiftService extends Base
      */
     public function give($user, $rUId, $giftId, $checkScene = true)
     {
+        // 不能送给自己
+        if ($rUId == $user["id"]) {
+            throw AppException::factory(AppException::GIFT_GIVE_SELF);
+        }
+
         $redis = Redis::factory();
 
         // 礼物详情
@@ -298,6 +303,11 @@ class GiftService extends Base
      */
     public function sendRedPackage($user, $rUId, $amount, $checkScene = true)
     {
+        // 不能送给自己
+        if ($rUId == $user["id"]) {
+            throw AppException::factory(AppException::GIFT_GIVE_SELF);
+        }
+
         $redis = Redis::factory();
 
         // 判断接收方是否拉黑用户

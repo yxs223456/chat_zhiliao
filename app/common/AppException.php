@@ -37,6 +37,7 @@ class AppException extends \Exception
 
     const GIFT_OFFLINE = [5000, "该礼物已经下架", "該禮物已經下架"];
     const GIFT_RED_PACKAGE_AMOUNT_LESS = [5001, "红包金额不能小于10", "紅包金額不能小於10"];
+    const GIFT_GIVE_SELF = [5002, "不能送自己礼物或红包", "不能送自己禮物或紅包"];
 
     const WALLET_MONEY_LESS = [6000, "余额不足", "餘額不足"];
 
@@ -49,8 +50,11 @@ class AppException extends \Exception
     const CHAT_END_ALREADY = [7006, "通话已结束", "通話已結束"];
     const CHAT_NOT_CALLING = [7007, "不在通话中", "不在通話中"];
     const CHAT_NOT_WAIT_ANSWER = [7008, "通话状态不为待接听", "通話狀態不為待接聽"];
+    const CHAT_NOT_SELF = [7009, "不能和自己通话", "不能和自己通話"];
 
     const VIDEO_NOT_EXISTS = [8001, "视频不存在", "視頻不存在"];
+
+    const IM_SEND_SELF = [9000, "不能和自己聊天", "不能和自己聊天"];
 
     public static function factory($errConst, $message = "", $lang = null)
     {

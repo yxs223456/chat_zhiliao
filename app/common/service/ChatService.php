@@ -35,6 +35,11 @@ class ChatService extends Base
      */
     public function dial($user, $tUId, $chatType)
     {
+        // 不能和自己通话
+        if ($tUId == $user["id"]) {
+            throw AppException::factory(AppException::CHAT_NOT_SELF);
+        }
+
         // 接听方个人设置
         $redis = Redis::factory();
         $tUSet = UserSetService::getUserSetByUId($tUId, $redis);

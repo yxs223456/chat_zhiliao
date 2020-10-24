@@ -282,6 +282,9 @@ class GiftService extends Base
             ]
         ]);
 
+        // 计算魅力值放入队列
+        userGuardCallbackProduce($rUId, $user["id"], $rUIncome);
+
         return [
             "s_u_after_balance" => $userWallet["total_balance"] - $giftPrice,
             "t_u_after_balance" => $rUserWallet["total_balance"] + $rUIncome,
@@ -502,6 +505,9 @@ class GiftService extends Base
                 "create_date" => date("Y-m-d"),
             ]
         ]);
+
+        // 计算魅力值放入队列
+        userGuardCallbackProduce($rUId, $user["id"], $rUIncome);
 
         return [
             "s_u_after_balance" => $userWallet["total_balance"] - $amount,

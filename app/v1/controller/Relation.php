@@ -78,16 +78,16 @@ class Relation extends Base
     public function friendList()
     {
         $request = $this->query["content"];
-        $pageNum = $request["page_num"] ?? 1;
+        $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
         $userId = $this->query['user']['id']; // 登陆用户
 
-        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+        if (!checkInt($startId) || !checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new RelationService();
-        $data = $service->friendList($pageNum, $pageSize, $userId);
+        $data = $service->friendList($startId, $pageSize, $userId);
         return $this->jsonResponse($data, new FriendTransformer());
     }
 

@@ -52,7 +52,7 @@ class GuardCrontab extends Command
             foreach ($error as $key => $value) {
                 $errorMessage .= "$key: " . $value . "\n";
             }
-            $this->sendWeChatWorkMessage($errorMessage, WeChatWork::$user["yangxiushan"]);
+            $this->sendWeChatWorkMessage($errorMessage, WeChatWork::$user["yanglichao"]);
         }
     }
 
@@ -121,10 +121,10 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             // 添加守护总奖励记录
             $exists = Db::name("guard_income")->where("u_id", $guard['guard_u_id'])->find();
             if ($exists) {
-                Db::name("guard_income")->where("u_id", $guard['guard_u_id'])->update([
-                    'guard_count' => Db::raw("guard_count+1"),
-                    'total_amount' => Db::raw("total_amount+" . $guard['s'])
-                ]);
+                Db::name("guard_income")->where("u_id", $guard['guard_u_id'])
+                    ->inc('guard_count', 1)
+                    ->inc('total_amount', $guard['s'])
+                    ->update();
             } else {
                 Db::name("guard_income")->insert([
                     'guard_count' => 1,

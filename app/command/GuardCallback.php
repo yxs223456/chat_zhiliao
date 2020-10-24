@@ -49,7 +49,7 @@ class GuardCallback extends Command
     {
         try {
             $this->beginTime = time();
-            userVisitorCallBackConsumer([$this, 'receive']);
+            userGuardCallBackConsumer([$this, 'receive']);
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
@@ -65,7 +65,7 @@ class GuardCallback extends Command
             foreach ($error as $key=>$value) {
                 $errorMessage .= "$key: " . $value . "\n";
             }
-            $this->sendWeChatWorkMessage($errorMessage, WeChatWork::$user["yangxiushan"]);
+            $this->sendWeChatWorkMessage($errorMessage, WeChatWork::$user["yanglichao"]);
         }
     }
 
@@ -119,7 +119,7 @@ class GuardCallback extends Command
                     'create_date' => date("Y-m-d"),
                 ]);
 
-            // 添加需要统计的
+            // 添加需要统计守护的女神ID
             $startEndDate = implode("-",getWeekStartAndEnd());
             $exists = Db::name("guard_user_callback")->where("u_id", $this->incomeUserId)
                 ->where("start_end_date", $startEndDate)->find();
@@ -137,13 +137,11 @@ class GuardCallback extends Command
                 if ($addCoin < Constant::GUARD_SHARE_MIN_COIN) {
                     $addCoin = Constant::GUARD_SHARE_MIN_COIN;
                 }
-                Db::name("user_wallet")->where("u_id", $guardUser["u_id"])->update(
-                    [
-                        'income_total_amount' => Db::raw("income_total_amount+$addCoin"),
-                        'balance_amount' => Db::raw("balance_amount+$addCoin"),
-                        'total_balance' => Db::raw("total_balance+$addCoin")
-                    ]
-                );
+                Db::name("user_wallet")->where("u_id", $guardUser["u_id"])
+                    ->inc('income_total_amount', $addCoin)
+                    ->inc('balance_amount', $addCoin)
+                    ->inc('total_balance', $addCoin)
+                    ->update();
                 // 添加守护分润流水
                 $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
                 Db::name("user_wallet_flow")->insert([
@@ -159,9 +157,8 @@ class GuardCallback extends Command
 
                 // 更新守护奖励总记录表
                 Db::name("guard_income")->where("u_id", $guardUser['u_id'])
-                    ->update([
-                        'total_amount' => Db::raw("total_amount+$addCoin")
-                    ]);
+                    ->inc('total_amount', $addCoin)
+                    ->update();
             }
 
             Db::commit();

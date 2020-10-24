@@ -87,7 +87,7 @@ class GuardService extends Base
         }
 
         // 只查询21的数据
-        $guard = Db::query("select guard_u_id,sum(amount) s from guard_charm_log where u_id = :uid and sex_type = :sex 
+        $guard = Db::query("select guard_u_id,sum(amount) as total s from guard_charm_log where u_id = :uid and sex_type = :sex 
 and create_date >= :start_date and create_date <= :end_date 
 and s >= :s GROUP BY guard_u_id ORDER by s desc limit 1",
             [

@@ -108,7 +108,8 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             ->leftJoin("user u", "ui.u_id = u.id")
             ->field("ui.*,u.sex")
             ->where("ui.u_id", $guard['guard_u_id'])
-            ->find();
+            ->select();
+        $data = $data[0];
 
         cacheUserGuard($userId, ["data" => $data], $redis);
         return $data;

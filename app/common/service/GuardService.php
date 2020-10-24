@@ -89,7 +89,7 @@ class GuardService extends Base
         // 只查询21的数据
         $guard = Db::query("select guard_u_id,sum(amount) s from guard_charm_log where u_id = :uid and sex_type = :sex 
 and create_date >= :start_date and create_date <= :end_date 
-and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
+and s >= :s GROUP BY guard_u_id ORDER by s desc limit 1",
             [
                 'uid' => $userId,
                 'sex' => InteractSexTypeEnum::FEMALE_TO_MALE,
@@ -108,8 +108,7 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             ->leftJoin("user u", "ui.u_id = u.id")
             ->field("ui.*,u.sex")
             ->where("ui.u_id", $guard['guard_u_id'])
-            ->select();
-        $data = $data[0];
+            ->find();
 
         cacheUserGuard($userId, ["data" => $data], $redis);
         return $data;

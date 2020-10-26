@@ -31,6 +31,12 @@ class UserTransformer extends TransformerAbstract
             'age' => $this->getUserAge($data['birthday'] ?? ""),
             'distance' => $this->getDistance($data['id']),
             'content' => $data["content"] ?? "",
+            'voice_chat_switch' => (int)$data['voice_chat_switch'] ?? 0,
+            'voice_chat_price' => (int)$data['voice_chat_price'] ?? 0,
+            'video_chat_switch' => (int)$data['video_chat_switch'],
+            'video_chat_price' => (int)$data['video_chat_price'],
+            'direct_message_free' => (int)$data['direct_message_free'],
+            'direct_message_price' => (int)$data['direct_message_price'],
             'time' => date("Y/m/d"),
         ];
     }

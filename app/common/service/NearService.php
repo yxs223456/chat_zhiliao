@@ -74,12 +74,6 @@ class NearService extends Base
     {
         // 读附近人分页缓存
         $redis = Redis::factory();
-        $data = getNearUserPage($userId, $pageNum, $pageSize, $redis);
-
-        // 如果分页缓存存在直接返回
-        if (!empty($data)) {
-            return $data;
-        }
 
         $ret = [
             "userInfo" => [],
@@ -103,7 +97,9 @@ class NearService extends Base
         $userData = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
             ->leftJoin("user_set us", "u.id = us.u_id")
-            ->field("u.id,u.sex,ui.portrait,ui.nickname,ui.birthday")
+            ->field("u.id,u.sex,ui.portrait,ui.nickname,ui.birthday,
+            us.voice_chat_switch,us.voice_chat_price,us.video_chat_switch,us.video_chat_price,us.direct_message_free,
+            us.direct_message_price")
             ->whereIn("u.id", array_keys($userIds))
             ->where("us.is_stealth", UserIsStealthEnum::NO)
             ->select()->toArray();
@@ -113,8 +109,7 @@ class NearService extends Base
 
         $ret["userInfo"] = $userData;
         $ret["distance"] = $userIds;
-        // 缓存分页数据
-        cacheNearUserPage($userId, $pageNum, $pageSize, array_values($ret), $redis);
+
         return array_values($ret);
     }
 }

@@ -506,21 +506,6 @@ function getNearUserSortSetLock($userId, Redis $redis)
     return $redis->get($key);
 }
 
-// 缓存附近用户分页列表数据 // 一天
-function cacheNearUserPage($userId, $pageNum, $pageSize, $data, \Redis $redis)
-{
-    $key = REDIS_NEAR_USER_SORT_SET . $userId . ":" . $pageNum . ":" . $pageSize;
-    $redis->set($key, json_encode($data), 86400);
-}
-
-// 获取附近用户分页列表缓存
-function getNearUserPage($userId, $pageNum, $pageSize, \Redis $redis)
-{
-    $key = REDIS_NEAR_USER_SORT_SET . $userId . ":" . $pageNum . ":" . $pageSize;
-    $data = $redis->get($key);
-    return $data ? json_decode($data, true) : null;
-}
-
 // 删除用户附近缓存数据
 function deleteNearUserCache($userId, \Redis $redis)
 {

@@ -93,10 +93,7 @@ class IndexTransformer extends TransformerAbstract
     private function getGuard($guard)
     {
         if (empty($guard)) {
-            return [
-                'guard_u_id' => 0,
-                'avatar' => ''
-            ];
+            return new \stdClass();
         }
         return [
             'guard_u_id' => $guard["u_id"] ?? 0,

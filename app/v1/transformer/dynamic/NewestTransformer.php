@@ -21,6 +21,8 @@ class NewestTransformer extends TransformerAbstract
     private $userId = null;
     // 动态对应的点赞用户ID
     private $likeDynamicUserIds = null;
+    // 用户关注用户ID
+    private $userFollow = null;
 
     public function __construct(array $params = null)
     {
@@ -32,6 +34,7 @@ class NewestTransformer extends TransformerAbstract
             array_combine(array_column($this->_queries["dynamicCount"], "dynamic_id"), $this->_queries["dynamicCount"]);
         $this->userId = $this->_queries["userId"] ?? 0;
         $this->likeDynamicUserIds = $this->_queries["likeDynamicUserIds"] ?? [];
+        $this->userFollow = $this->_queries["userFollow"] ?? [];
     }
 
     public function transformData(array $data): array
@@ -51,6 +54,14 @@ class NewestTransformer extends TransformerAbstract
             'like_count' => (int)$this->getCountInfo($data["id"], 'like_count'),
             'comment_count' => (int)$this->getCountInfo($data['id'], 'comment_count'),
             'is_like' => $this->getIsLike($data["id"]),
+            'is_followed' => $this->getIsFollowed($data['u_id']),
+            'voice_chat_switch' => (int)$this->getUserInfo($data['u_id'],'voice_chat_switch'),
+            'voice_chat_price' => (int)$this->getUserInfo($data['u_id'],'voice_chat_price'),
+            'video_chat_switch' => (int)$this->getUserInfo($data['u_id'],'video_chat_switch'),
+            'video_chat_price' => (int)$this->getUserInfo($data['u_id'],'video_chat_price'),
+            'direct_message_free' => (int)$this->getUserInfo($data['u_id'],'direct_message_free'),
+            'direct_message_price' => (int)$this->getUserInfo($data['u_id'],'direct_message_price'),
+
         ];
     }
 
@@ -101,4 +112,11 @@ class NewestTransformer extends TransformerAbstract
         return in_array($this->userId, $this->likeDynamicUserIds[$dynamicId]) ? 1 : 0;
     }
 
+    private function getIsFollowed($uid)
+    {
+        if(in_array($uid,$this->userFollow)) {
+            return 1;
+        }
+        return 0;
+    }
 }

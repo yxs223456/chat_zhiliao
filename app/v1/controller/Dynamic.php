@@ -66,17 +66,17 @@ class Dynamic extends Base
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
-        $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         $user = $this->query["user"];
 
         if (!checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new DynamicService();
-        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds) = $service->newest($startId, $pageSize, $isFlush, $user);
+        list($dynamic, $userInfo, $dynamicCount, $likeDynamicUserIds, $userFollow) = $service->newest($startId, $pageSize, $user);
         return $this->jsonResponse($dynamic, new NewestTransformer(
             ["userInfo" => $userInfo, 'dynamicCount' => $dynamicCount,
-                'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds]
+                'userId' => $this->query["user"]["id"], 'likeDynamicUserIds' => $likeDynamicUserIds,
+                'userFollow' => $userFollow]
         ));
     }
 

@@ -51,6 +51,13 @@ class ConcernTransformer extends TransformerAbstract
             'like_count' => (int)$this->getCountInfo($data["id"], 'like_count'),
             'comment_count' => (int)$this->getCountInfo($data['id'], 'comment_count'),
             'is_like' => $this->getIsLike($data["id"]),
+            'is_followed' => 1,
+            'voice_chat_switch' => (int)$this->getUserInfo($data['u_id'],'voice_chat_switch'),
+            'voice_chat_price' => (int)$this->getUserInfo($data['u_id'],'voice_chat_price'),
+            'video_chat_switch' => (int)$this->getUserInfo($data['u_id'],'video_chat_switch'),
+            'video_chat_price' => (int)$this->getUserInfo($data['u_id'],'video_chat_price'),
+            'direct_message_free' => (int)$this->getUserInfo($data['u_id'],'direct_message_free'),
+            'direct_message_price' => (int)$this->getUserInfo($data['u_id'],'direct_message_price'),
         ];
     }
 
@@ -102,5 +109,4 @@ class ConcernTransformer extends TransformerAbstract
         }
         return in_array($this->userId, $this->likeDynamicUserIds[$dynamicId]) ? 1 : 0;
     }
-
 }

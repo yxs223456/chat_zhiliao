@@ -38,6 +38,13 @@ class NearTransformer extends TransformerAbstract
             'like_count' => $data["dynamicCount"]['like_count'] ?? 0,
             'comment_count' => $data['dynamicCount']['comment_count'] ?? 0,
             'is_like' => $this->getIsLike($data["likeDynamicUserIds"]),
+            'is_followed' => (int)$data["is_followed"],
+            'voice_chat_switch' => (int)$this->getInfoData($data['userInfo'], 'voice_chat_switch'),
+            'voice_chat_price' => (int)$this->getInfoData($data['userInfo'], 'voice_chat_price'),
+            'video_chat_switch' => (int)$this->getInfoData($data['userInfo'], 'video_chat_switch'),
+            'video_chat_price' => (int)$this->getInfoData($data['userInfo'], 'video_chat_price'),
+            'direct_message_free' => (int)$this->getInfoData($data['userInfo'], 'direct_message_free'),
+            'direct_message_price' => (int)$this->getInfoData($data['userInfo'], 'direct_message_price'),
         ];
     }
 
@@ -61,6 +68,11 @@ class NearTransformer extends TransformerAbstract
             return 0;
         }
         return in_array($this->userId, $likeDynamicUserIds) ? 1 : 0;
+    }
+
+    private function getInfoData($data, $key)
+    {
+        return isset($data[$key]) ? $data[$key] : "";
     }
 
 }

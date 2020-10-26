@@ -328,7 +328,8 @@ class DynamicService extends Base
             "dynamic" => [],
             "userInfo" => [],
             "dynamicCount" => [],
-            "likeDynamicUserIds" => []
+            "likeDynamicUserIds" => [],
+            "userFollow" => [],
         ];
 
         // 获取动态数据
@@ -349,7 +350,10 @@ class DynamicService extends Base
         // 获取动态用户数据
         $userInfo = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
-            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->leftJoin("user_set us","u.id = us.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
+            us.voice_chat_switch,us.voice_chat_price,us.video_chat_switch,us.video_chat_price,us.direct_message_free,
+            us.direct_message_price")
             ->whereIn("u.id", array_column($dynamics, 'u_id'))
             ->select()->toArray();
         $ret["userInfo"] = $userInfo;
@@ -371,6 +375,12 @@ class DynamicService extends Base
             $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
         }, $dynamicIdToUserIds);
         $ret["likeDynamicUserIds"] = $likeDynamicUserIds;
+
+        // 获取用户关注用户ID
+        $userFollow = Db::name("user_follow")->where("u_id", $user['id'])
+            ->whereIn("follow_u_id", array_column($dynamics, 'u_id'))
+            ->column("follow_u_id");
+        $ret["userFollow"] = $userFollow;
 
         return array_values($ret);
     }
@@ -482,7 +492,10 @@ class DynamicService extends Base
         // 获取动态用户数据
         $userInfo = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
-            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->leftJoin("user_set us","us.u_id = u.id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
+            us.voice_chat_switch,us.voice_chat_price,us.video_chat_switch,us.video_chat_price,us.direct_message_free,
+            us.direct_message_price")
             ->whereIn("u.id", array_column($dynamics, 'u_id'))
             ->select()->toArray();
         $ret["userInfo"] = $userInfo;
@@ -561,7 +574,10 @@ class DynamicService extends Base
         // 获取动态用户数据
         $userInfo = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "u.id = ui.u_id")
-            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->leftJoin("user_set us","us.u_id = ui.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
+            us.voice_chat_switch,us.voice_chat_price,us.video_chat_switch,us.video_chat_price,us.direct_message_free,
+            us.direct_message_price")
             ->whereIn("u.id", array_column($dynamics, 'u_id'))
             ->select()->toArray();
         $userIdToUserInfo = array_combine(array_column($userInfo, 'id'), $userInfo);
@@ -583,12 +599,16 @@ class DynamicService extends Base
             $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
         }, $dynamicIdToUserIds);
 
+        // 获取用户是否关注数据
+        $userFollow = Db::name("user_follow")->where("u_id", $userId)
+            ->whereIn("follow_u_id", array_column($dynamics, 'u_id'))
+            ->column("follow_u_id");
 
         foreach ($dynamics as &$item) {
             $item["userInfo"] = isset($userIdToUserInfo[$item['u_id']]) ? $userIdToUserInfo[$item['u_id']] : [];
             $item["dynamicCount"] = isset($dynamicIdToDynamicCount[$item['id']]) ? $dynamicIdToDynamicCount[$item['id']] : [];
             $item["likeDynamicUserIds"] = isset($likeDynamicUserIds[$item['id']]) ? $likeDynamicUserIds[$item['id']] : [];
-
+            $item["is_followed"] = in_array($item["u_id"], $userFollow) ? 1 : 0;
             // 计算距离
             $item["distance"] = $userIds[$item["u_id"]] ?? 0;
         }

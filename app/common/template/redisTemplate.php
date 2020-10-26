@@ -492,11 +492,11 @@ function getNearUserSortSet($userId, $pageNum, $pageSize, \Redis $redis)
     return $redis->zRange($key, ($pageNum - 1) * $pageSize, $pageSize, true);
 }
 
-// 用户5分钟内只能刷新一次 加锁
+// 用户1分钟内只能刷新一次 加锁
 function setNearUserSortSetLock($userId, \Redis $redis)
 {
     $key = REDIS_NEAR_USER_SORT_SET . 'Lock' . $userId;
-    $redis->setex($key, 300, 1);
+    $redis->setex($key, 60, 1);
 }
 
 // 获取用户刷新附近人动态的锁

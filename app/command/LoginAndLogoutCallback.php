@@ -141,8 +141,8 @@ class LoginAndLogoutCallback extends Command
                 addUserToHomeRecommendList($userId, $userHomeCondition, $userWallet["income_total_amount"], $redis);
             }
 
-            // 如果是一周内新注册女生，把用户放入首页新人列表
-            if (time() - strtotime($userInfo["create_time"]) <= 7 * 86400) {
+            // 如果是一月内新注册用户，放入首页新人列表
+            if (time() - strtotime($userInfo["create_time"]) <= 30 * 86400) {
                 foreach ($userHomeConditions as $userHomeCondition) {
                     addUserToHomeNewUserList($userId, $userHomeCondition, $userWallet["income_total_amount"], $redis);
                 }

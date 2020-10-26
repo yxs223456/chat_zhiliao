@@ -5,6 +5,30 @@
 define("REDIS_KEY_PREFIX", "chat_zhiliao:");
 
 /**
+ * 城市缓存
+ */
+define("REDIS_KEY_CITY_CONFIG", REDIS_KEY_PREFIX . "cityConfig");
+
+// 缓存城市配置，有效期15天
+function cacheCityConfig(array $cityConfig, \Redis $redis)
+{
+    $key = REDIS_KEY_CITY_CONFIG;
+    $redis->setex($key, 10 * 86400, json_encode($cityConfig));
+}
+
+// 获取城市配置
+function getCityConfigByCache(\Redis $redis)
+{
+    $key = REDIS_KEY_CITY_CONFIG;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    } else {
+        return [];
+    }
+}
+
+/**
  * 首页推荐集合
  */
 define("REDIS_KEY_HOME_RECOMMEND_LIST", REDIS_KEY_PREFIX . "homeRecommendList:");

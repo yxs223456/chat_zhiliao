@@ -774,31 +774,6 @@ function getUserFemaleCharmList($pageNum, $pageSize, $startTime, $endTime, Redis
 }
 
 /**
- * 缓存自己魅力值信息(根据时间段缓存一天)
- */
-define("REDIS_FEMALE_CHARM_INFO", REDIS_KEY_PREFIX . "user_female_charm_info:");
-//缓存当前登陆女神用户自己魅力信息
-function cacheUserFemaleCharmInfo($userId, $startTime, $endTime, $data, Redis $redis)
-{
-    $key = REDIS_FEMALE_CHARM_INFO . $startTime . "-" . $endTime . ":" . $userId;
-    $redis->set($key, json_encode($data));
-    if ($redis->ttl($key) == -1) {
-        $redis->expire($key, 86400);// 缓存一天
-    }
-}
-
-//获取当前登陆女神魅力信息
-function getUserFemaleCharmInfo($userId, $startTime, $endTime, Redis $redis)
-{
-    $key = REDIS_FEMALE_CHARM_INFO . $startTime . "-" . $endTime . ":" . $userId;
-    $data = $redis->get($key);
-    if ($data) {
-        return json_decode($data, true);
-    }
-    return null;
-}
-
-/**
  * 缓存女神周贡献榜单信息(缓存一天)
  */
 define("REDIS_PRETTY_WEEK_CONTRIBUTION_LIST", REDIS_KEY_PREFIX . "user_pretty_week_contribution_list:");
@@ -933,4 +908,149 @@ function getMaleRecentlyGuardPretty($uid, Redis $redis)
         return json_decode($data, true);
     }
     return null;
+}
+
+/**
+ * 缓存女神魅力排行月榜
+ */
+define("REDIS_FEMALE_CHARM_SORT_SET_MONTH", REDIS_KEY_PREFIX . "femaleCharmSortSetMonth:");
+//缓存女神魅力月榜，有效期一个月
+function cacheFemaleCharmSortSetMonth($userId, $charm, Redis $redis)
+{
+    $startDate = date("Y-m-01");
+    $endDate = date('Y-m-d', strtotime("$startDate +1 month -1 day"));
+    $key = REDIS_FEMALE_CHARM_SORT_SET_MONTH . $startDate ."-" . $endDate;
+    $redis->zIncrBy($key, $charm, $userId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 2678400);// 缓存一月
+    }
+}
+
+/**
+ * 获取女神魅力月排行
+ */
+function getFemaleCharmSortSetMonth($start, $end, Redis $redis)
+{
+    $startDate = date("Y-m-01");
+    $endDate = date('Y-m-d', strtotime("$startDate +1 month -1 day"));
+    $key = REDIS_FEMALE_CHARM_SORT_SET_MONTH . $startDate ."-" . $endDate;
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+
+/**
+ * 返回用户月排名
+ */
+function getFemaleCharmSortSetMonthRank($userId, Redis $redis)
+{
+    $startDate = date("Y-m-01");
+    $endDate = date('Y-m-d', strtotime("$startDate +1 month -1 day"));
+    $key = REDIS_FEMALE_CHARM_SORT_SET_MONTH . $startDate . "-" . $endDate;
+    return $redis->zRevRank($key, $userId);
+}
+
+/**
+ * 返回用户月排行分值
+ */
+function getFemaleCharmSortSetMonthScore($userId, Redis $redis)
+{
+    $startDate = date("Y-m-01");
+    $endDate = date('Y-m-d', strtotime("$startDate +1 month -1 day"));
+    $key = REDIS_FEMALE_CHARM_SORT_SET_MONTH . $startDate . "-" . $endDate;
+    return $redis->zScore($key, $userId);
+}
+
+/**
+ * 缓存女神魅力排行周榜
+ */
+define("REDIS_FEMALE_CHARM_SORT_SET_WEEK", REDIS_KEY_PREFIX . "femaleCharmSortSetWeek:");
+function cacheFemaleCharmSortSetWeek($userId, $charm, Redis $redis)
+{
+    list($start, $end) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CHARM_SORT_SET_WEEK . $start . "-" . $end;
+    $redis->zIncrBy($key, $charm, $userId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 604800); // 缓存一周
+    }
+}
+
+/**
+ * 获取女神魅力周排行
+ */
+function getFemaleCharmSortSetWeek($start, $end, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CHARM_SORT_SET_WEEK . $startDate. "-" . $endDate;
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+
+/**
+ * 返回用户周排名
+ */
+function getFemaleCharmSortSetWeekRank($userId, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CHARM_SORT_SET_WEEK . $startDate ."-". $endDate;
+    return $redis->zRevRank($key, $userId);
+}
+
+/**
+ * 返回用户周排行分值
+ */
+function getFemaleCharmSortSetWeekScore($userId, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CHARM_SORT_SET_WEEK . $startDate ."-". $endDate;
+    return $redis->zScore($key, $userId);
+}
+
+/**
+ * 缓存女神魅力排行日榜
+ */
+define("REDIS_FEMALE_CHARM_SORT_SET_DAY", REDIS_KEY_PREFIX . "femaleCharmSortSetDay:");
+function cacheFemaleCharmSortSetDay($userId, $charm, Redis $redis)
+{
+    $key = REDIS_FEMALE_CHARM_SORT_SET_DAY . date("Y-m-d");
+    $redis->zIncrBy($key, $charm, $userId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 86400); // 缓存一天
+    }
+}
+
+/**
+ * 获取女神魅力日排行
+ */
+function getFemaleCharmSortSetDay($start, $end, Redis $redis)
+{
+    $key = REDIS_FEMALE_CHARM_SORT_SET_DAY . date("Y-m-d");
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+
+/**
+ * 返回用户日排名
+ */
+function getFemaleCharmSortSetDayRank($userId, Redis $redis)
+{
+    $key = $key = REDIS_FEMALE_CHARM_SORT_SET_DAY . date("Y-m-d");
+    return $redis->zRevRank($key, $userId);
+}
+
+/**
+ * 返回用户日排行分值
+ */
+function getFemaleCharmSortSetDayScore($userId, Redis $redis)
+{
+    $key = $key = REDIS_FEMALE_CHARM_SORT_SET_DAY . date("Y-m-d");
+    return $redis->zScore($key, $userId);
 }

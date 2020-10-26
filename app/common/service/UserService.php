@@ -592,6 +592,7 @@ class UserService extends Base
             cacheUserInfoByToken($user->toArray(), $redis);
             cacheUserInfoById($user->toArray(), $redis);
             deleteUserInfoDataByUId($userBase["id"], $redis);
+            deleteUserIndexDataByUId($userBase["id"], $redis);
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
@@ -717,6 +718,7 @@ class UserService extends Base
 
         Db::name("user_set")->where("u_id", $user["id"])->update($update);
         deleteUserSetByUId($user["id"], Redis::factory());
+        deleteUserIndexDataByUId($user["id"], Redis::factory());
         return;
     }
 
@@ -765,6 +767,7 @@ class UserService extends Base
 
         Db::name("user_set")->where("u_id", $user["id"])->update(["direct_message_free" => $switch, "direct_message_price" => $coin]);
         deleteUserSetByUId($user["id"], Redis::factory());
+        deleteUserIndexDataByUId($user["id"], Redis::factory());
         return;
     }
 
@@ -877,7 +880,10 @@ class UserService extends Base
 //        if (!empty($info["nickname"]) || !empty($info["portrait"])) {
 //            RongCloudApp::updateUserInfo($user["user_number"], $info["nickname"] ?? $user["nickname"], $info["portrait"] ?? $user["portrait"]);
 //        }
+        // 删除用户info数据
         deleteUserInfoDataByUId($user["id"], $redis);
+        // 删除用户主页数据缓存
+        deleteUserIndexDataByUId($user["id"], $redis);
         return;
     }
 
@@ -885,11 +891,12 @@ class UserService extends Base
      * 获取用户主页数据
      *
      * @param $userId int 用户ID
+     * @param $currentUserId int 当前用户Id
      * @param int $retry 重试次数
      * @return array|mixed
      * @throws AppException
      */
-    public function index($userId, $retry = 0)
+    public function index($userId, $currentUserId, $retry = 0)
     {
         $redis = Redis::factory();
         $ret = getUserIndexDataByUId($userId, $redis);
@@ -912,7 +919,8 @@ class UserService extends Base
                 "videoLike" => [],
                 "gifts" => [],
                 "guard" => [], //守护
-                "score" => "0" // 评分
+                "score" => "0", // 评分
+                "is_follow" => 0 // 是否关注
             ];
             $user = self::getUserById($userId, $redis);
             $userInfo = UserInfoService::getUserInfoById($userId,$redis);
@@ -967,6 +975,13 @@ class UserService extends Base
 
             // 获取评分
             $data["score"] = ScoreService::getScore($userId);
+            // 查看是否已关注
+            if ($userId != $currentUserId) {
+                $exists = Db::name("user_follow")->where("u_id", $currentUserId)
+                    ->where("follow_u_id", $userId)
+                    ->find();
+                $data["is_follow"] = empty($exists) ? 0 : 1;
+            }
 
             cacheUserIndexDataByUId($userId, $data, $redis);
             $redis->del($lockKey);

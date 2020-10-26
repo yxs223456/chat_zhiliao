@@ -23,6 +23,7 @@ class FansTransformer extends TransformerAbstract
             'sex' => $data['sex'] ?? 0,
             'age' => $this->getUserAge($data['birthday'] ?? ""),
             'city' => $data["city"] ?? "",
+            'is_follow' => $data["is_friend"]
         ];
     }
 

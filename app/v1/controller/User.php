@@ -449,7 +449,7 @@ class User extends Base
         // 添加访问记录到队列
         VisitorService::addVisitorLog($uid, $this->query["user"]["id"]);
         $service = new UserService();
-        $data = $service->index($uid);
+        $data = $service->index($uid, $this->query["user"]["id"]);
         return $this->jsonResponse($data, new IndexTransformer());
     }
 

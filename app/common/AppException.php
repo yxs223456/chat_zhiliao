@@ -29,6 +29,9 @@ class AppException extends \Exception
     const USER_ACCOUNT_ERROR = [2011, "账号或密码错误", "賬號或密碼錯誤"];
     const USER_CERTIFICATE_SUBMIT_ALREADY = [2012, "自拍认证已提交", "自拍認證已提交"];
     const USER_CERTIFICATE_SUCCESS_ALREADY = [2013, "自拍认证已通过", "自拍認證已通過"];
+    const USER_NOT_FOLLOW = [2014, "用户未关注", "用戶未關注"];
+    const USER_IS_FOLLOWED = [2015, "用户已关注", "用戶已關注"];
+    const USER_NOT_FOLLOW_SELF = [2016, "不能关注自己", "不能關注自己"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空", "動態不能為空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在", "動態不存在"];

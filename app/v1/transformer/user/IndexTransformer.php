@@ -49,6 +49,7 @@ class IndexTransformer extends TransformerAbstract
                 'direct_message_price' => $userSet['direct_message_price'] ?? 0,
                 "score" => $data["score"] ?? "0",
             ],
+            "is_follow" => $data["is_follow"] ?? 0,
             "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"]),// 动态
             "videos" => $this->getVideos($data['videos'] ?? []), // 视频
             "gifts" => $this->getGifts($data["gifts"] ?? []),

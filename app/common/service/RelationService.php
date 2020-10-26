@@ -53,7 +53,7 @@ class RelationService extends Base
         $query = Db::name("user_follow")->alias("uf")
             ->leftJoin("user u", "u.id = uf.u_id")
             ->leftJoin("user_info ui", "ui.u_id = uf.u_id")
-            ->field("uf.id,uf.u_id,u.sex,ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->field("uf.id,uf.u_id,uf.is_friend,u.sex,ui.portrait,ui.nickname,ui.birthday,ui.city")
             ->where("uf.follow_u_id", $userId)
             ->order("uf.id","desc");
         if (!empty($startId)) {
@@ -112,11 +112,15 @@ class RelationService extends Base
     public function unfollow($followId, $userId)
     {
         if ($followId == $userId) {
-            throw AppException::factory(AppException::QUERY_INVALID);
+            throw AppException::factory(AppException::USER_NOT_FOLLOW_SELF);
         }
         $followUser = UserService::getUserById($followId);
         if (empty($followUser)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+        $isFollow = Db::name("user_follow")->where("u_id", $userId)->where("follow_u_id", $followId)->find();
+        if (empty($isFollow)) {
+            throw AppException::factory(AppException::USER_NOT_FOLLOW);
         }
         Db::name("user_follow")->where("u_id", $userId)->where("follow_u_id", $followId)->delete();
         $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();
@@ -138,7 +142,7 @@ class RelationService extends Base
     public function follow($followId, $userId)
     {
         if ($followId == $userId) {
-            throw AppException::factory(AppException::QUERY_INVALID);
+            throw AppException::factory(AppException::USER_NOT_FOLLOW_SELF);
         }
         $followUser = UserService::getUserById($followId);
         if (empty($followUser)) {
@@ -151,6 +155,11 @@ class RelationService extends Base
         // 访问日志队列
         VisitorService::addVisitorLog($followId, $userId);
         // 添加关注
+        $isFollow = Db::name("user_follow")->where("u_id", $userId)->where("follow_u_id", $followId)->find();
+        if (!empty($isFollow)) {
+            throw AppException::factory(AppException::USER_IS_FOLLOWED);
+        }
+
         Db::name("user_follow")->insertGetId(["follow_u_id" => $followId, 'u_id' => $userId]);
         $followedMe = Db::name("user_follow")->where("u_id", $followId)->where("follow_u_id", $userId)->find();
         // 当前用户也关注我，更新is_friend

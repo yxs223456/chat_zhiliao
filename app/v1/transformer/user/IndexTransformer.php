@@ -53,6 +53,7 @@ class IndexTransformer extends TransformerAbstract
             "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"]),// 动态
             "videos" => $this->getVideos($data['videos'] ?? []), // 视频
             "gifts" => $this->getGifts($data["gifts"] ?? []),
+            "have_angle" => empty($data["guard"]) ? 0 : 1,
             "angle" => $this->getGuard($data["guard"] ?? []),
         ];
     }
@@ -92,7 +93,10 @@ class IndexTransformer extends TransformerAbstract
     private function getGuard($guard)
     {
         if (empty($guard)) {
-            return new \stdClass();
+            return [
+                'guard_u_id' => 0,
+                'avatar' => ''
+            ];
         }
         return [
             'guard_u_id' => $guard["u_id"] ?? 0,

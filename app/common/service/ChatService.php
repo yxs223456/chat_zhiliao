@@ -16,6 +16,7 @@ use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
+use app\common\helper\ShengWang;
 use app\common\model\UserWalletFlowModel;
 use think\facade\Db;
 
@@ -220,6 +221,27 @@ class ChatService extends Base
             throw $e;
         }
         return new \stdClass();
+    }
+
+    /**
+     * 取声网 1v1通话 RTC token
+     * @param $user
+     * @param $chatId
+     * @return array
+     * @throws \Exception
+     */
+    public function getSwRtcToken($user, $chatId)
+    {
+        $expire = 86400;
+        $token = ShengWang::getRtcToken($user["id"], $chatId, $expire);
+
+        $returnData = [
+            "token" => $token,
+            "u_id" => $user["id"],
+            "channel_name" => $chatId,
+            "expire" => $expire,
+        ];
+        return $returnData;
     }
 
     /**

@@ -14,6 +14,7 @@ use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletAddEnum;
 use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
+use app\common\helper\ShengWang;
 use think\facade\Db;
 
 class IMService extends Base
@@ -122,5 +123,22 @@ class IMService extends Base
             "price" => $price,
             "bonus" => $bonus,
         ];
+    }
+
+    /**
+     * 获取声网RTM token
+     * @param $user
+     * @return array
+     * @throws \Exception
+     */
+    public function getSWImToken($user)
+    {
+        $expire = 86400;
+        $returnData = [
+            "token" => ShengWang::getRtmToken($user["id"], $expire),
+            "u_id" => $user["id"],
+            "expire" => $expire,
+        ];
+        return $returnData;
     }
 }

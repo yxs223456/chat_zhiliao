@@ -107,7 +107,14 @@ class NearService extends Base
             return array_values($ret);
         }
 
-        $ret["userInfo"] = $userData;
+        $idToData = array_combine(array_column($userData,'id'),$userData);
+        $sortUserData = [];
+        foreach ($userIds as $key => $item)
+        {
+            $sortUserData[] = isset($idToData[$key]) ? $idToData[$key] : [];
+        }
+
+        $ret["userInfo"] = array_values(array_filter($sortUserData));
         $ret["distance"] = $userIds;
 
         return array_values($ret);

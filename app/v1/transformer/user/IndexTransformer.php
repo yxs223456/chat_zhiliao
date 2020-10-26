@@ -53,7 +53,8 @@ class IndexTransformer extends TransformerAbstract
             "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"]),// 动态
             "videos" => $this->getVideos($data['videos'] ?? []), // 视频
             "gifts" => $this->getGifts($data["gifts"] ?? []),
-            "guard" => $this->getGuard($data["guard"] ?? []),
+            "have_angle" => empty($data["guard"]) ? 0 : 1,
+            "angle" => $this->getGuard($data["guard"] ?? []),
         ];
     }
 

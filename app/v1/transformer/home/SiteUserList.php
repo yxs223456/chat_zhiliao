@@ -25,7 +25,7 @@ class SiteUserList extends TransformerAbstract
         ];
 
         foreach ($data["list"] as $item) {
-            $returnData["list"] = [
+            $returnData["list"][] = [
                 "id" => (int) $item["id"],
                 "user_number" => (string) $item["user_number"],
                 "photo" => (string) $item["photo"],
@@ -35,6 +35,7 @@ class SiteUserList extends TransformerAbstract
                 "video_chat_price" => (int) $item["video_chat_price"],
                 "voice_chat_switch" => (int) $item["voice_chat_switch"],
                 "voice_chat_price" => (int) $item["voice_chat_price"],
+                "score" => (string) $item["score"],
             ];
         }
 

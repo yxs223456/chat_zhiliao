@@ -51,6 +51,8 @@ class HomeService extends Base
             $users[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($users[$key]["photos"]);
 
+            $users[$key]["city"] = CityService::getCityByCode($user["city"]);
+
             $signatures = json_decode($user["signatures"], true);
             $users[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
             unset($users[$key]["signatures"]);
@@ -102,6 +104,8 @@ class HomeService extends Base
             $photos = json_decode($user["photos"], true);
             $users[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($users[$key]["photos"]);
+
+            $users[$key]["city"] = CityService::getCityByCode($user["city"]);
 
             $signatures = json_decode($user["signatures"], true);
             $users[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -155,6 +159,8 @@ class HomeService extends Base
             $photos = json_decode($user["photos"], true);
             $users[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($users[$key]["photos"]);
+
+            $users[$key]["city"] = CityService::getCityByCode($user["city"]);
 
             $signatures = json_decode($user["signatures"], true);
             $users[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";

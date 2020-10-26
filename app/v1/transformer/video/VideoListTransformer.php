@@ -16,6 +16,10 @@ class VideoListTransformer extends TransformerAbstract
     private $user = null;
     // 小视频对应的点赞用户ID
     private $likeVideoUserIds = null;
+    // 用户设置数据
+    private $userSetData = null;
+    // 登陆用户关注小视频用户的ID数组
+    private $userFollow = null;
 
     public function __construct(array $params = null)
     {
@@ -23,6 +27,9 @@ class VideoListTransformer extends TransformerAbstract
 
         $this->user = $this->_queries["user"] ?? [];
         $this->likeVideoUserIds = $this->_queries["likeVideoUserIds"] ?? [];
+        $this->userSetData = $this->_queries["userSetData"] ?? [];
+        $this->userFollow = $this->_queries["userFollow"] ?? [];
+
     }
 
     public function transformData(array $data): array
@@ -35,12 +42,42 @@ class VideoListTransformer extends TransformerAbstract
             "like_count" => (int)$data["like_count"] ?? 0,
             "city" => $data["city"] ?? "",
             "is_like" => $this->getIsLike($data["id"]),
+            "is_followed" => $this->getIsFollow($data["u_id"]),
+            "voice_chat_switch" => (int)$this->getUserSet($data["u_id"], "voice_chat_switch"),
+            "voice_chat_price" => (int)$this->getUserSet($data["u_id"], "voice_chat_price"),
+            "video_chat_switch" => (int)$this->getUserSet($data["u_id"], "video_chat_switch"),
+            "video_chat_price" => (int)$this->getUserSet($data["u_id"], "video_chat_price"),
+            "direct_message_free" => (int)$this->getUserSet($data["u_id"], "direct_message_free"),
+            "direct_message_price" => (int)$this->getUserSet($data["u_id"], "direct_message_price"),
         ];
     }
 
     private function getIsLike($videoId)
     {
         if (isset($this->likeVideoUserIds[$videoId]) && in_array($this->user["id"], $this->likeVideoUserIds[$videoId])) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * 获取用户设置数据
+     *
+     * @param $uid
+     * @param $key
+     * @return string
+     */
+    private function getUserSet($uid, $key)
+    {
+        if (isset($this->userSetData[$uid])) {
+            return $this->userSetData[$uid][$key];
+        }
+        return "";
+    }
+
+    private function getIsFollow($uid)
+    {
+        if (in_array($uid, $this->userFollow)) {
             return 1;
         }
         return 0;

@@ -155,13 +155,16 @@ class VideoService extends Base
      * @param $startId
      * @param $pageSize
      * @param $city
+     * @param $user
      * @return array|mixed|null
      */
-    public function cityList($startId, $pageSize, $city)
+    public function cityList($startId, $pageSize, $city, $user)
     {
         $ret = [
             "video" => [],
-            "likeVideoUserIds" => []
+            "likeVideoUserIds" => [],
+            "userSetData" => [],
+            "userFollow" => []
         ];
 
         // 获取动态数据
@@ -182,7 +185,7 @@ class VideoService extends Base
         }
         $ret["video"] = $videos;
 
-        // 获取动态点赞的用户ID
+        // 获取小视频点赞的用户ID
         $videoIdToUserIds = Db::name("video_like")
             ->whereIn("video_id", array_column($videos, 'id'))
             ->field("video_id,u_id")
@@ -194,6 +197,19 @@ class VideoService extends Base
         }, $videoIdToUserIds);
         $ret["likeVideoUserIds"] = $likeVideoUserIds;
 
+        // 获取小视频用户配置
+        $uids = array_column($videos, 'u_id');
+        $userSet = Db::name("user_set")->whereIn("u_id", $uids)
+            ->select()->toArray();
+        $userSetData = array_combine(array_column($userSet, 'u_id'), $userSet);
+        $ret["userSetData"] = $userSetData;
+
+        // 查看当前用户关注动态用户的记录
+        $userFollow = Db::name("user_follow")->where("u_id", $user["id"])
+            ->whereIn("follow_u_id", $uids)
+            ->column("follow_u_id");
+        $ret["userFollow"] = $userFollow;
+
         return array_values($ret);
     }
 
@@ -202,13 +218,16 @@ class VideoService extends Base
      *
      * @param $startId
      * @param $pageSize
+     * @param $user
      * @return array|mixed|null
      */
-    public function recommendList($startId, $pageSize)
+    public function recommendList($startId, $pageSize, $user)
     {
         $ret = [
             "video" => [],
-            "likeVideoUserIds" => []
+            "likeVideoUserIds" => [],
+            "userSetData" => [],
+            "userFollow" => []
         ];
 
         // 获取动态数据
@@ -239,6 +258,19 @@ class VideoService extends Base
             $likeVideoUserIds[$item['video_id']][] = $item["u_id"];
         }, $videoIdToUserIds);
         $ret["likeVideoUserIds"] = $likeVideoUserIds;
+
+        // 获取小视频用户配置
+        $uids = array_column($videos, 'u_id');
+        $userSet = Db::name("user_set")->whereIn("u_id", $uids)
+            ->select()->toArray();
+        $userSetData = array_combine(array_column($userSet, 'u_id'), $userSet);
+        $ret["userSetData"] = $userSetData;
+
+        // 查看当前用户关注动态用户的记录
+        $userFollow = Db::name("user_follow")->where("u_id", $user["id"])
+            ->whereIn("follow_u_id", $uids)
+            ->column("follow_u_id");
+        $ret["userFollow"] = $userFollow;
 
         return array_values($ret);
     }

@@ -43,9 +43,10 @@ class Video extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new VideoService();
-        list($video, $likeVideoUserIds) = $service->cityList($startId, $pageSize, $city);
+        list($video, $likeVideoUserIds, $userSetData, $userFollow) = $service->cityList($startId, $pageSize, $city, $user);
         return $this->jsonResponse($video, new VideoListTransformer(
-            ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds]
+            ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds,
+                "userSetData" => $userSetData, 'userFollow' => $userFollow]
         ));
     }
 
@@ -66,9 +67,10 @@ class Video extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new VideoService();
-        list($video, $likeVideoUserIds) = $service->recommendList($startId, $pageSize);
+        list($video, $likeVideoUserIds, $userSetData, $userFollow) = $service->recommendList($startId, $pageSize, $user);
         return $this->jsonResponse($video, new VideoListTransformer(
-            ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds]
+            ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds,
+                "userSetData" => $userSetData, 'userFollow' => $userFollow]
         ));
     }
 

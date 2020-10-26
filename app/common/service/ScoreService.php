@@ -73,4 +73,36 @@ class ScoreService extends Base
 
         return bcdiv($score["total_score"], $score["total_users"], 1);
     }
+
+    /**
+     * 获取分数的字符串表示
+     * @param $score
+     * @return string
+     */
+    public static function getScoreByScore($score)
+    {
+        if (bccomp($score, 0, 1) <= 0) {
+            return "0.0";
+        } elseif (bccomp($score, 4.5, 1) > 0) {
+            return "5.0";
+        } elseif (bccomp($score, 4, 1) > 0) {
+            return "4.5";
+        } elseif (bccomp($score, 3.5, 1) > 0) {
+            return "4.0";
+        } elseif (bccomp($score, 3, 1) > 0) {
+            return "3.5";
+        } elseif (bccomp($score, 2.5, 1) > 0) {
+            return "3.0";
+        } elseif (bccomp($score, 2, 1) > 0) {
+            return "2.5";
+        } elseif (bccomp($score, 1.5, 1) >=0) {
+            return "2.0";
+        } elseif (bccomp($score, 1, 1) > 0) {
+            return "1.5";
+        } elseif (bccomp($score, 0.5, 1) > 0) {
+            return "1.0";
+        } else{
+            return "0.5";
+        }
+    }
 }

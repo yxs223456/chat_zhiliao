@@ -56,7 +56,7 @@ class HomeService extends Base
             unset($users[$key]["signatures"]);
 
             $score = $user["total_users"] <= 0 ? 0 : (bcdiv($user["total_score"], $user["total_users"], 1));
-            $users[$key]["score"] = $score;
+            $users[$key]["score"] = ScoreService::getScoreByScore($score);
             unset($users[$key]["total_score"]);
             unset($users[$key]["total_users"]);
         }
@@ -108,7 +108,7 @@ class HomeService extends Base
             unset($users[$key]["signatures"]);
 
             $score = $user["total_users"] <= 0 ? 0 : (bcdiv($user["total_score"], $user["total_users"], 1));
-            $users[$key]["score"] = $score;
+            $users[$key]["score"] = ScoreService::getScoreByScore($score);;
             unset($users[$key]["total_score"]);
             unset($users[$key]["total_users"]);
         }
@@ -161,7 +161,7 @@ class HomeService extends Base
             unset($users[$key]["signatures"]);
 
             $score = $user["total_users"] <= 0 ? 0 : (bcdiv($user["total_score"], $user["total_users"], 1));
-            $users[$key]["score"] = $score;
+            $users[$key]["score"] = ScoreService::getScoreByScore($score);;
             unset($users[$key]["total_score"]);
             unset($users[$key]["total_users"]);
         }

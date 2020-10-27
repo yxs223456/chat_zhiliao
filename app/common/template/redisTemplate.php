@@ -1016,7 +1016,7 @@ function getFemaleCharmSortSetWeek($start, $end, Redis $redis)
 }
 
 /**
- * 返回用户周排名
+ * 返回女神魅力周排名
  */
 function getFemaleCharmSortSetWeekRank($userId, Redis $redis)
 {
@@ -1026,7 +1026,7 @@ function getFemaleCharmSortSetWeekRank($userId, Redis $redis)
 }
 
 /**
- * 返回用户周排行分值
+ * 返回女神魅力周排行分值
  */
 function getFemaleCharmSortSetWeekScore($userId, Redis $redis)
 {
@@ -1076,5 +1076,152 @@ function getFemaleCharmSortSetDayRank($userId, Redis $redis)
 function getFemaleCharmSortSetDayScore($userId, Redis $redis)
 {
     $key = $key = REDIS_FEMALE_CHARM_SORT_SET_DAY . date("Y-m-d");
+    return $redis->zScore($key, $userId);
+}
+
+
+/**
+ * 缓存女神贡献排行周榜，缓存两周，除了本周贡献，上周贡献列表也会用到
+ */
+define("REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK", REDIS_KEY_PREFIX . "femaleContributeSortSetWeek:");
+function cacheFemaleContributeSortSet($userId, $contributeId, $coin, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . $startDate . "-" . $endDate;
+    $redis->zIncrBy($key, $coin, $contributeId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 1209600); // 缓存两周
+    }
+}
+/**
+ * 获取女神贡献人本周排行
+ */
+function getFemaleContributeSortSetThisWeek($userId, $start, $end, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . $startDate . "-" . $endDate;
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+/**
+ * 返回当前用户在女神本周排名
+ */
+function getFemaleContributeSortSetThisWeekRank($userId, $contributeId, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . $startDate . "-" . $endDate;
+    return $redis->zRevRank($key, $contributeId);
+}
+/**
+ * 返回当前用户在女神本周排行分值
+ */
+function getFemaleContributeSortSetThisWeekScore($userId, $contributeId, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . $startDate . "-" . $endDate;
+    return $redis->zScore($key, $contributeId);
+}
+/**
+ * 获取女神贡献人上周排行
+ */
+function getFemaleContributeSortSetLastWeek($userId, $start, $end, Redis $redis)
+{
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . getLastWeekStartDate() . "-" . getLastWeekEndDate();
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+/**
+ * 返回当前用户在女神上周排名
+ */
+function getFemaleContributeSortSetLastWeekRank($userId, $contributeId, Redis $redis)
+{
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . getLastWeekStartDate() . "-" . getLastWeekEndDate();
+    return $redis->zRevRank($key, $contributeId);
+}
+/**
+ * 返回当前用户在女神上周排行分值
+ */
+function getFemaleContributeSortSetLastWeekScore($userId, $contributeId, Redis $redis)
+{
+    $key = REDIS_FEMALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . getLastWeekStartDate() . "-" . getLastWeekEndDate();
+    return $redis->zScore($key, $contributeId);
+}
+
+
+/**
+ * 缓存男的贡献排周榜，缓存一周。（一个男的给女的花钱的排行）
+ */
+define("REDIS_MALE_CONTRIBUTE_SORT_SET_WEEK", REDIS_KEY_PREFIX . "maleContributeSortSetWeek:");
+function cacheMaleContributeSortSet($userId, $prettyId, $coin, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . $startDate . "-" . $endDate;
+    $redis->zIncrBy($key, $coin, $prettyId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 604800); // 缓存一周
+    }
+}
+/**
+ * 获取男的本周贡献的女神排行
+ */
+function getMaleContributeSortSetThisWeek($userId, $start, $end, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_CONTRIBUTE_SORT_SET_WEEK . $userId . ":" . $startDate . "-" . $endDate;
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+
+/**
+ * 缓存男的守护收入周榜
+ */
+define("REDIS_MALE_EARN_SORT_SET_WEEK", REDIS_KEY_PREFIX . "maleGuardEarnSortSetWeek:");
+function cacheMaleGuardEarnSortSetWeek($userId, $charm, Redis $redis)
+{
+    list($start, $end) = getWeekStartAndEnd();
+    $key = REDIS_MALE_EARN_SORT_SET_WEEK . $start . "-" . $end;
+    $redis->zIncrBy($key, $charm, $userId);
+    if ($redis->ttl($key) == -1) {
+        $redis->expire($key, 604800); // 缓存一周
+    }
+}
+/**
+ * 获取男的守护收入周排行
+ */
+function getMaleGuardEarnSortSetWeek($start, $end, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_EARN_SORT_SET_WEEK . $startDate . "-" . $endDate;
+    $data = $redis->zRevRange($key, $start, $end, true);
+    if ($data) {
+        return $data;
+    }
+    return null;
+}
+/**
+ * 返回男的守护收入周排名
+ */
+function getMaleGuardEarnSortSetWeekRank($userId, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_EARN_SORT_SET_WEEK . $startDate . "-" . $endDate;
+    return $redis->zRevRank($key, $userId);
+}
+/**
+ * 返回男的守护收入周排行分值
+ */
+function getMaleGuardEarnSortSetWeekScore($userId, Redis $redis)
+{
+    list($startDate, $endDate) = getWeekStartAndEnd();
+    $key = REDIS_MALE_EARN_SORT_SET_WEEK . $startDate . "-" . $endDate;
     return $redis->zScore($key, $userId);
 }

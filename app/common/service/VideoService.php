@@ -69,8 +69,6 @@ class VideoService extends Base
             throw AppException::factory(AppException::QUERY_INVALID);
         }
 
-        // 删除用户首页缓存
-        deleteUserIndexDataByUId($user["id"], Redis::factory());
         return Db::name("video")->where("id", $id)->update(["is_delete" => DbDataIsDeleteEnum::YES]);
     }
 

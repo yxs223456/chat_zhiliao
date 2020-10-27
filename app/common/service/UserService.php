@@ -592,7 +592,6 @@ class UserService extends Base
             cacheUserInfoByToken($user->toArray(), $redis);
             cacheUserInfoById($user->toArray(), $redis);
             deleteUserInfoDataByUId($userBase["id"], $redis);
-            deleteUserIndexDataByUId($userBase["id"], $redis);
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
@@ -718,7 +717,6 @@ class UserService extends Base
 
         Db::name("user_set")->where("u_id", $user["id"])->update($update);
         deleteUserSetByUId($user["id"], Redis::factory());
-        deleteUserIndexDataByUId($user["id"], Redis::factory());
         return;
     }
 
@@ -767,7 +765,6 @@ class UserService extends Base
 
         Db::name("user_set")->where("u_id", $user["id"])->update(["direct_message_free" => $switch, "direct_message_price" => $coin]);
         deleteUserSetByUId($user["id"], Redis::factory());
-        deleteUserIndexDataByUId($user["id"], Redis::factory());
         return;
     }
 
@@ -882,8 +879,6 @@ class UserService extends Base
 //        }
         // 删除用户info数据
         deleteUserInfoDataByUId($user["id"], $redis);
-        // 删除用户主页数据缓存
-        deleteUserIndexDataByUId($user["id"], $redis);
         return;
     }
 

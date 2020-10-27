@@ -76,7 +76,6 @@ class DynamicService extends Base
         // 删除缓存
         $redis = Redis::factory();
         deleteUserDynamicInfo($id, $redis); // 删除动态缓存
-        deleteUserIndexDataByUId($user["id"], $redis); // 删除用户主页缓存
 
         return Db::name("dynamic")->where("id", $id)->update(["is_delete" => DbDataIsDeleteEnum::YES]);
 

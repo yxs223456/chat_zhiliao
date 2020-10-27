@@ -47,7 +47,13 @@ class Pretty extends Base
     public function lastWeekContributeList()
     {
         $request = $this->query["content"];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 10;
         $uid = $request["id"] ?? 0;
+
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
         if (!checkInt($uid)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -58,7 +64,7 @@ class Pretty extends Base
         }
 
         $service = new CharmService();
-        $data = $service->lastWeekContributeList($uid, $this->query['user']['id']);
+        $data = $service->lastWeekContributeList($uid, $this->query['user']['id'], $pageNum, $pageSize);
         return $this->jsonResponse($data, new LastWeekTransformer());
     }
 
@@ -68,7 +74,13 @@ class Pretty extends Base
     public function thisWeekContributeList()
     {
         $request = $this->query['content'];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 10;
         $uid = $request['id'] ?? 0;
+
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
         if (!checkInt($uid)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);

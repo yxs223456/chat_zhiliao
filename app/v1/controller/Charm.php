@@ -45,7 +45,7 @@ class Charm extends Base
         }
 
         $service = new CharmService();
-        return $this->jsonResponse($service->monthList($pageNum, $pageSize, $user), new ListTransformer());
+        return $this->jsonResponse($service->rankList($pageNum, $pageSize, $user,'month'), new ListTransformer());
     }
 
     /**
@@ -66,7 +66,7 @@ class Charm extends Base
         }
 
         $service = new CharmService();
-        return $this->jsonResponse($service->weekList($pageNum, $pageSize, $user), new ListTransformer());
+        return $this->jsonResponse($service->rankList($pageNum, $pageSize, $user, 'week'), new ListTransformer());
     }
 
     /**
@@ -87,7 +87,7 @@ class Charm extends Base
         }
 
         $service = new CharmService();
-        return $this->jsonResponse($service->dayList($pageNum, $pageSize, $user), new ListTransformer());
+        return $this->jsonResponse($service->rankList($pageNum, $pageSize, $user), new ListTransformer());
     }
 
 }

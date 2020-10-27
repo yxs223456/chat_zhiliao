@@ -53,6 +53,7 @@ class EarnService extends Base
     private function getSelf($user)
     {
         $ret = [
+            "u_id" => $user["id"],
             "avatar" => "",
             "total_amount" => 0,
             "rank" => 0
@@ -75,53 +76,22 @@ class EarnService extends Base
      *
      * @param $pageNum
      * @param $pageSize
-     * @param int $retry
      * @return array|mixed|null
      * @throws AppException
      */
-    private function getAllList($pageNum, $pageSize, $retry = 0)
+    private function getAllList($pageNum, $pageSize)
     {
-        $redis = Redis::factory();
-        if ($data = getMaleAllEarnList($pageNum, $pageSize, $redis)) {
-            return $data['data'];
+        $data = Db::name("guard_income")->alias("gi")
+            ->leftJoin("user u", "gi.u_id = u.id")
+            ->leftJoin("user_info ui", "gi.u_id = ui.u_id")
+            ->field("gi.u_id,gi.total_amount,gi.guard_count,u.user_number,ui.portrait")
+            ->order("gi.total_amount", "desc")
+            ->limit(($pageNum - 1) * $pageSize, $pageSize)
+            ->select()->toArray();
+        if (empty($data)) {
+            return [];
         }
-
-        $ret = [
-            'pageNum' => $pageNum,
-            'pageSize' => $pageSize,
-            'data' => []
-        ];
-
-        $lockKey = REDIS_KEY_PREFIX . "MALE_ALL_EARN_LIST_LOCK:" . $pageNum . ":" . $pageSize;
-        if ($redis->setnx($lockKey, 1)) {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-
-            $data = Db::name("guard_income")->alias("gi")
-                ->leftJoin("user u", "gi.u_id = u.id")
-                ->leftJoin("user_info ui", "gi.u_id = ui.u_id")
-                ->field("gi.u_id,gi.total_amount,gi.guard_count,u.user_number,ui.portrait")
-                ->order("gi.total_amount", "desc")
-                ->limit(($pageNum - 1) * $pageSize, $pageSize)
-                ->select()->toArray();
-            if (empty($data)) {
-                cacheMaleAllEarnList($pageNum, $pageSize, $ret, $redis);
-                $redis->del($lockKey);
-                return $ret;
-            }
-
-            $ret["data"] = $data;
-            cacheMaleAllEarnList($pageNum, $pageSize, $ret, $redis);
-            $redis->del($lockKey);
-            return $data;
-        } else {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-        }
-
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME);
-            return $this->getAllList($pageNum, $pageSize, ++$retry);
-        }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        return $data;
     }
 
     /**

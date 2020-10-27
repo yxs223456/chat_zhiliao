@@ -106,14 +106,13 @@ class CharmService extends Base
         $userIdToData = array_combine(array_column($userInfos, "u_id"), $userInfos);
 
         $list = [];
-        $start++; // index + 1
         foreach ($userIds as $value) {
             $tmp = [];
             $tmp["u_id"] = $userIdToData[$value]["u_id"] ?? 0;
             $tmp["nickname"] = $userIdToData[$value]["nickname"] ?? "";
             $tmp["portrait"] = $userIdToData[$value]["portrait"];
             $tmp['charm'] = $data[$value] ?? 0;
-            $tmp['rank'] = $start++;
+            $tmp['rank'] = ++$start;
             $list[] = $tmp;
         }
         return $list;
@@ -240,7 +239,6 @@ class CharmService extends Base
             ->whereIn("u_id", $userIds)
             ->select()->toArray();
 
-        $start++; // index + 1
         $list = [];
         $userIdToInfo = array_combine(array_column($userInfo,"u_id"),$userInfo);
         foreach ($data as $key => $score) {
@@ -250,7 +248,7 @@ class CharmService extends Base
             $tmp["portrait"] = $userIdToInfo[$key]["portrait"];
             $tmp["user_number"] = $userIdToInfo[$key]["user_number"];
             $tmp['charm'] = $score;
-            $tmp['rank'] = $start++;
+            $tmp['rank'] = ++$start;
             $list[] = $tmp;
         }
 

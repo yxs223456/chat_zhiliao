@@ -43,7 +43,8 @@ class ThisWeekTransformer extends TransformerAbstract
             $tmp['u_id'] = $item['u_id'] ?? '';
             $tmp['avatar'] = $item['portrait'] ?? '';
             $tmp['user_number'] = $this->getHiddenUserNumber($item['user_number']);
-            $tmp['charm'] = bcdiv($item['charm'],100,2) ?? "0.00";
+            $tmp['charm'] = bcdiv($item['charm'], 100, 2) ?? "0.00";
+            $tmp['rank'] = (int)$item['rank'];
             $ret[] = $tmp;
             if ($item['u_id'] == $user['u_id']) {
                 $retData['user']['rank'] = $key + 1;

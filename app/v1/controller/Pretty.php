@@ -91,19 +91,26 @@ class Pretty extends Base
         }
 
         $service = new CharmService();
-        $data = $service->thisWeekContributeList($uid, $this->query['user']['id']);
+        $data = $service->thisWeekContributeList($uid, $this->query['user']['id'], $pageNum, $pageSize);
         return $this->jsonResponse($data, new ThisWeekTransformer());
     }
 
     /**
-     * 等待被守护
+     * 等待被守护(当前登陆用户本周角逐)
      */
     public function wait()
     {
+        $request = $this->query['content'];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 10;
         $user = $this->query["user"];
 
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
         $service = new GuardService();
-        $data = $service->wait($user);
+        $data = $service->wait($user, $pageNum, $pageSize);
         return $this->jsonResponse($data, new WaitTransformer());
     }
 

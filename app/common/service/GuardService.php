@@ -118,10 +118,12 @@ GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
      * 女神本周等待被守护用户排名
      *
      * @param $user
+     * @param $pageNum
+     * @param $pageSize
      * @throws AppException
      * @return array
      */
-    public function wait($user)
+    public function wait($user, $pageNum, $pageSize)
     {
         $userInfo = UserInfoService::getUserInfoById($user['id']);
         // 只有女的才有等待守护
@@ -130,28 +132,42 @@ GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
         }
         $ret = [
             "guard" => GuardService::getGuard($user["id"]),
-            "amountList" => [],
-            "userInfoList" => []
+            "list" => []
         ];
 
-        list($startDate, $endDate) = getWeekStartAndEnd();
-        $data = Db::query("select guard_u_id,sum(amount) as total_amount from guard_charm_log where u_id = {$user['id']} 
-and sex_type = :sexType and create_date >= :startDate and create_date <= :endDate GROUP by guard_u_id ORDER by total_amount DESC limit 0,20", [
-            "sexType" => InteractSexTypeEnum::FEMALE_TO_MALE,
-            "startDate" => $startDate,
-            "endDate" => $endDate
-        ]);
+        $redis = Redis::factory();
+        $start = ($pageNum - 1) * $pageSize;
+        $data = getFemaleContributeSortSetThisWeek($user['id'], $start, $start + $pageSize - 1, $redis);
 
         if (empty($data)) {
             return $ret;
         }
 
-        $guardUserInfo = Db::name("user_info")
-            ->field("u_id,portrait,nickname")
-            ->whereIn("u_id", array_column($data, 'guard_u_id'))
+        $userIds = array_keys($data);
+        $guardUserInfo = Db::name("user_info")->alias("ui")
+            ->leftJoin("user_set us", "us.u_id = ui.u_id")
+            ->field("ui.u_id,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
+            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
+            ->whereIn("ui.u_id", $userIds)
             ->select()->toArray();
-        $ret["amountList"] = $data;
-        $ret["userInfoList"] = $guardUserInfo;
+        $guardIdToInfo = array_combine(array_column($guardUserInfo, 'u_id'), $guardUserInfo);
+
+        $list = [];
+        foreach ($data as $uid => $score) {
+            $tmp = [];
+            $tmp["u_id"] = $guardIdToInfo[$uid]["u_id"] ?? 0;
+            $tmp["portrait"] = $guardIdToInfo[$uid]["portrait"] ?? "";
+            $tmp["nickname"] = $guardIdToInfo[$uid]["nickname"] ?? "";
+            $tmp["voice_chat_switch"] = $guardIdToInfo[$uid]["voice_chat_switch"] ?? 0;
+            $tmp["voice_chat_price"] = $guardIdToInfo[$uid]["voice_chat_price"] ?? 0;
+            $tmp["video_chat_switch"] = $guardIdToInfo[$uid]["video_chat_switch"] ?? 0;
+            $tmp["video_chat_price"] = $guardIdToInfo[$uid]["video_chat_price"] ?? 0;
+            $tmp["direct_message_free"] = $guardIdToInfo[$uid]["direct_message_free"] ?? 0;
+            $tmp["direct_message_price"] = $guardIdToInfo[$uid]["direct_message_price"] ?? 0;
+            $tmp["charm"] = $score;
+            $list[] = $tmp;
+        }
+        $ret["list"] = $list;
         return $ret;
     }
 
@@ -177,9 +193,11 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
         $startDate = date("Y-m-d", strtotime("-3 month"));
         $data = Db::name("guard_history")->alias("gh")
             ->leftJoin("user_info ui", "ui.u_id = gh.guard_u_id")
-            ->field("gh.*,ui.portrait,ui.nickname")
+            ->leftJoin("user_set us","us.u_id = gh.guard_u_id")
+            ->field("gh.*,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
+            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
             ->where("gh.u_id", "=", $user["id"])
-            ->where("start_date", "=", $startDate)
+            ->where("start_date", ">=", $startDate)
             ->order("gh.start_date", "desc")
             ->select()->toArray();
 

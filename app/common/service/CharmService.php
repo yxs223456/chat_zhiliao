@@ -10,7 +10,6 @@ namespace app\common\service;
 
 
 use app\common\AppException;
-use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
@@ -135,7 +134,7 @@ class CharmService extends Base
         $userInfo = UserService::getUserById($uid);
         // 用户不存在或者不是女生
         if (empty($userInfo) || $userInfo['sex'] != UserSexEnum::FEMALE) {
-            throw AppException::factory(AppException::QUERY_INVALID);
+            throw AppException::factory(AppException::USER_NOT_FEMALE);
         }
 
         $ret = [
@@ -160,7 +159,7 @@ class CharmService extends Base
         $userInfo = UserService::getUserById($uid);
         // 用户不存在或者不是女生
         if (empty($userInfo) || $userInfo['sex'] != UserSexEnum::FEMALE) {
-            throw AppException::factory(AppException::QUERY_INVALID);
+            throw AppException::factory(AppException::USER_NOT_FEMALE);
         }
 
         $ret = [
@@ -243,13 +242,14 @@ class CharmService extends Base
 
         $start++; // index + 1
         $list = [];
-        foreach ($userInfo as $item) {
+        $userIdToInfo = array_combine(array_column($userInfo,"u_id"),$userInfo);
+        foreach ($data as $key => $score) {
             $tmp = [];
-            $tmp["u_id"] = $item["u_id"];
-            $tmp["nickname"] = $item["nickname"];
-            $tmp["portrait"] = $item["portrait"];
-            $tmp["user_number"] = $item["user_number"];
-            $tmp['charm'] = $data[$item['u_id']] ?? 0;
+            $tmp["u_id"] = $userIdToInfo[$key]["u_id"];
+            $tmp["nickname"] = $userIdToInfo[$key]["nickname"];
+            $tmp["portrait"] = $userIdToInfo[$key]["portrait"];
+            $tmp["user_number"] = $userIdToInfo[$key]["user_number"];
+            $tmp['charm'] = $score;
             $tmp['rank'] = $start++;
             $list[] = $tmp;
         }

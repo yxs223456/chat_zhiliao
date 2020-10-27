@@ -892,109 +892,85 @@ class UserService extends Base
      *
      * @param $userId int 用户ID
      * @param $currentUserId int 当前用户Id
-     * @param int $retry 重试次数
      * @return array|mixed
      * @throws AppException
      */
-    public function index($userId, $currentUserId, $retry = 0)
+    public function index($userId, $currentUserId)
     {
         $redis = Redis::factory();
-        $ret = getUserIndexDataByUId($userId, $redis);
-        if (!empty($ret)) {
-            return $ret;
+        $data = [
+            "user" => [],
+            "userInfo" => [],
+            "userSet" => [],// 用户配置
+            "dynamics" => [],
+            "dynamicLike" => [],
+            "videos" => [],
+            "videoLike" => [],
+            "gifts" => [],
+            "guard" => [], //守护
+            "score" => "0", // 评分
+            "is_follow" => 0 // 是否关注
+        ];
+        $user = self::getUserById($userId, $redis);
+        $userInfo = UserInfoService::getUserInfoById($userId, $redis);
+        if (empty($user) || empty($userInfo)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
 
-        // 某个用户的更新锁
-        $lockKey = REDIS_KEY_PREFIX . "USER_INDEX_LOCK" . $userId;
-        if ($redis->setnx($lockKey, 1)) {
-            // 设置锁过期时间，防止死锁永不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-            $data = [
-                "user" => [],
-                "userInfo" => [],
-                "userSet" => [],// 用户配置
-                "dynamics" => [],
-                "dynamicLike" => [],
-                "videos" => [],
-                "videoLike" => [],
-                "gifts" => [],
-                "guard" => [], //守护
-                "score" => "0", // 评分
-                "is_follow" => 0 // 是否关注
-            ];
-            $user = self::getUserById($userId, $redis);
-            $userInfo = UserInfoService::getUserInfoById($userId,$redis);
-            if (empty($user) || empty($userInfo)) {
-                $redis->del($lockKey);
-                throw AppException::factory(AppException::USER_NOT_EXISTS);
-            }
+        $data["user"] = $user;
+        $data["userInfo"] = $userInfo;
 
-            $data["user"] = $user;
-            $data["userInfo"] = $userInfo;
+        // 用户设置
+        $set = Db::name("user_set")->where("u_id", $userId)->find();
+        $data["userSet"] = $set;
 
-            // 用户设置
-            $set = Db::name("user_set")->where("u_id", $userId)->find();
-            $data["userSet"] = $set;
-
-            // 查询四条带有图片的动态
-            $dynamic = Db::query("select * from dynamic where u_id=:id and length(source) > 2 order by create_time desc limit 4", ['id' => $userId]);
-            $dynamicLike = [];
-            if (!empty($dynamic)) {
-                $dynamicLikeData = Db::name("dynamic_count")
-                    ->whereIn("dynamic_id", array_column($dynamic, "id"))
-                    ->field("like_count,dynamic_id")
-                    ->select()->toArray();
-                if ($dynamicLikeData) {
-                    $dynamicLike = array_column($dynamicLikeData, "like_count", 'dynamic_id');
-                }
-            }
-            $data["dynamics"] = $dynamic;
-            $data["dynamicLike"] = $dynamicLike;
-
-            // 查询礼物数据
-            $gifts = Db::name("gift_give_log")->alias("gl")
-                ->leftJoin("config_gift cg", "gl.g_id = cg.id")
-                ->field("cg.image_url,count(gl.g_id) c")
-                ->where("gl.r_u_id", $userId)
-                ->group("gl.g_id")
-                ->order("cg.id", "asc")
+        // 查询四条带有图片的动态
+        $dynamic = Db::query("select * from dynamic where u_id=:id and length(source) > 2 order by create_time desc limit 4", ['id' => $userId]);
+        $dynamicLike = [];
+        if (!empty($dynamic)) {
+            $dynamicLikeData = Db::name("dynamic_count")
+                ->whereIn("dynamic_id", array_column($dynamic, "id"))
+                ->field("like_count,dynamic_id")
                 ->select()->toArray();
-            $data["gifts"] = $gifts;
-
-            // 获取守护人信息
-            $guardUser = GuardService::getGuard($userId);
-            $data['guard'] = $guardUser;
-
-            // 获取小视频信息
-            $videos = Db::name("video")->alias("v")
-                ->leftJoin("video_count vc","v.id = vc.video_id")
-                ->field("v.*,vc.like_count")
-                ->where("v.u_id",$userId)->where("v.is_delete",DbDataIsDeleteEnum::NO)
-                ->order("v.id","desc")->limit(4)->select()->toArray();
-            $data["videos"] = $videos;
-
-            // 获取评分
-            $data["score"] = ScoreService::getScore($userId);
-            // 查看是否已关注
-            if ($userId != $currentUserId) {
-                $exists = Db::name("user_follow")->where("u_id", $currentUserId)
-                    ->where("follow_u_id", $userId)
-                    ->find();
-                $data["is_follow"] = empty($exists) ? 0 : 1;
+            if ($dynamicLikeData) {
+                $dynamicLike = array_column($dynamicLikeData, "like_count", 'dynamic_id');
             }
-
-            cacheUserIndexDataByUId($userId, $data, $redis);
-            $redis->del($lockKey);
-            return $data;
-        } else {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
         }
+        $data["dynamics"] = $dynamic;
+        $data["dynamicLike"] = $dynamicLike;
 
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME);
-            return $this->index($userId, ++$retry);
+        // 查询礼物数据
+        $gifts = Db::name("gift_give_log")->alias("gl")
+            ->leftJoin("config_gift cg", "gl.g_id = cg.id")
+            ->field("cg.image_url,count(gl.g_id) c")
+            ->where("gl.r_u_id", $userId)
+            ->group("gl.g_id")
+            ->order("cg.id", "asc")
+            ->select()->toArray();
+        $data["gifts"] = $gifts;
+
+        // 获取守护人信息
+        $guardUser = GuardService::getGuard($userId);
+        $data['guard'] = $guardUser;
+
+        // 获取小视频信息
+        $videos = Db::name("video")->alias("v")
+            ->leftJoin("video_count vc", "v.id = vc.video_id")
+            ->field("v.*,vc.like_count")
+            ->where("v.u_id", $userId)->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->order("v.id", "desc")->limit(4)->select()->toArray();
+        $data["videos"] = $videos;
+
+        // 获取评分
+        $data["score"] = ScoreService::getScore($userId);
+        // 查看是否已关注
+        if ($userId != $currentUserId) {
+            $exists = Db::name("user_follow")->where("u_id", $currentUserId)
+                ->where("follow_u_id", $userId)
+                ->find();
+            $data["is_follow"] = empty($exists) ? 0 : 1;
         }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        return $data;
     }
 
     /**

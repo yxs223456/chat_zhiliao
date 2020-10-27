@@ -115,108 +115,13 @@ GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
     }
 
     /**
-     * 女神本周等待被守护用户排名
-     *
-     * @param $user
-     * @param $pageNum
-     * @param $pageSize
-     * @throws AppException
-     * @return array
-     */
-    public function wait($user, $pageNum, $pageSize)
-    {
-        $userInfo = UserInfoService::getUserInfoById($user['id']);
-        // 只有女的才有等待守护
-        if ($userInfo["sex"] != UserSexEnum::FEMALE) {
-            throw AppException::factory(AppException::QUERY_INVALID);
-        }
-        $ret = [
-            "guard" => GuardService::getGuard($user["id"]),
-            "list" => []
-        ];
-
-        $redis = Redis::factory();
-        $start = ($pageNum - 1) * $pageSize;
-        $data = getFemaleContributeSortSetThisWeek($user['id'], $start, $start + $pageSize - 1, $redis);
-
-        if (empty($data)) {
-            return $ret;
-        }
-
-        $userIds = array_keys($data);
-        $guardUserInfo = Db::name("user_info")->alias("ui")
-            ->leftJoin("user_set us", "us.u_id = ui.u_id")
-            ->field("ui.u_id,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
-            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
-            ->whereIn("ui.u_id", $userIds)
-            ->select()->toArray();
-        $guardIdToInfo = array_combine(array_column($guardUserInfo, 'u_id'), $guardUserInfo);
-
-        $list = [];
-        foreach ($data as $uid => $score) {
-            $tmp = [];
-            $tmp["u_id"] = $guardIdToInfo[$uid]["u_id"] ?? 0;
-            $tmp["portrait"] = $guardIdToInfo[$uid]["portrait"] ?? "";
-            $tmp["nickname"] = $guardIdToInfo[$uid]["nickname"] ?? "";
-            $tmp["voice_chat_switch"] = $guardIdToInfo[$uid]["voice_chat_switch"] ?? 0;
-            $tmp["voice_chat_price"] = $guardIdToInfo[$uid]["voice_chat_price"] ?? 0;
-            $tmp["video_chat_switch"] = $guardIdToInfo[$uid]["video_chat_switch"] ?? 0;
-            $tmp["video_chat_price"] = $guardIdToInfo[$uid]["video_chat_price"] ?? 0;
-            $tmp["direct_message_free"] = $guardIdToInfo[$uid]["direct_message_free"] ?? 0;
-            $tmp["direct_message_price"] = $guardIdToInfo[$uid]["direct_message_price"] ?? 0;
-            $tmp["charm"] = $score;
-            $list[] = $tmp;
-        }
-        $ret["list"] = $list;
-        return $ret;
-    }
-
-    /**
-     * 最近三个月守护的人
-     *
-     * @param $user
-     * @return array
-     * @throws AppException
-     */
-    public function recently($user)
-    {
-        $userInfo = UserInfoService::getUserInfoById($user['id']);
-        // 只有女的才有最近守护
-        if ($userInfo["sex"] != UserSexEnum::FEMALE) {
-            throw AppException::factory(AppException::QUERY_INVALID);
-        }
-        $ret = [
-            "guard" => GuardService::getGuard($user["id"]),
-            "guardList" => []
-        ];
-
-        $startDate = date("Y-m-d", strtotime("-3 month"));
-        $data = Db::name("guard_history")->alias("gh")
-            ->leftJoin("user_info ui", "ui.u_id = gh.guard_u_id")
-            ->leftJoin("user_set us","us.u_id = gh.guard_u_id")
-            ->field("gh.*,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
-            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
-            ->where("gh.u_id", "=", $user["id"])
-            ->where("start_date", ">=", $startDate)
-            ->order("gh.start_date", "desc")
-            ->select()->toArray();
-
-        if (empty($data)) {
-            return $ret;
-        }
-
-        $ret["guardList"] = $data;
-        return $ret;
-    }
-
-    /**
      * 男生等待守护
      *
      * @param $user
      * @return array
      * @throws AppException
      */
-    public function maleWait($user)
+    public function wait($user)
     {
         $userInfo = UserInfoService::getUserInfoById($user['id']);
         // 男生的等待守护
@@ -276,7 +181,9 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
 
         $data = Db::name("guard_history")->alias("gh")
             ->leftJoin("user_info ui", "gh.u_id = ui.u_id")
-            ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname")
+            ->leftJoin("user_set us","gh.u_id = us.u_id")
+            ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
+            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
             ->where("start_date", ">=", getLastWeekStartDate())
             ->where("end_date", "<=", getLastWeekEndDate())
             ->where("guard_u_id", "=", $user["id"])
@@ -298,7 +205,7 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
      * @return array|mixed|null
      * @throws AppException
      */
-    public function maleRecently($user)
+    public function recently($user)
     {
         $userInfo = UserInfoService::getUserInfoById($user['id']);
         // 男生的正在守护

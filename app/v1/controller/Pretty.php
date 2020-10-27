@@ -8,10 +8,7 @@
 
 namespace app\v1\controller;
 
-
 use app\common\AppException;
-use app\common\service\CharmService;
-use app\common\service\GuardService;
 use app\common\service\PrettyService;
 use app\v1\transformer\pretty\LastWeekTransformer;
 use app\v1\transformer\pretty\RecentlyTransformer;
@@ -63,7 +60,7 @@ class Pretty extends Base
             $uid = $this->query['user']['id'];
         }
 
-        $service = new CharmService();
+        $service = new PrettyService();
         $data = $service->lastWeekContributeList($uid, $this->query['user']['id'], $pageNum, $pageSize);
         return $this->jsonResponse($data, new LastWeekTransformer());
     }
@@ -90,7 +87,7 @@ class Pretty extends Base
             $uid = $this->query['user']['id'];
         }
 
-        $service = new CharmService();
+        $service = new PrettyService();
         $data = $service->thisWeekContributeList($uid, $this->query['user']['id'], $pageNum, $pageSize);
         return $this->jsonResponse($data, new ThisWeekTransformer());
     }
@@ -109,7 +106,7 @@ class Pretty extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
-        $service = new GuardService();
+        $service = new PrettyService();
         $data = $service->wait($user, $pageNum, $pageSize);
         return $this->jsonResponse($data, new WaitTransformer());
     }
@@ -121,7 +118,7 @@ class Pretty extends Base
     {
         $user = $this->query["user"];
 
-        $service = new GuardService();
+        $service = new PrettyService();
         $data = $service->recently($user);
         return $this->jsonResponse($data, new RecentlyTransformer());
     }

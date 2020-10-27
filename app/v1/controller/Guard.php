@@ -34,7 +34,7 @@ class Guard extends Base
         $user = $this->query["user"];
 
         $service = new GuardService();
-        $data = $service->maleWait($user);
+        $data = $service->wait($user);
         return $this->jsonResponse($data, new WaitTransformer());
     }
 
@@ -58,7 +58,7 @@ class Guard extends Base
         $user = $this->query['user'];
 
         $service = new GuardService();
-        $data = $service->maleRecently($user);
+        $data = $service->recently($user);
         return $this->jsonResponse($data, new RecentlyTransformer());
     }
 

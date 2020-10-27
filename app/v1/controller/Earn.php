@@ -12,6 +12,7 @@ namespace app\v1\controller;
 use app\common\AppException;
 use app\common\service\EarnService;
 use app\v1\transformer\earn\RankTransformer;
+use app\v1\transformer\earn\WeekRankTransformer;
 
 class Earn extends Base
 {
@@ -43,7 +44,9 @@ class Earn extends Base
 
         $service = new EarnService();
         $data = $service->weekRank($pageNum, $pageSize, $user);
-        return $this->jsonResponse($data);
+        return $this->jsonResponse($data, new WeekRankTransformer([
+            "pageSize" => $pageSize, "pageNum" => $pageNum
+        ]));
     }
 
     /**

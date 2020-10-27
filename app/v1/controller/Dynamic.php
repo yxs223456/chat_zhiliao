@@ -204,7 +204,7 @@ class Dynamic extends Base
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
         $requestUserId = $request["user_id"] ?? 0;
-        if (empty($userId)) {
+        if (empty($requestUserId)) {
             $requestUserId = $this->query["user"]["id"];
         }
 

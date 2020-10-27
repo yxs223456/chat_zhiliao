@@ -10,6 +10,7 @@ namespace app\v1\transformer\dynamic;
 
 use app\common\helper\Redis;
 use app\common\transformer\TransformerAbstract;
+use think\facade\Db;
 
 class PersonalTransformer extends TransformerAbstract
 {
@@ -21,6 +22,8 @@ class PersonalTransformer extends TransformerAbstract
     private $userId = null;
     // 当前用户点赞的动态ID
     private $likeDynamicUserIds = null;
+    // 是否关注了
+    private $isFollowed = null;
 
     public function __construct(array $params = null)
     {
@@ -50,6 +53,7 @@ class PersonalTransformer extends TransformerAbstract
             'like_count' => (int)$this->getCountInfo($data["id"], 'like_count'),
             'comment_count' => (int)$this->getCountInfo($data['id'], 'comment_count'),
             'is_like' => $this->getIsLike($data["id"]),
+            'is_followed' => $this->getIsFollow(),
         ];
     }
 
@@ -97,6 +101,26 @@ class PersonalTransformer extends TransformerAbstract
             return 0;
         }
         return in_array($this->userId, $this->likeDynamicUserIds[$dynamicId]) ? 1 : 0;
+    }
+
+    private function getIsFollow()
+    {
+        if (isset($this->isFollowed)) {
+            return $this->isFollowed;
+        }
+        if ($this->userId == $this->userInfo['id']) {
+            $this->isFollowed = 0;
+            return 0;
+        }
+        $exists = Db::name("user_follow")->where("u_id", $this->userId)
+            ->where("follow_u_id", $this->userInfo['id'])
+            ->field("id")->find();
+        if (empty($exists)) {
+            $this->isFollowed = 0;
+            return 0;
+        }
+        $this->isFollowed = 1;
+        return 1;
     }
 
 }

@@ -235,11 +235,17 @@ class Dynamic extends Base
     {
         $request = $this->query["content"];
         $content = $request["content"] ?? "";
-        $source = $request["source"] ?? [];
+        $source = $request["source"] ?? "";
+
+        if (!is_string($source)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $source = array_filter(explode(",", $source));
 
         if (empty($content) && empty($source)) {
             throw AppException::factory(AppException::DYNAMIC_CONTENT_EMPTY);
         }
+
         $user = $this->query["user"];
         $service = new DynamicService();
         $service->post($content, $source, $user);

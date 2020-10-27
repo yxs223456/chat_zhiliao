@@ -360,6 +360,9 @@ class User extends Base
             "city" => $city];
 
         if (isset($photo)) {
+            if (!is_string($photo)) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
             $photo = array_filter(explode(",", $photo));
             $update["photos"] = json_encode($photo);
         }

@@ -20,7 +20,8 @@ class ThisWeekTransformer extends TransformerAbstract
         $guard = $data['guard'] ?? [];
 
         $retData = [
-            'guard' => [
+            'have_angle' => empty($guard) ? 0 : 1, // 是否有守护：0-无，1-有
+            'angle' => [
                 'avatar' => ''
             ],
             'user' => [
@@ -34,7 +35,7 @@ class ThisWeekTransformer extends TransformerAbstract
         ];
 
         if ($guard) {
-            $retData['guard']['avatar'] = $guard['portrait'] ?? '';
+            $retData['angle']['avatar'] = $guard['portrait'] ?? '';
         }
 
         $ret = [];

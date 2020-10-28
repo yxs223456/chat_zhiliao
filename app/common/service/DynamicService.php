@@ -227,6 +227,13 @@ class DynamicService extends Base
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
+        // 判断是否已点赞
+        $isLike = Db::name("dynamic_like")->where("dynamic_id", $id)
+            ->where("u_id", $user["id"])->field("id")->find();
+        if ($isLike) {
+            throw AppException::factory(AppException::DYNAMIC_IS_LIKE);
+        }
+
         // 添加访问记录队列
         VisitorService::addVisitorLog($uid, $user["id"]);
 
@@ -256,15 +263,22 @@ class DynamicService extends Base
      */
     public function unlike($id, $user)
     {
+        $isCancel = Db::name("dynamic_like")->where("dynamic_id", $id)
+            ->where("u_id", $user["id"])->field("id")->find();
+        if (empty($isCancel)) {
+            throw AppException::factory(AppException::DYNAMIC_IS_CANCEL_LIKE);
+        }
         Db::startTrans();
         try {
-            Db::name("dynamic_like")->where("dynamic_id", $id)
+            $ret = Db::name("dynamic_like")->where("dynamic_id", $id)
                 ->where("u_id", $user["id"])
                 ->delete();
-            Db::name("dynamic_count")->where("dynamic_id", $id)
-                ->dec("like_count", 1)
-                ->update();
-
+            // 如果有删除才更新防止出现负的
+            if ($ret) {
+                Db::name("dynamic_count")->where("dynamic_id", $id)
+                    ->dec("like_count", 1)
+                    ->update();
+            }
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();

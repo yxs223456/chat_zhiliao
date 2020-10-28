@@ -36,6 +36,8 @@ class AppException extends \Exception
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空", "動態不能為空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在", "動態不存在"];
+    const DYNAMIC_IS_LIKE = [3003, "已点赞", "已點讚"];
+    const DYNAMIC_IS_CANCEL_LIKE = [3004, "已取消", "已取消"];
 
     const VIP_OFFLINE = [4000, "该VIP套餐已下架", "該VIP套餐已下架"];
 

@@ -76,7 +76,8 @@ class Vip extends Base
      */
     public function payBylinePay()
     {
-        $id = input("id");
+        $request = $this->query["content"];
+        $id = $request["id"]??0;
         if (!checkInt($id, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }

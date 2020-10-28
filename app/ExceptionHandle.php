@@ -62,15 +62,15 @@ class ExceptionHandle extends Handle
         } else if (config("app.app_environment") == 1) {
             try {
                 $log = [
+                    "api" => $request->server("REQUEST_URI"),
+                    "file" => $e->getFile(),
+                    "line" => $e->getLine(),
                     "message" => $e->getMessage(),
                     "content" => $request->getContent(),
                     "header" => $request->header(),
                     "method" => $request->method(),
                     "input" => $request->getInput(),
-                    "api" => $request->server("REDIRECT_URL"),
                     "ip" => $request->ip(),
-                    "file" => $e->getFile(),
-                    "line" => $e->getLine(),
                     "code" => $e->getCode(),
                 ];
                 Log::write(json_encode($log), "error");

@@ -19,8 +19,8 @@ class ListTransformer extends TransformerAbstract
         if (empty($list)) {
             return $data;
         }
+        
         $ret = [];
-
         foreach ($list as $item) {
             $tmp = [];
             $tmp['u_id'] = $item['u_id'] ?? '';

@@ -32,7 +32,7 @@ class WeekRankTransformer extends TransformerAbstract
             'user' => [
                 'u_id' => (int)$currentUser["id"] ?? 0,
                 'avatar' => $currentUser['avatar'] ?? '',
-                'total_amount' => $currentUser['total_amount'] ?? 0,
+                'total_amount' => (string)($currentUser['total_amount'] ?? 0),
                 'rank' => $currentUser['rank'] ?? 0
             ],
             'list' => []
@@ -45,7 +45,7 @@ class WeekRankTransformer extends TransformerAbstract
             $tmp['u_id'] = $item['id'] ?? 0;
             $tmp['avatar'] = $item["portrait"] ?? "";
             $tmp['user_number'] = $this->getHiddenUserNumber($item['user_number'] ?? '');
-            $tmp['total_amount'] = (int)$item['total_amount'];
+            $tmp['total_amount'] = (string)($item['total_amount'] ?? 0);
             $tmp['guard_count'] = (int)$item['counts'];
             $tmp['rank'] = ++$start;
             $ret[] = $tmp;

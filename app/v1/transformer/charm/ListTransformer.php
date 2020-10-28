@@ -26,14 +26,18 @@ class ListTransformer extends TransformerAbstract
             $tmp['u_id'] = $item['u_id'] ?? '';
             $tmp['avatar'] = $item['portrait'] ?? '';
             $tmp['nickname'] = $item['nickname'] ?? '';
-            $tmp['charm'] = $item['charm'] ?? 0;
+            $tmp['charm'] = (string)$this->getCharm($item['charm']);
             $tmp['rank'] = $item['rank'] ?? 0;
             $ret[] = $tmp;
         }
 
         $data['list'] = $ret;
-
         return $data;
+    }
+
+    private function getCharm($charm)
+    {
+        return bcdiv($charm, 100, 0);
     }
 
 }

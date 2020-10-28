@@ -79,7 +79,7 @@ class CharmService extends Base
         }
 
         return [
-            'u_id' => $user['id'],
+            'u_id' => (int)$user['id'],
             'nickname' => $userInfo['nickname'] ?? "",
             'avatar' => $userInfo['portrait'] ?? "",
             'charm' => (string)bcdiv($charm,100,0),

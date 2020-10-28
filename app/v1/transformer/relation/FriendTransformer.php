@@ -8,6 +8,7 @@
 
 namespace app\v1\transformer\relation;
 
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class FriendTransformer extends TransformerAbstract
@@ -20,7 +21,7 @@ class FriendTransformer extends TransformerAbstract
             'nickname' => $data['nickname'] ?? '',
             'sex' => $data['sex'] ?? 0,
             'age' => $this->getUserAge($data['birthday'] ?? ""),
-            'city' => $data["city"] ?? "",
+            'city' => empty($data["city"]) ? "" : CityService::getCityByCode($data["city"]),
             "is_followed" => 1
         ];
     }

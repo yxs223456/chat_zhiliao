@@ -9,6 +9,7 @@
 namespace app\v1\transformer\dynamic;
 
 use app\common\helper\Redis;
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class NewestTransformer extends TransformerAbstract
@@ -46,7 +47,7 @@ class NewestTransformer extends TransformerAbstract
             'nickname' => $this->getUserInfo($data['u_id'], "nickname"),
             'sex' => (int)$this->getUserInfo($data['u_id'], "sex"),
             'age' => $this->getUserAge($data['u_id']),
-            'city' => $this->getUserInfo($data['u_id'], 'city'),
+            'city' => $this->getUserCity($data['u_id'], 'city'),
             'distance' => (string)$this->getDistance($data['u_id']),
             'create_time' => date("Y/m/d", strtotime($data["create_time"])),
             'content' => $data["content"] ?? "",
@@ -75,6 +76,18 @@ class NewestTransformer extends TransformerAbstract
     private function getUserInfo($userId, $key)
     {
         return isset($this->userInfo[$userId][$key]) ? $this->userInfo[$userId][$key] : "";
+    }
+
+    /**
+     * 获取用户信息
+     *
+     * @param $userId
+     * @param $key
+     * @return mixed|string
+     */
+    private function getUserCity($userId, $key)
+    {
+        return !empty($this->userInfo[$userId][$key]) ? CityService::getCityByCode($this->userInfo[$userId][$key]) : "";
     }
 
     /**

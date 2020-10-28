@@ -39,18 +39,15 @@ class Dynamic extends Base
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
-        $long = $request["long"] ?? 0; // 经度
-        $lat = $request["lat"] ?? 0; // 纬度
+        $long = $request["long"] ?? ""; // 经度
+        $lat = $request["lat"] ?? ""; // 纬度
         $userId = $this->query["user"]["id"]; // 当前登陆用户ID
 
         if (!checkInt($startId) || !checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
-        if (empty($long) && empty($lat)) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-        }
-        $service = new DynamicService();
 
+        $service = new DynamicService();
         $dynamic = $service->near($startId, $pageSize, $long, $lat, $userId);
         return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
     }
@@ -204,7 +201,7 @@ class Dynamic extends Base
         $startId = $request["start_id"] ?? 0;
         $pageSize = $request["page_size"] ?? 20;
         $requestUserId = $request["user_id"] ?? 0;
-        if (empty($userId)) {
+        if (empty($requestUserId)) {
             $requestUserId = $this->query["user"]["id"];
         }
 
@@ -235,11 +232,17 @@ class Dynamic extends Base
     {
         $request = $this->query["content"];
         $content = $request["content"] ?? "";
-        $source = $request["source"] ?? [];
+        $source = $request["source"] ?? "";
+
+        if (!is_string($source)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        $source = array_filter(explode(",", $source));
 
         if (empty($content) && empty($source)) {
             throw AppException::factory(AppException::DYNAMIC_CONTENT_EMPTY);
         }
+
         $user = $this->query["user"];
         $service = new DynamicService();
         $service->post($content, $source, $user);

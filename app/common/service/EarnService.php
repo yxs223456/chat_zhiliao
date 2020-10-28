@@ -8,10 +8,7 @@
 
 namespace app\common\service;
 
-
 use app\common\AppException;
-use app\common\Constant;
-use app\common\enum\FlowTypeEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\WalletAddEnum;
 use app\common\helper\Redis;
@@ -53,6 +50,7 @@ class EarnService extends Base
     private function getSelf($user)
     {
         $ret = [
+            "u_id" => $user["id"],
             "avatar" => "",
             "total_amount" => 0,
             "rank" => 0
@@ -75,53 +73,22 @@ class EarnService extends Base
      *
      * @param $pageNum
      * @param $pageSize
-     * @param int $retry
      * @return array|mixed|null
      * @throws AppException
      */
-    private function getAllList($pageNum, $pageSize, $retry = 0)
+    private function getAllList($pageNum, $pageSize)
     {
-        $redis = Redis::factory();
-        if ($data = getMaleAllEarnList($pageNum, $pageSize, $redis)) {
-            return $data['data'];
+        $data = Db::name("guard_income")->alias("gi")
+            ->leftJoin("user u", "gi.u_id = u.id")
+            ->leftJoin("user_info ui", "gi.u_id = ui.u_id")
+            ->field("gi.u_id,gi.total_amount,gi.guard_count,u.user_number,ui.portrait")
+            ->order("gi.total_amount", "desc")
+            ->limit(($pageNum - 1) * $pageSize, $pageSize)
+            ->select()->toArray();
+        if (empty($data)) {
+            return [];
         }
-
-        $ret = [
-            'pageNum' => $pageNum,
-            'pageSize' => $pageSize,
-            'data' => []
-        ];
-
-        $lockKey = REDIS_KEY_PREFIX . "MALE_ALL_EARN_LIST_LOCK:" . $pageNum . ":" . $pageSize;
-        if ($redis->setnx($lockKey, 1)) {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-
-            $data = Db::name("guard_income")->alias("gi")
-                ->leftJoin("user u", "gi.u_id = u.id")
-                ->leftJoin("user_info ui", "gi.u_id = ui.u_id")
-                ->field("gi.u_id,gi.total_amount,gi.guard_count,u.user_number,ui.portrait")
-                ->order("gi.total_amount", "desc")
-                ->limit(($pageNum - 1) * $pageSize, $pageSize)
-                ->select()->toArray();
-            if (empty($data)) {
-                cacheMaleAllEarnList($pageNum, $pageSize, $ret, $redis);
-                $redis->del($lockKey);
-                return $ret;
-            }
-
-            $ret["data"] = $data;
-            cacheMaleAllEarnList($pageNum, $pageSize, $ret, $redis);
-            $redis->del($lockKey);
-            return $data;
-        } else {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-        }
-
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME);
-            return $this->getAllList($pageNum, $pageSize, ++$retry);
-        }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        return $data;
     }
 
     /**
@@ -156,28 +123,19 @@ class EarnService extends Base
      */
     private function getWeekSelf($user)
     {
+        $redis = Redis::factory();
+        $userInfo = UserInfoService::getUserInfoById($user["id"], $redis);
         $ret = [
-            "avatar" => "",
+            "id" => $user["id"] ?? 0,
+            "avatar" => $userInfo["portrait"] ?? "",
             "total_amount" => 0,
             "rank" => 0
         ];
+        $score = (int)getMaleGuardEarnSortSetWeekScore($user["id"], $redis);
+        $rank = (int)getMaleGuardEarnSortSetWeekRank($user["id"], $redis);
 
-        list($startDate,$endDate) = getWeekStartAndEnd();
-        $userInfo = UserInfoService::getUserInfoById($user['id']);
-        $ret["avatar"] = $userInfo["portrait"];
-        $totalAmount = Db::name("user_wallet_flow")
-            ->where("u_id","=", $user['id'])
-            ->where("create_date",">=",$startDate)
-            ->where("create_date","<=",$endDate)
-            ->where("add_type","=",WalletAddEnum::ANGEL)
-            ->sum("amount");
-        if (empty($totalAmount)) {
-            $totalAmount = 0;
-        }
-        $rank = Db::query("select sum(amount) as total_amount from user_wallet_flow where create_date >= '$startDate' and create_date <= '$endDate' and add_type = ".WalletAddEnum::ANGEL ." group by u_id having total_amount >" . $totalAmount);
-
-        $ret["total_amount"] = $totalAmount;
-        $ret["rank"] = count($rank) + 1;
+        $ret["total_amount"] = $score;
+        $ret["rank"] = empty($score) ? 0 : $rank + 1;
         return $ret;
     }
 
@@ -186,82 +144,46 @@ class EarnService extends Base
      *
      * @param $pageNum
      * @param $pageSize
-     * @param int $retry
      * @return array
      * @throws AppException
      */
-    private function getWeekList($pageNum, $pageSize, $retry = 0)
+    private function getWeekList($pageNum, $pageSize)
     {
         $redis = Redis::factory();
-        if ($data = getMaleWeekEarnList($pageNum, $pageSize, $redis)) {
-            return $data["data"];
+        $start = ($pageNum - 1) * $pageSize;
+        $data = getMaleGuardEarnSortSetWeek($start, $start + $pageSize - 1, $redis);
+
+        if (empty($data)) {
+            return [];
         }
 
-        $lockKey = REDIS_KEY_PREFIX . "MALE_WEEK_EARN_LIST_LOCK:" . $pageSize . ":" . $pageNum;
-        if ($redis->setnx($lockKey, 1)) {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-            $ret = [
-                "pageSize" => $pageSize,
-                "pageNum" => $pageNum,
-                "data" => []
-            ];
+        $userIds = array_keys($data);
+        // 查询用户本周守护人数
+        $startDate = getLastWeekStartDate();
+        $endDate = getLastWeekEndDate();
+        $userIdString = implode(",", $userIds);
+        $guard = Db::query("select guard_u_id,count(guard_u_id) as counts from  guard_history where start_date >= '{$startDate}' and end_date <= '{$endDate}' and guard_u_id in ($userIdString) GROUP by guard_u_id");
+        $userIdToCounts = array_column($guard, 'counts', 'guard_u_id');
 
-            list($startDate, $endDate) = getWeekStartAndEnd();
-            $data = Db::query("select u_id,SUM(amount) as total_amount from user_wallet_flow where create_date >= :startDate and create_date <= :endDate
-and add_type = :addType group by u_id order by total_amount desc limit " . ($pageNum - 1) * $pageSize . "," . $pageSize, [
-                "addType" => WalletAddEnum::ANGEL,
-                "startDate" => $startDate,
-                "endDate" => $endDate
-            ]);
+        // 获取用户展示信息
+        $userInfo = Db::name("user_info")->alias("ui")
+            ->leftJoin("user u", "u.id = ui.u_id")
+            ->field("ui.portrait,u.user_number,u.id")
+            ->whereIn("u.id", $userIds)
+            ->select()->toArray();
+        $userIdToInfo = array_combine(array_column($userInfo, 'id'), $userInfo);
 
-            if (empty($data)) {
-                cacheMaleWeekEarnList($pageNum, $pageSize, $ret, $redis);
-                $redis->del($lockKey);
-                return [];
-            }
-
-            $userIds = array_column($data, 'u_id');
-
-            // 查询用户本周守护人数
-            $startDate = getLastWeekStartDate();
-            $endDate = getLastWeekEndDate();
-            $guard = Db::query("select guard_u_id,count(id) as counts from  guard_history where start_date >= '{$startDate}' and end_date <= '{$endDate}' and guard_u_id in :uid GROUP by guard_u_id", [
-                'uid' => $userIds
-            ]);
-            $userIdToCounts = array_column($guard, 'counts', 'guard_u_id');
-
-            // 获取用户展示信息
-            $userInfo = Db::name("user_info")->alias("ui")
-                ->leftJoin("user u", "u.id = ui.u_id")
-                ->field("ui.portrait,u.user_number,u.id")
-                ->whereIn("u.id", $userIds)
-                ->select()->toArray();
-            $userIdToInfo = array_combine(array_column($userInfo, 'id'), $userInfo);
-
-            $allData = [];
-            foreach ($data as $item) {
-                $tmp = [];
-                $tmp["id"] = $item["u_id"];
-                $tmp["total_amount"] = $item["total_amount"];
-                $tmp["user_number"] = $userIdToInfo[$item["u_id"]]["user_number"] ?? "";
-                $tmp["portrait"] = $userIdToInfo[$item["u_id"]]["portrait"] ?? "";
-                $tmp["counts"] = $userIdToCounts[$item["u_id"]] ?? 0;
-                $allData[] = $tmp;
-            }
-
-            $ret["data"] = $allData;
-            cacheMaleWeekEarnList($pageNum, $pageSize, $data, $redis);
-            $redis->del($lockKey);
-            return $allData;
-        } else {
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
+        $allData = [];
+        foreach ($data as $uid => $score) {
+            $tmp = [];
+            $tmp["id"] = $userIdToInfo[$uid]["id"];
+            $tmp["total_amount"] = $score;
+            $tmp["user_number"] = $userIdToInfo[$uid]["user_number"] ?? "";
+            $tmp["portrait"] = $userIdToInfo[$uid]["portrait"] ?? "";
+            $tmp["counts"] = $userIdToCounts[$uid] ?? 0;
+            $allData[] = $tmp;
         }
 
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME);
-            return $this->getWeekList($pageNum, $pageSize, ++$retry);
-        }
-
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        return $allData;
     }
 }

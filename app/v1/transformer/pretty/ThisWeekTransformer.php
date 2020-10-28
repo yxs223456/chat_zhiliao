@@ -20,7 +20,8 @@ class ThisWeekTransformer extends TransformerAbstract
         $guard = $data['guard'] ?? [];
 
         $retData = [
-            'guard' => [
+            'have_angle' => empty($guard) ? 0 : 1, // 是否有守护：0-无，1-有
+            'angle' => [
                 'avatar' => ''
             ],
             'user' => [
@@ -34,7 +35,7 @@ class ThisWeekTransformer extends TransformerAbstract
         ];
 
         if ($guard) {
-            $retData['guard']['avatar'] = $guard['portrait'] ?? '';
+            $retData['angle']['avatar'] = $guard['portrait'] ?? '';
         }
 
         $ret = [];
@@ -43,7 +44,8 @@ class ThisWeekTransformer extends TransformerAbstract
             $tmp['u_id'] = $item['u_id'] ?? '';
             $tmp['avatar'] = $item['portrait'] ?? '';
             $tmp['user_number'] = $this->getHiddenUserNumber($item['user_number']);
-            $tmp['charm'] = bcdiv($item['charm'],100,2) ?? "0.00";
+            $tmp['charm'] = bcdiv($item['charm'], 100, 2) ?? "0.00";
+            $tmp['rank'] = (int)$item['rank'];
             $ret[] = $tmp;
             if ($item['u_id'] == $user['u_id']) {
                 $retData['user']['rank'] = $key + 1;

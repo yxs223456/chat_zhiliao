@@ -19,14 +19,14 @@ class RecentlyTransformer extends TransformerAbstract
         $amountList = $data['guardList'] ?? [];
 
         $retData = [
-            'guard' => new \stdClass(),
+            'have_angle' => empty($guard) ? 0 : 1,
+            'angle' => empty($guard) ? new \stdClass() : [],
             'list' => []
         ];
 
         if (!empty($guard)) {
-            $retData["guard"]["avatar"] = $guard["portrait"] ?? "";
+            $retData["angle"]["avatar"] = $guard["portrait"] ?? "";
         }
-
 
         $ret = [];
         foreach ($amountList as $item) {
@@ -35,6 +35,12 @@ class RecentlyTransformer extends TransformerAbstract
             $tmp['avatar'] = $item["portrait"] ?? "";
             $tmp['nickname'] = $item['nickname'] ?? '';
             $tmp['charm'] = $this->getCharm($item['charm_amount']);
+            $tmp['voice_chat_switch'] = $item['voice_chat_switch'] ?? 0;
+            $tmp['voice_chat_price'] = $item['voice_chat_price'] ?? 0;
+            $tmp['video_chat_switch'] = $item['video_chat_switch'] ?? 0;
+            $tmp['video_chat_price'] = $item['video_chat_price'] ?? 0;
+            $tmp['direct_message_free'] = $item['direct_message_free'] ?? 0;
+            $tmp['direct_message_price'] = $item['direct_message_price'] ?? 0;
             $ret[] = $tmp;
         }
 

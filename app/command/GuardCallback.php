@@ -14,7 +14,9 @@ use app\common\enum\WalletAddEnum;
 use app\common\helper\RabbitMQ;
 use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
+use app\common\service\CharmService;
 use app\common\service\GuardService;
+use app\common\service\PrettyService;
 use app\common\service\UserService;
 use PhpAmqpLib\Message\AMQPMessage;
 use think\console\Command;
@@ -107,6 +109,9 @@ class GuardCallback extends Command
         // 上周守护人
         $guardUser = GuardService::getGuard($this->incomeUserId);
 
+        // 更新女神月，周，日魅力总排行，女神周贡献排行，男贡献值周榜
+        PrettyService::updatePrettySortList($prettyUser,$spendUser, $this->coin);
+
         Db::startTrans();
         try {
             // 添加魅力值贡献记录
@@ -159,16 +164,12 @@ class GuardCallback extends Command
                 Db::name("guard_income")->where("u_id", $guardUser['u_id'])
                     ->inc('total_amount', $addCoin)
                     ->update();
+
+                // 更新守护收入周榜
+                cacheMaleGuardEarnSortSetWeek($guardUser["u_id"], $addCoin, Redis::factory());
             }
 
             Db::commit();
-
-            // 当前业务规则逻辑(只有男生送女神才互相计算魅力值，参加魅力排行，符合条件删除女神本周的排行缓存)
-            if ($prettyUser['sex'] == UserSexEnum::FEMALE && $spendUser['sex'] == UserSexEnum::MALE) {
-                list($startDate, $endDate) = getWeekStartAndEnd();
-                deletePrettyWeekContributionList($this->incomeUserId, $startDate, $endDate, Redis::factory());
-            }
-
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;

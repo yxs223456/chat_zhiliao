@@ -9,6 +9,7 @@
 namespace app\v1\transformer\user;
 
 use app\common\enum\UserOccupationEnum;
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class BlackListTransformer extends TransformerAbstract
@@ -22,7 +23,7 @@ class BlackListTransformer extends TransformerAbstract
             "nickname" => (string)$data["nickname"] ?? "",
             'sex' => $data['sex'] ?? 0,
             'age' => $this->getUserAge($data['birthday'] ?? ""),
-            'city' => $data["city"]
+            'city' => empty($data['city']) ? "" : CityService::getCityByCode($data["city"])
         ];
     }
 

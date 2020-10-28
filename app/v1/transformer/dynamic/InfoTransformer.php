@@ -9,7 +9,9 @@
 namespace app\v1\transformer\dynamic;
 
 use app\common\helper\Redis;
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
+use think\facade\Db;
 
 class InfoTransformer extends TransformerAbstract
 {
@@ -27,13 +29,14 @@ class InfoTransformer extends TransformerAbstract
             'sex' => $info['sex'] ?? 0,
             'age' => $this->getAge($info['birthday'] ?? ""),
             'distance' => (string)$this->getDistance($info['u_id']),
-            'city' => $info['city'] ?? '',
+            'city' => empty($info['city']) ? "" : CityService::getCityByCode($info['city']),
             'create_time' => date("Y/m/d", strtotime($info["create_time"])),
             'content' => $info["content"] ?? "",
             'source' => json_decode($info["source"], true),
             'like_count' => $info['like_count'] ?? 0,
             'comment_count' => $data['comment_count'] ?? 0,
             'is_like' => $this->getIsLike($likeUserIds),
+            'is_followed' => $this->getIsFollow($info["u_id"]),
             'comment_list' => $this->getComment($comment)
         ];
     }
@@ -100,5 +103,16 @@ class InfoTransformer extends TransformerAbstract
     private function getIsLike($likeUserIds)
     {
         return in_array($this->_queries['id'], $likeUserIds) ? 1 : 0;
+    }
+
+    private function getIsFollow($uid)
+    {
+        $exists = Db::name("user_follow")->where("u_id", $this->_queries['id'])
+            ->where("follow_u_id", $uid)
+            ->field("id")->find();
+        if (empty($exists)) {
+            return 0;
+        }
+        return 1;
     }
 }

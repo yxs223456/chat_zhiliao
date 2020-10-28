@@ -8,10 +8,7 @@
 
 namespace app\v1\controller;
 
-
 use app\common\AppException;
-use app\common\service\CharmService;
-use app\common\service\GuardService;
 use app\common\service\PrettyService;
 use app\v1\transformer\pretty\LastWeekTransformer;
 use app\v1\transformer\pretty\RecentlyTransformer;
@@ -47,7 +44,13 @@ class Pretty extends Base
     public function lastWeekContributeList()
     {
         $request = $this->query["content"];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 10;
         $uid = $request["id"] ?? 0;
+
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
         if (!checkInt($uid)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -57,8 +60,8 @@ class Pretty extends Base
             $uid = $this->query['user']['id'];
         }
 
-        $service = new CharmService();
-        $data = $service->lastWeekContributeList($uid, $this->query['user']['id']);
+        $service = new PrettyService();
+        $data = $service->lastWeekContributeList($uid, $this->query['user']['id'], $pageNum, $pageSize);
         return $this->jsonResponse($data, new LastWeekTransformer());
     }
 
@@ -68,7 +71,13 @@ class Pretty extends Base
     public function thisWeekContributeList()
     {
         $request = $this->query['content'];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 10;
         $uid = $request['id'] ?? 0;
+
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
         if (!checkInt($uid)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -78,20 +87,27 @@ class Pretty extends Base
             $uid = $this->query['user']['id'];
         }
 
-        $service = new CharmService();
-        $data = $service->thisWeekContributeList($uid, $this->query['user']['id']);
+        $service = new PrettyService();
+        $data = $service->thisWeekContributeList($uid, $this->query['user']['id'], $pageNum, $pageSize);
         return $this->jsonResponse($data, new ThisWeekTransformer());
     }
 
     /**
-     * 等待被守护
+     * 等待被守护(当前登陆用户本周角逐)
      */
     public function wait()
     {
+        $request = $this->query['content'];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 10;
         $user = $this->query["user"];
 
-        $service = new GuardService();
-        $data = $service->wait($user);
+        if (!checkInt($pageSize, false) || !checkInt($pageNum, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new PrettyService();
+        $data = $service->wait($user, $pageNum, $pageSize);
         return $this->jsonResponse($data, new WaitTransformer());
     }
 
@@ -102,7 +118,7 @@ class Pretty extends Base
     {
         $user = $this->query["user"];
 
-        $service = new GuardService();
+        $service = new PrettyService();
         $data = $service->recently($user);
         return $this->jsonResponse($data, new RecentlyTransformer());
     }

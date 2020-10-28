@@ -498,6 +498,10 @@ class DynamicService extends Base
      */
     public function near($startId, $pageSize, $long, $lat, $userId)
     {
+        // 经纬度不传返回空列表
+        if (empty($long) && empty($lat)) {
+            return [];
+        }
         $redis = Redis::factory();
         // 缓存当前用户坐标
         cacheUserLongLatInfo($userId, $lat, $long, $redis);

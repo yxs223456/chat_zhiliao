@@ -17,6 +17,7 @@ class PayMethodEnum
 
     const ALI = 1;
     const WE_CHAT = 2;
+    const LINE_PAY = 3;
 
     protected static $desc = [
         self::ALI => [
@@ -24,6 +25,9 @@ class PayMethodEnum
         ],
         self::WE_CHAT => [
             "cn" => "微信",
+        ],
+        self::LINE_PAY => [
+            "cn" => "line pay",
         ],
     ];
 }

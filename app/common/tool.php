@@ -35,7 +35,7 @@ function checkIsPhone($phone)
  * @return mixed                    请求的响应数据，失败时返回false
  * @throws Exception
  */
-function curl($url, $method = 'get', $postData = null, $isPostDataJsonEncode = false, $isResponseJson = false, $cookie = null, $header = null, $isReturnHeader = false) {
+function curl($url, $method = 'get', $postData = null, $isPostDataJsonEncode = false, $isResponseJson = false, $header = null, $cookie = null, $isReturnHeader = false) {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     if (stripos($url, 'https') !== false) {

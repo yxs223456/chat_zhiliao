@@ -19,6 +19,7 @@ use app\common\enum\VipIsSaleEnum;
 use app\common\enum\VipTypeEnum;
 use app\common\enum\WeChatPayOrderTypeEnum;
 use app\common\helper\AliPay;
+use app\common\helper\LinePay;
 use app\common\helper\Redis;
 use app\common\helper\WechatPay;
 use app\common\model\ConfigVipModel;
@@ -165,6 +166,82 @@ class VipService extends Base
         return $returnData;
     }
 
+    /**
+     * line pay 购买vip套餐
+     * @param $user
+     * @param $id
+     * @return array
+     * @throws AppException
+     * @throws \Throwable
+     */
+    public function payBylinePay($user, $id)
+    {
+        // vip 套餐
+        $vipConfigModel = new ConfigVipModel();
+        $vip = $vipConfigModel->findById($id);
+        if (empty($vip)) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        if ($vip["is_delete"] == DbDataIsDeleteEnum::YES || $vip["is_sale"] == VipIsSaleEnum::NO) {
+            throw AppException::factory(AppException::VIP_OFFLINE); // 判断是否下架
+        }
+
+        /**
+         * 生成支付宝支付订单，先记录数据库，后向支付宝下单
+         */
+        $goodsName = ($vip["type"] == VipTypeEnum::VIP ? "vip充值-" : "svip充值-") . $vip["name"];
+        $outTradeNo = ($vip["type"] == VipTypeEnum::VIP ? "VIP" : "SVIP") .
+            date("ymdHis") . getRandomString(10);
+        $money = $vip["price"]; // vip套餐价格单位元
+        $currency = config("app.currency");
+
+        //纪录数据库
+        Db::startTrans();
+        try {
+            Db::name("pay_order_line")->insertGetId([
+                "u_id" => $user["id"],
+                "out_trade_no" => $outTradeNo,
+                "is_pay" => IsPayEnum::NO,
+                "amount" => $money,
+                "currency" => $currency,
+            ]);
+
+            Db::name("pay_order")->insert([
+                "u_id" => $user["id"],
+                "scene" => PayOrderSceneEnum::VIP,
+                "source_id" => $id,
+                "trade_no" => $outTradeNo,
+                "is_pay" => IsPayEnum::NO,
+                "pay_method" => PayMethodEnum::LINE_PAY,
+                "amount" => $money,
+                "currency" => $currency,
+                "status" => PayOrderStatusEnum::WAIT_PAY,
+            ]);
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+        // line pay 发起支付请求
+        $response = LinePay::requestApi($money, $outTradeNo, $goodsName, '', $currency);
+        $returnData = [
+            "payment_access_token" => $response["info"]["paymentAccessToken"],
+            "app_pay_url" => $response["info"]["paymentUrl"]["app"],
+            "web_pay_url" => $response["info"]["paymentUrl"]["web"],
+        ];
+
+        return $returnData;
+    }
+
+    /**
+     * 支付宝购买vip套餐
+     * @param $user
+     * @param $id
+     * @return string
+     * @throws AppException
+     * @throws \Throwable
+     */
     public function payByAli($user, $id)
     {
         // vip 套餐

@@ -13,6 +13,7 @@ use app\common\enum\IsPayEnum;
 use app\common\enum\PayOrderSceneEnum;
 use app\common\enum\PayOrderStatusEnum;
 use app\common\helper\AliPay;
+use app\common\helper\LinePay;
 use app\common\helper\WechatPay;
 use app\common\service\RechargeService;
 use app\common\service\VipService;
@@ -20,6 +21,94 @@ use think\facade\Db;
 
 class PayCallback extends BaseController
 {
+    /**
+     * line pay 支付回调
+     */
+    public function linePayCallback()
+    {
+        $outTradeNo = input("orderId");
+        $transactionId = input("transactionId");
+        if (empty($outTradeNo) || empty($transactionId)) {
+            throw new \Exception("缺少orderId或transactionId参数");
+        }
+
+        $linePayOrder = Db::name("pay_order_line")
+            ->where("out_trade_no", $outTradeNo)
+            ->find();
+
+        // 判断是否真正付款(非常重要)
+        $confirmResponse = LinePay::confirmApi($transactionId, $linePayOrder["amount"], $linePayOrder["currency"]);
+        if ($confirmResponse["returnCode"] !== "0000") {
+            throw new \Exception("line pay 支付确认错误:" . json_encode($confirmResponse, JSON_UNESCAPED_UNICODE));
+        }
+
+        // 支付后续处理
+        Db::startTrans();
+        try {
+            /**
+             * 微信支付订单处理
+             */
+            $linePayOrder = Db::name("pay_order_line")
+                ->where("out_trade_no", $outTradeNo)
+                ->lock(true)
+                ->find();
+            // 判断是否已处理（非常重要）
+            if ($linePayOrder["is_pay"] == IsPayEnum::YES) {
+                throw new \Exception("line pay订单已处理 orderId=". $outTradeNo);
+            }
+
+            // 将line pay支付订单修改为已支付状态
+            Db::name("pay_order_line")
+                ->where("id", $linePayOrder["id"])
+                ->update([
+                    "is_pay" => IsPayEnum::YES,
+                    "transaction_id" => $confirmResponse["info"]["transaction_id"],
+                    "response_data" => json_encode($confirmResponse, JSON_UNESCAPED_UNICODE),
+                ]);
+
+            /**
+             * 用户支付订单处理
+             */
+            $userPayOrder = Db::name("pay_order")
+                ->where("out_trade_no", $outTradeNo)
+                ->find();
+            // 将用户支付订单修改为已支付状态
+            Db::name("pay_order")
+                ->where("id", $userPayOrder["id"])
+                ->update([
+                    "is_pay" => IsPayEnum::YES,
+                    "pay_time" => time(),
+                    "status" => PayOrderStatusEnum::PAY,
+                ]);
+
+            /**
+             * 根据支付场景，进行后续处理
+             */
+            switch ($userPayOrder["scene"]) {
+                case PayOrderSceneEnum::VIP:
+                    VipService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                    break;
+                case PayOrderSceneEnum::COIN:
+                    RechargeService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                    break;
+            }
+
+            Db::commit();
+
+            /**
+             * 支付后的异步处理
+             */
+            switch ($userPayOrder["scene"]) {
+                case PayOrderSceneEnum::COIN:
+                    rechargeCallbackProduce($userPayOrder["u_id"]);
+                    break;
+            }
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
+    }
+
     /**
      * 微信支付回调
      */

@@ -70,4 +70,21 @@ class Vip extends Base
 
         return $returnData;
     }
+
+    /**
+     * line pay 购买vip套餐
+     */
+    public function payBylinePay()
+    {
+        $id = input("id");
+        if (!checkInt($id, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new VipService();
+        $returnData = $service->payBylinePay($user, $id);
+
+        return $returnData;
+    }
 }

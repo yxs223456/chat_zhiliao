@@ -118,10 +118,12 @@ GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
      * 男生等待守护
      *
      * @param $user
+     * @param $pageNum
+     * @param $pageSize
      * @return array
      * @throws AppException
      */
-    public function wait($user)
+    public function wait($user, $pageNum, $pageSize)
     {
         $userInfo = UserInfoService::getUserInfoById($user['id']);
         // 男生的等待守护
@@ -130,28 +132,42 @@ GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
         }
 
         $ret = [
-            "amountList" => [],
-            "userInfoList" => []
+            "list" => []
         ];
 
-        list($startDate, $endDate) = getWeekStartAndEnd();
-        $data = Db::query("select u_id,sum(amount) as total_amount from guard_charm_log where guard_u_id = {$user['id']} 
-and sex_type = :sexType and create_date >= :startDate and create_date <= :endDate GROUP by u_id ORDER by total_amount DESC limit 0,20", [
-            "sexType" => InteractSexTypeEnum::FEMALE_TO_MALE,
-            "startDate" => $startDate,
-            "endDate" => $endDate
-        ]);
+        $redis = Redis::factory();
+        $start = ($pageNum - 1) * $pageSize;
+        $data = getMaleContributeSortSetThisWeek($user['id'], $start, $start + $pageSize - 1, $redis);
 
         if (empty($data)) {
             return $ret;
         }
 
-        $guardUserInfo = Db::name("user_info")
-            ->field("u_id,portrait,nickname")
-            ->whereIn("u_id", array_column($data, 'u_id'))
+        $userIds = array_keys($data);
+        $prettyInfo = Db::name("user_info")->alias("ui")
+            ->leftJoin("user_set us", "us.u_id = ui.u_id")
+            ->field("ui.u_id,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
+            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
+            ->whereIn("ui.u_id", $userIds)
             ->select()->toArray();
-        $ret["amountList"] = $data;
-        $ret["userInfoList"] = $guardUserInfo;
+        $prettyIdToInfo = array_combine(array_column($prettyInfo, 'u_id'), $prettyInfo);
+
+        $list = [];
+        foreach ($data as $uid => $score) {
+            $tmp = [];
+            $tmp["u_id"] = $prettyIdToInfo[$uid]["u_id"] ?? 0;
+            $tmp["portrait"] = $prettyIdToInfo[$uid]["portrait"] ?? '';
+            $tmp["nickname"] = $prettyIdToInfo[$uid]["nickname"] ?? '';
+            $tmp["voice_chat_switch"] = $prettyIdToInfo[$uid]["voice_chat_switch"] ?? 0;
+            $tmp["voice_chat_price"] = $prettyIdToInfo[$uid]["voice_chat_price"] ?? 0;
+            $tmp["video_chat_switch"] = $prettyIdToInfo[$uid]["video_chat_switch"] ?? 0;
+            $tmp["video_chat_price"] = $prettyIdToInfo[$uid]["video_chat_price"] ?? 0;
+            $tmp["direct_message_free"] = $prettyIdToInfo[$uid]["direct_message_free"] ?? 0;
+            $tmp["direct_message_price"] = $prettyIdToInfo[$uid]["direct_message_price"] ?? 0;
+            $tmp["score"] = $score;
+            $list[] = $tmp;
+        }
+        $ret["list"] = $list;
         return $ret;
     }
 

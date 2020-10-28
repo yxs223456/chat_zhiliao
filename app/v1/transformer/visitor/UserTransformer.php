@@ -8,6 +8,7 @@
 
 namespace app\v1\transformer\visitor;
 
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class UserTransformer extends TransformerAbstract
@@ -33,7 +34,7 @@ class UserTransformer extends TransformerAbstract
             $tmp["avatar"] = $item["portrait"] ?? "";
             $tmp["nickname"] = $item["nickname"] ?? "";
             $tmp["age"] = (int)$this->getUserAge($item["birthday"] ?? "");
-            $tmp["city"] = $item["city"] ?? "";
+            $tmp["city"] = empty($item["city"]) ? "" : CityService::getCityByCode($item['city']);
             $tmp["time"] = $item["create_time"] ?? 0;
             $ret[] = $tmp;
         }

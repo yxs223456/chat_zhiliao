@@ -9,6 +9,7 @@
 namespace app\v1\transformer\dynamic;
 
 use app\common\helper\Redis;
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 use think\facade\Db;
 
@@ -46,7 +47,7 @@ class PersonalTransformer extends TransformerAbstract
             'sex' => (int)$this->getUserInfo("sex"),
             'age' => $this->getAge(),
             'distance' => (string)$this->getDistance(),
-            'city' => $this->getUserInfo('city'),
+            'city' => $this->getUserCity('city'),
             'create_time' => date("Y/m/d", strtotime($data["create_time"])),
             'content' => $data["content"] ?? "",
             'source' => json_decode($data["source"], true),
@@ -68,6 +69,10 @@ class PersonalTransformer extends TransformerAbstract
         return isset($this->userInfo[$key]) ? $this->userInfo[$key] : "";
     }
 
+    private function getUserCity($key)
+    {
+        return empty($this->userInfo[$key]) ? "" : CityService::getCityByCode($this->userInfo[$key]);
+    }
     /**
      * 获取统计信息
      *

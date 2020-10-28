@@ -8,6 +8,7 @@
 
 namespace app\v1\transformer\dynamic;
 
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class NearTransformer extends TransformerAbstract
@@ -30,7 +31,7 @@ class NearTransformer extends TransformerAbstract
             'nickname' => $data['userInfo']['nickname'] ?? '',
             'sex' => $data['userInfo']['sex'] ?? 0,
             'age' => $this->getUserAge($data['userInfo']['birthday'] ?? ""),
-            'city' => $data['userInfo']['city'] ?? '',
+            'city' => empty($data['userInfo']['city']) ? "" : CityService::getCityByCode($data["userInfo"]['city']),
             'distance' => sprintf("%.2f",$data['distance']),
             'create_time' => date("Y/m/d", strtotime($data["create_time"])),
             'content' => $data["content"] ?? "",

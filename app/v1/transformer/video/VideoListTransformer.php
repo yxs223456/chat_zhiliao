@@ -8,6 +8,7 @@
 
 namespace app\v1\transformer\video;
 
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class VideoListTransformer extends TransformerAbstract
@@ -40,7 +41,7 @@ class VideoListTransformer extends TransformerAbstract
             "avatar" => (string)$data["portrait"] ?? "",
             "source" => $data["source"] ?? "",
             "like_count" => (int)$data["like_count"] ?? 0,
-            "city" => $data["city"] ?? "",
+            "city" => empty($data["city"]) ? "" : CityService::getCityByCode($data['city']),
             "is_like" => $this->getIsLike($data["id"]),
             "is_followed" => $this->getIsFollow($data["u_id"]),
             "voice_chat_switch" => (int)$this->getUserSet($data["u_id"], "voice_chat_switch"),

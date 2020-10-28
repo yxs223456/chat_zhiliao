@@ -9,6 +9,7 @@
 namespace app\v1\transformer\dynamic;
 
 use app\common\helper\Redis;
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 use think\facade\Db;
 
@@ -28,7 +29,7 @@ class InfoTransformer extends TransformerAbstract
             'sex' => $info['sex'] ?? 0,
             'age' => $this->getAge($info['birthday'] ?? ""),
             'distance' => (string)$this->getDistance($info['u_id']),
-            'city' => $info['city'] ?? '',
+            'city' => empty($info['city']) ? "" : CityService::getCityByCode($info['city']),
             'create_time' => date("Y/m/d", strtotime($info["create_time"])),
             'content' => $info["content"] ?? "",
             'source' => json_decode($info["source"], true),

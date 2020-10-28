@@ -13,6 +13,7 @@ use app\common\enum\PrettyMaleLevelEnum;
 use app\common\enum\UserIsPrettyEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
+use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
 class IndexTransformer extends TransformerAbstract
@@ -33,7 +34,7 @@ class IndexTransformer extends TransformerAbstract
                 'nickname' => $userInfo['nickname'] ?? "",
                 'birthday' => $userInfo["birthday"] ?? "",
                 'photos' => empty($userInfo["photos"]) ? [] : json_decode($userInfo["photos"], true),
-                'city' => $userInfo['city'] ?? "",
+                'city' => empty($userInfo['city']) ? "" : CityService::getCityByCode($userInfo['city']),
                 'is_pretty' => $userInfo["is_pretty"] ?? UserIsPrettyEnum::NO,
                 'pretty_female_level' => $userInfo["pretty_female_level"] ?? PrettyFemaleLevelEnum::COMMON,
                 'pretty_male_level' => $userInfo['pretty_male_level'] ?? PrettyMaleLevelEnum::COMMON,

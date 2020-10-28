@@ -224,7 +224,8 @@ class VipService extends Base
             throw $e;
         }
         // line pay 发起支付请求
-        $response = LinePay::requestApi($money, $outTradeNo, $goodsName, '', $currency);
+        $cancelUrl = "https://chat.admin.local.com/admin/index/index.html";
+        $response = LinePay::requestApi($money, $outTradeNo, $goodsName, $cancelUrl, $currency);
         $returnData = [
             "payment_access_token" => $response["info"]["paymentAccessToken"],
             "app_pay_url" => $response["info"]["paymentUrl"]["app"],

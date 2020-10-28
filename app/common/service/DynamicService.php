@@ -73,10 +73,6 @@ class DynamicService extends Base
             throw AppException::factory(AppException::QUERY_INVALID);
         }
 
-        // 删除缓存
-        $redis = Redis::factory();
-        deleteUserDynamicInfo($id, $redis); // 删除动态缓存
-
         return Db::name("dynamic")->where("id", $id)->update(["is_delete" => DbDataIsDeleteEnum::YES]);
 
     }
@@ -108,66 +104,41 @@ class DynamicService extends Base
      * 获取动态详情（缓存）
      *
      * @param $id int 动态ID
-     * @param $retry int 尝试次数
      * @return array
      * @throws AppException
      */
-    public function getInfo($id, $retry = 0)
+    public function getInfo($id)
     {
-        // 读缓存
-        $redis = Redis::factory();
-        if ($data = getUserDynamicInfo($id, $redis)) {
-            return $data;
+        // 获取动态数据
+        $dynamic = Db::name("dynamic")->alias("d")
+            ->leftJoin("user_info ui", "d.u_id = ui.u_id")
+            ->leftJoin("user u", "d.u_id = u.id")
+            ->leftJoin("dynamic_count dc", "d.id = dc.dynamic_id")
+            ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
+        dc.like_count,dc.comment_count")
+            ->where("d.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("d.id", $id)
+            ->find();
+        if (empty($dynamic)) {
+            throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
         }
 
-        // 读db回写缓存
-        $lockKey = REDIS_KEY_PREFIX . "userDynamicInfoLock:" . $id;
-        if ($redis->setnx($lockKey, 1)) {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-            // 获取动态数据
-            $dynamic = Db::name("dynamic")->alias("d")
-                ->leftJoin("user_info ui", "d.u_id = ui.id")
-                ->leftJoin("user u", "d.u_id = u.id")
-                ->leftJoin("dynamic_count dc", "d.id = dc.dynamic_id")
-                ->field("d.*,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
-            dc.like_count,dc.comment_count")
-                ->where("d.is_delete", DbDataIsDeleteEnum::NO)
-                ->where("d.id", $id)
-                ->find();
-            if (empty($dynamic)) {
-                $redis->del($lockKey);
-                throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
-            }
+        $ret = [];
+        $ret["info"] = $dynamic;
 
-            $ret = [];
-            $ret["info"] = $dynamic;
+        // 获取评论数据
+        $dynamicComment = Db::name("dynamic_comment")->alias("dc")
+            ->leftJoin("user_info ui", "dc.u_id = ui.u_id")
+            ->field("dc.id,dc.pid,dc.u_id,dc.content,dc.source,dc.create_time,ui.portrait,ui.nickname")
+            ->where("dc.dynamic_id", $id)
+            ->where("dc.is_delete", DbDataIsDeleteEnum::NO)
+            ->order("dc.id")
+            ->select()->toArray();
+        $ret["comment"] = $dynamicComment;
 
-            // 获取评论数据
-            $dynamicComment = Db::name("dynamic_comment")->alias("dc")
-                ->leftJoin("user_info ui", "dc.u_id = ui.u_id")
-                ->field("dc.id,dc.pid,dc.u_id,dc.content,dc.source,dc.create_time,ui.portrait,ui.nickname")
-                ->where("dc.dynamic_id", $id)
-                ->where("dc.is_delete", DbDataIsDeleteEnum::NO)
-                ->order("dc.id")
-                ->select()->toArray();
-            $ret["comment"] = $dynamicComment;
-
-            // 获取点赞人ID
-            $ret["likeUserIds"] = Db::name('dynamic_like')->where("dynamic_id", $id)->column("u_id");
-            cacheUserDynamicInfo($id, $ret, $redis);
-            $redis->del($lockKey);
-            return $ret;
-        } else {
-            //设置锁过期时间防止失败后数据永修不更新
-            $redis->expire($lockKey, Constant::CACHE_LOCK_SECONDS);
-        }
-
-        if ($retry < Constant::GET_CACHE_TIMES) {
-            usleep(Constant::GET_CACHE_WAIT_TIME); // sleep 50 毫秒
-            return $this->getInfo($id, ++$retry);
-        }
-        throw AppException::factory(AppException::TRY_AGAIN_LATER);
+        // 获取点赞人ID
+        $ret["likeUserIds"] = Db::name('dynamic_like')->where("dynamic_id", $id)->column("u_id");
+        return $ret;
     }
 
     /**
@@ -236,8 +207,6 @@ class DynamicService extends Base
             throw $e;
         }
 
-        // 删除缓存
-        deleteUserDynamicInfo($id, Redis::factory());
     }
 
     /**
@@ -276,8 +245,6 @@ class DynamicService extends Base
             Db::rollback();
             throw $e;
         }
-        // 删除缓存
-        deleteUserDynamicInfo($id, Redis::factory());
     }
 
     /**
@@ -303,8 +270,6 @@ class DynamicService extends Base
             Db::rollback();
             throw $e;
         }
-        // 删除缓存
-        deleteUserDynamicInfo($id, Redis::factory());
     }
 
     /**************************************************最新动态列表相关***********************************************/

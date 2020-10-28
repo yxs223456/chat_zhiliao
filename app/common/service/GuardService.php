@@ -181,7 +181,7 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
 
         $data = Db::name("guard_history")->alias("gh")
             ->leftJoin("user_info ui", "gh.u_id = ui.u_id")
-            ->leftJoin("user_set us","gh.u_id = us.u_id")
+            ->leftJoin("user_set us", "gh.u_id = us.u_id")
             ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
             us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
             ->where("start_date", ">=", getLastWeekStartDate())
@@ -225,7 +225,9 @@ and sex_type = :sexType and create_date >= :startDate and create_date <= :endDat
 
         $data = Db::name("guard_history")->alias("gh")
             ->leftJoin("user_info ui", "gh.u_id = ui.u_id")
-            ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname")
+            ->leftJoin("user_set us", "gh.u_id = us.u_id")
+            ->field("gh.charm_amount,gh.u_id,ui.portrait,ui.nickname,us.voice_chat_switch,us.voice_chat_price,
+            us.video_chat_switch,us.video_chat_price,us.direct_message_free,us.direct_message_price")
             ->where("start_date", ">=", date("Y-m-d", strtotime("-3 month")))
             ->where("guard_u_id", "=", $user["id"])
             ->select()->toArray();

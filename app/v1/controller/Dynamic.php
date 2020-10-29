@@ -10,6 +10,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\DynamicService;
+use app\v1\transformer\dynamic\CommentTransformer;
 use app\v1\transformer\dynamic\ConcernTransformer;
 use app\v1\transformer\dynamic\InfoTransformer;
 use app\v1\transformer\dynamic\NearTransformer;
@@ -166,8 +167,8 @@ class Dynamic extends Base
 
         $user = $this->query["user"];
         $service = new DynamicService();
-        $service->comment($id, $pid, $content, $user);
-        return $this->jsonResponse(new \stdClass());
+        $data = $service->comment($id, $pid, $content, $user);
+        return $this->jsonResponse($data, new CommentTransformer());
     }
 
     /**

@@ -173,6 +173,7 @@ class DynamicService extends Base
      * @param $content string 评论内容
      * @param $user array 评论人
      *
+     * @return array
      * @throws \Throwable
      */
     public function comment($id, $pid, $content, $user)
@@ -189,14 +190,21 @@ class DynamicService extends Base
         // 添加访问记录队列
         VisitorService::addVisitorLog($uid, $user["id"]);
 
+        // 父评论数据
+        $pcomment = Db::name("dynamic_comment")->where("id", $pid)->find();
+
         Db::startTrans();
         try {
-            Db::name("dynamic_comment")->insertGetId([
+            $commentId = Db::name("dynamic_comment")->insertGetId([
                 'dynamic_id' => $id,
                 'pid' => $pid,
                 'u_id' => $user["id"],
                 'content' => $content,
             ]);
+            // 更新pid_path
+            $pPidPath = empty($pcomment["pid_path"]) ? "0" : $pcomment["pid_path"];
+            $pidPath = $pPidPath . "-" . $commentId;
+            Db::name("dynamic_comment")->where("id", $commentId)->update(['pid_path' => $pidPath]);
 
             Db::name("dynamic_count")->where("dynamic_id", $id)
                 ->inc("comment_count", 1)
@@ -207,6 +215,14 @@ class DynamicService extends Base
             throw $e;
         }
 
+        return [
+            'id' => $commentId,
+            'u_id' => $user['id'],
+            'content' => $content,
+            'pid' => $pid,
+            'to_user' => $pcomment["u_id"] ?? 0,
+            'pid_path' => $pidPath
+        ];
     }
 
     /**

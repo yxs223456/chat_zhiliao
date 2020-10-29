@@ -498,7 +498,7 @@ class UserService extends Base
     // 用户注册后的异步处理
     private function registerCallback($userId)
     {
-        userAddParentCallbackProduce($userId);
+        userAddParentCallbackProduce($userId, Redis::factory());
     }
 
     // 生成用户编号

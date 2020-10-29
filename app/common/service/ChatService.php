@@ -386,7 +386,7 @@ class ChatService extends Base
             Db::commit();
 
             // 把后续处理任务放入队列
-            chatEndCallbackProduce($chatId);
+            chatEndCallbackProduce($chatId, Redis::factory());
 
             // 更新接听人免费接听数
         } catch (\Throwable $e) {

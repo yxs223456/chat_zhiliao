@@ -14,7 +14,7 @@ use think\facade\Db;
 
 trait CommandTrait
 {
-    private $maxAllowTime = 30;            //PHP脚本单次运行时间上限
+    private $maxAllowTime = 60;            //PHP脚本单次运行时间上限
     private $maxAllowMemory = 104857600;    //分配给当前 PHP 脚本的最大允许内存量 100M
 
     public function sendWeChatWorkMessage($message, $user = null)

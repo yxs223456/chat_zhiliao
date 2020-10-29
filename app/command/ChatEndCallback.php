@@ -44,7 +44,16 @@ class ChatEndCallback extends Command
     {
         try {
             $this->beginTime = time();
-            chatEndCallbackConsumer([$this, 'receive']);
+//            chatEndCallbackConsumer([$this, 'receive']);
+
+            $redis = Redis::factory();
+            while(time() - $this->beginTime <= $this->maxAllowTime) {
+                $data = chatEndCallbackConsumer($redis);
+                if (isset($data["chat_id"])) {
+                    $chatId = $data["chat_id"];
+                    $this->doChatEnd($chatId, $redis);
+                }
+            }
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
@@ -91,8 +100,20 @@ class ChatEndCallback extends Command
 
     private function doWork(array $msgArray, AMQPMessage $message)
     {
-        // 判断是否已处理
-        $chatId = $msgArray["chat_id"];
+        try {
+            $chatId = $msgArray["chat_id"];
+//            $this->doChatEnd($chatId, $message);
+
+        } catch (\Throwable $e) {
+            throw $e;
+        } finally {
+            //显示确认，队列接收到显示确认后会删除该消息
+            RabbitMQ::ackMessage($message);
+        }
+    }
+
+    private function doChatEnd($chatId, $redis)
+    {
         $is_callback_sign = Db::name("tmp_chat_end_callback")
             ->where("chat_id", $chatId)
             ->find();
@@ -102,7 +123,6 @@ class ChatEndCallback extends Command
 
         // 需要处理的通话
         $chat = Db::name("chat")->where("id", $chatId)->find();
-        $redis = Redis::factory();
 
         Db::startTrans();
         try {
@@ -144,10 +164,6 @@ class ChatEndCallback extends Command
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
-        } finally {
-            //显示确认，队列接收到显示确认后会删除该消息
-            RabbitMQ::ackMessage($message);
-            $redis->close();
         }
 
         if ($is_callback_sign["s_u_pay"]) {

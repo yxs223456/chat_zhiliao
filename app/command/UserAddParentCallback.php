@@ -8,6 +8,7 @@
 namespace app\command;
 
 use app\common\helper\RabbitMQ;
+use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
 use PhpAmqpLib\Message\AMQPMessage;
 use think\console\Command;
@@ -37,7 +38,15 @@ class UserAddParentCallback extends Command
     {
         try {
             $this->beginTime = time();
-            userAddParentCallbackConsumer([$this, 'receive']);
+//            userAddParentCallbackConsumer([$this, 'receive']);
+
+            $redis = Redis::factory();
+            while(time() - $this->beginTime <= $this->maxAllowTime) {
+                $data = userAddParentCallbackConsumer($redis);
+                if (isset($data["u_id"])) {
+                    $this->addParentCallback($data["u_id"]);
+                }
+            }
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
@@ -84,8 +93,22 @@ class UserAddParentCallback extends Command
 
     private function doWork(array $msgArray, AMQPMessage $message)
     {
+        try {
+            $userId = $msgArray["u_id"];
+//            $this->addParentCallback($userId, $message);
+
+        } catch (\Throwable $e) {
+            throw $e;
+        } finally {
+            //显示确认，队列接收到显示确认后会删除该消息
+            RabbitMQ::ackMessage($message);
+        }
+
+    }
+
+    private function addParentCallback($userId)
+    {
         // 判断是否已处理
-        $userId = $msgArray["u_id"];
         $is_callback_sign = Db::name("tmp_add_parent_callback")
             ->where("u_id", $userId)
             ->find();
@@ -96,7 +119,8 @@ class UserAddParentCallback extends Command
         //用户全部辈分上级的下级数全部+1， 用户直接上级的直接下级数+1
         $userCommunity = Db::name("user_community")->where("u_id", $userId)->find();
         if (empty($userCommunity["p_id_path"])) {
-            RabbitMQ::ackMessage($message);
+//            RabbitMQ::ackMessage($message);
+            return;
         }
         $userPIdPathArray = explode(",", $userCommunity["p_id_path"]);
         $directParentId = $userPIdPathArray[0];
@@ -131,10 +155,6 @@ class UserAddParentCallback extends Command
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
-        } finally {
-            //显示确认，队列接收到显示确认后会删除该消息
-            RabbitMQ::ackMessage($message);
         }
-
     }
 }

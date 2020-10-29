@@ -45,7 +45,24 @@ class LoginAndLogoutCallback extends Command
     {
         try {
             $this->beginTime = time();
-            loginAndLogoutCallbackConsumer([$this, 'receive']);
+//            loginAndLogoutCallbackConsumer([$this, 'receive']);
+
+            $redis = Redis::factory();
+            while(time() - $this->beginTime <= $this->maxAllowTime) {
+                $data = loginAndLogoutCallbackConsumer($redis);
+                if (isset($data["u_id"]) && isset($data["do"])) {
+                    $userId = $data["u_id"];
+                    $do = strtolower($data["do"]);
+                    switch ($do) {
+                        case "login":
+                            $this->loginCallback($userId);
+                            break;
+                        case "logout":
+                            $this->logoutCallback($userId);
+                            break;
+                    }
+                }
+            }
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,

@@ -10,6 +10,7 @@ namespace app\command;
 
 use app\common\enum\ChatStatusEnum;
 use app\common\helper\RabbitMQ;
+use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
 use app\gateway\GatewayClient;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -39,7 +40,16 @@ class RechargeCallback extends Command
     {
         try {
             $this->beginTime = time();
-            rechargeCallbackConsumer([$this, 'receive']);
+//            rechargeCallbackConsumer([$this, 'receive']);
+
+            $redis = Redis::factory();
+            while(time() - $this->beginTime <= $this->maxAllowTime) {
+                $data = rechargeCallbackConsumer($redis);
+                if (isset($data["u_id"])) {
+                    $this->checkChat($data["u_id"]);
+                }
+            }
+
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,

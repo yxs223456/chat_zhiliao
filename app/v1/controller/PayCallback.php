@@ -14,6 +14,7 @@ use app\common\enum\PayOrderSceneEnum;
 use app\common\enum\PayOrderStatusEnum;
 use app\common\helper\AliPay;
 use app\common\helper\LinePay;
+use app\common\helper\Redis;
 use app\common\helper\WechatPay;
 use app\common\service\RechargeService;
 use app\common\service\VipService;
@@ -100,7 +101,7 @@ class PayCallback extends BaseController
              */
             switch ($userPayOrder["scene"]) {
                 case PayOrderSceneEnum::COIN:
-                    rechargeCallbackProduce($userPayOrder["u_id"]);
+                    rechargeCallbackProduce($userPayOrder["u_id"], Redis::factory());
                     break;
             }
         } catch (\Throwable $e) {
@@ -179,7 +180,7 @@ class PayCallback extends BaseController
              */
             switch ($userPayOrder["scene"]) {
                 case PayOrderSceneEnum::COIN:
-                    rechargeCallbackProduce($userPayOrder["u_id"]);
+                    rechargeCallbackProduce($userPayOrder["u_id"], Redis::factory());
                     break;
             }
         } catch (\Throwable $e) {
@@ -262,6 +263,15 @@ XML;
                 }
 
                 Db::commit();
+
+                /**
+                 * 支付后的异步处理
+                 */
+                switch ($userPayOrder["scene"]) {
+                    case PayOrderSceneEnum::COIN:
+                        rechargeCallbackProduce($userPayOrder["u_id"], Redis::factory());
+                        break;
+                }
             } catch (\Throwable $e) {
                 Db::rollback();
                 throw $e;

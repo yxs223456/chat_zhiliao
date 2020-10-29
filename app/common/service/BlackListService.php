@@ -80,7 +80,7 @@ class BlackListService extends Base
 
         $exists = Db::name("black_list")->where("u_id", $user['id'])->where("black_u_id", $blackUserId)->find();
         if ($exists) {
-            throw AppException::factory(AppException::QUERY_INVALID);
+            throw AppException::factory(AppException::USER_IS_ADD_BLACK);
         }
 
         Db::name("black_list")->insertGetId(["u_id" => $user["id"], "black_u_id" => $blackUserId]);
@@ -109,7 +109,7 @@ class BlackListService extends Base
         }
         $exists = Db::name("black_list")->where("u_id", $user['id'])->where("black_u_id", $blackUserId)->find();
         if (!$exists) {
-            throw AppException::factory(AppException::QUERY_INVALID);
+            throw AppException::factory(AppException::USER_IS_REMOVE_BLACK);
         }
 
         Db::name("black_list")->where("u_id", $user["id"])->where("black_u_id", $blackUserId)->delete();

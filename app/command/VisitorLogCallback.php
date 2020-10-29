@@ -39,7 +39,17 @@ class VisitorLogCallback extends Command
     {
         try {
             $this->beginTime = time();
-            userVisitorCallBackConsumer([$this, 'receive']);
+//            userVisitorCallBackConsumer([$this, 'receive']);
+
+            $redis = Redis::factory();
+            while (time() - $this->beginTime <= $this->maxAllowTime) {
+                $data = userVisitorCallBackConsumer($redis);
+                if (!empty($data["uid"]) && !empty($data["vid"])) {
+                    $this->userId = $data["uid"];
+                    $this->visitorId = $data["vid"];
+                    $this->doWorkR();
+                }
+            }
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
@@ -138,5 +148,58 @@ class VisitorLogCallback extends Command
             RabbitMQ::ackMessage($message);
         }
 
+    }
+
+    /**
+     * redis 队列处理逻辑
+     *
+     * @throws \Throwable
+     */
+    private function doWorkR()
+    {
+        $redis = Redis::factory();
+        // 访问的自己返回
+        if ($this->userId == $this->visitorId) {
+            return;
+        }
+        // 判断今天是否已访问过
+        $bool = getUserVisitorExists($this->userId, $this->visitorId, $redis);
+        if ($bool) {
+            return;
+        }
+
+        Db::startTrans();
+        try {
+            // 添加访问日志
+            Db::name("visitor_log")
+                ->insert([
+                    'u_id' => $this->userId,
+                    'visitor_u_id' => $this->visitorId,
+                    'date' => date("Y-m-d"),
+                ]);
+
+            // 更新访问总次数（没有总数初始化，有更新数据）
+            $exists = Db::name("visitor_count")->where("u_id", $this->userId)->find();
+            if (empty($exists)) {
+                Db::name("visitor_count")->insert(["u_id" => $this->userId, 'count' => 1]);
+            } else {
+                Db::name("visitor_count")
+                    ->where("u_id", $this->userId)
+                    ->inc("count", 1)
+                    ->update();
+            }
+
+            Db::commit();
+            // 添加今日访问缓存
+            cacheUserVisitorIdData($this->userId, $this->visitorId, $redis);
+            // 删除分页缓存
+            deleteUserVisitorPageData($this->userId, $redis);
+            // 更新总数缓存
+            VisitorService::updateVisitorSumCount($this->userId, $redis);
+
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
     }
 }

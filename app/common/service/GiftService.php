@@ -283,7 +283,7 @@ class GiftService extends Base
         ]);
 
         // 计算魅力值放入队列
-        userGuardCallbackProduce($rUId, $user["id"], $rUIncome);
+        userGuardCallbackProduce($rUId, $user["id"], $rUIncome, Redis::factory());
 
         return [
             "s_u_after_balance" => $userWallet["total_balance"] - $giftPrice,
@@ -507,7 +507,7 @@ class GiftService extends Base
         ]);
 
         // 计算魅力值放入队列
-        userGuardCallbackProduce($rUId, $user["id"], $rUIncome);
+        userGuardCallbackProduce($rUId, $user["id"], $rUIncome, Redis::factory());
 
         return [
             "s_u_after_balance" => $userWallet["total_balance"] - $amount,

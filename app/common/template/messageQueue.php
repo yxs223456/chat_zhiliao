@@ -182,22 +182,39 @@ function chatEndCallbackConsumer(\Redis $redis)
  * @param $userId
  * @param $visitorId
  */
-function userVisitorCallbackProduce($userId, $visitorId)
+define("REDIS_MQ_KEY_VISITOR_CALLBACK", REDIS_KEY_MQ_KEY_PREFIX . "visitorCallBack");
+function userVisitorCallbackProduce($userId, $visitorId, Redis $redis)
 {
-    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
-    $routingKey = "user_visitor_callback";
-    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
-        'uid' => $userId, 'vid' => $visitorId
-    ]));
+//    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
+//    $routingKey = "user_visitor_callback";
+//    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+//        'uid' => $userId, 'vid' => $visitorId
+//    ]));
+
+    $key = REDIS_MQ_KEY_VISITOR_CALLBACK;
+    $data = json_encode([
+        "uid" => $userId,
+        'vid' => $visitorId
+    ]);
+    $redis->rPush($key, $data);
 }
 
-function userVisitorCallBackConsumer($callback)
+function userVisitorCallBackConsumer(Redis $redis)
 {
-    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
-    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_visitor_callback";
-    $routingKey = "user_visitor_callback";
+//    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_visitor_callback";
+//    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_visitor_callback";
+//    $routingKey = "user_visitor_callback";
+//
+//    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
 
-    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
+    $key = REDIS_MQ_KEY_VISITOR_CALLBACK;
+    $data = $redis->blPop([$key], REDIS_KEY_MQ_WAIT_TIME);
+
+    if ($data == null || empty($data[1])) {
+        return null;
+    }
+    $arr = json_decode($data[1], true);
+    return $arr;
 }
 
 /**
@@ -207,20 +224,38 @@ function userVisitorCallBackConsumer($callback)
  * @param $spendUserId
  * @param $coin
  */
-function userGuardCallbackProduce($incomeUserId, $spendUserId, $coin)
+define("REDIS_MQ_KEY_GUARD_CALLBACK", REDIS_KEY_MQ_KEY_PREFIX . "guardCallBack");
+function userGuardCallbackProduce($incomeUserId, $spendUserId, $coin, Redis $redis)
 {
-    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_guard_callback";
-    $routingKey = "user_guard_callback";
-    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
-        'incomeUserId' => $incomeUserId, 'spendUserId' => $spendUserId, 'coin' => $coin
-    ]));
+//    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_guard_callback";
+//    $routingKey = "user_guard_callback";
+//    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+//        'incomeUserId' => $incomeUserId, 'spendUserId' => $spendUserId, 'coin' => $coin
+//    ]));
+
+    $key = REDIS_MQ_KEY_GUARD_CALLBACK;
+    $data = json_encode([
+        "incomeUserId" => $incomeUserId,
+        'spendUserId' => $spendUserId,
+        'coin' => $coin
+    ]);
+    $redis->rPush($key, $data);
 }
 
-function userGuardCallBackConsumer($callback)
+function userGuardCallBackConsumer(Redis $redis)
 {
-    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_guard_callback";
-    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_guard_callback";
-    $routingKey = "user_guard_callback";
+//    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "user_guard_callback";
+//    $queueName = RABBIT_MQ_QUEUE_PREFIX . "user_guard_callback";
+//    $routingKey = "user_guard_callback";
+//
+//    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
 
-    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
+    $key = REDIS_MQ_KEY_GUARD_CALLBACK;
+    $data = $redis->blPop([$key], REDIS_KEY_MQ_WAIT_TIME);
+
+    if ($data == null || empty($data[1])) {
+        return null;
+    }
+    $arr = json_decode($data[1], true);
+    return $arr;
 }

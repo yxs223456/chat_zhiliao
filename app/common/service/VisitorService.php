@@ -28,7 +28,7 @@ class VisitorService extends Base
             return;
         }
         // 放入操作队列
-        userVisitorCallbackProduce($userId, $visitorId);
+        userVisitorCallbackProduce($userId, $visitorId, Redis::factory());
     }
 
     /**

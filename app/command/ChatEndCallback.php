@@ -168,7 +168,7 @@ class ChatEndCallback extends Command
 
         if ($is_callback_sign["s_u_pay"]) {
             // 计算魅力值放入队列
-            userGuardCallbackProduce($chat['t_u_id'], $chat["s_u_id"], $income ?? 0);
+            userGuardCallbackProduce($chat['t_u_id'], $chat["s_u_id"], $income ?? 0, Redis::factory());
         }
     }
 }

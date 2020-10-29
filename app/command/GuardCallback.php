@@ -51,7 +51,18 @@ class GuardCallback extends Command
     {
         try {
             $this->beginTime = time();
-            userGuardCallBackConsumer([$this, 'receive']);
+//            userGuardCallBackConsumer([$this, 'receive']);
+
+            $redis = Redis::factory();
+            while (time() - $this->beginTime <= $this->maxAllowTime) {
+                $data = userGuardCallBackConsumer($redis);
+                if (!empty($data["incomeUserId"]) && !empty($data["spendUserId"]) && !empty($data["coin"])) {
+                    $this->incomeUserId = $data["incomeUserId"];
+                    $this->spendUserId = $data["spendUserId"];
+                    $this->coin = $data["coin"];
+                    $this->doWorkR();
+                }
+            }
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
@@ -178,5 +189,81 @@ class GuardCallback extends Command
             RabbitMQ::ackMessage($message);
         }
 
+    }
+
+    private function doWorkR()
+    {
+        // 男神女神信息
+        $prettyUser = UserService::getUserById($this->incomeUserId);
+        // 贡献人信息
+        $spendUser = UserService::getUserById($this->spendUserId);
+        // 上周守护人
+        $guardUser = GuardService::getGuard($this->incomeUserId);
+
+        // 更新女神月，周，日魅力总排行，女神周贡献排行，男贡献值周榜
+        PrettyService::updatePrettySortList($prettyUser,$spendUser, $this->coin);
+
+        Db::startTrans();
+        try {
+            // 添加魅力值贡献记录
+            Db::name("guard_charm_log")
+                ->insert([
+                    'u_id' => $this->incomeUserId,
+                    'guard_u_id' => $this->spendUserId,
+                    'sex_type' => $prettyUser["sex"] . $spendUser['sex'],
+                    'amount' => $this->coin,
+                    'create_date' => date("Y-m-d"),
+                ]);
+
+            // 添加需要统计守护的女神ID
+            $startEndDate = implode("-",getWeekStartAndEnd());
+            $exists = Db::name("guard_user_callback")->where("u_id", $this->incomeUserId)
+                ->where("start_end_date", $startEndDate)->find();
+            if (!$exists) {
+                Db::name("guard_user_callback")->insert([
+                    'u_id' => $this->incomeUserId,
+                    'start_end_date' => $startEndDate
+                ]);
+            }
+
+            // 如果守护存在计算守护
+            if ($guardUser) {
+                // 更新守护钱包金额
+                $addCoin = round($this->coin * Constant::GUARD_SHARE_RATE);
+                if ($addCoin < Constant::GUARD_SHARE_MIN_COIN) {
+                    $addCoin = Constant::GUARD_SHARE_MIN_COIN;
+                }
+                Db::name("user_wallet")->where("u_id", $guardUser["u_id"])
+                    ->inc('income_total_amount', $addCoin)
+                    ->inc('balance_amount', $addCoin)
+                    ->inc('total_balance', $addCoin)
+                    ->update();
+                // 添加守护分润流水
+                $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
+                Db::name("user_wallet_flow")->insert([
+                    'u_id' => $guardUser["u_id"],
+                    'flow_type' => FlowTypeEnum::ADD,
+                    'amount' => $addCoin,
+                    'add_type' => WalletAddEnum::ANGEL,
+                    'object_source_id' => $this->incomeUserId,// 造成分润的女神ID
+                    'before_balance' => $wallet["total_balance"] ?? 0,
+                    'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
+                    'create_date' => date("Y-m-d")
+                ]);
+
+                // 更新守护奖励总记录表
+                Db::name("guard_income")->where("u_id", $guardUser['u_id'])
+                    ->inc('total_amount', $addCoin)
+                    ->update();
+
+                // 更新守护收入周榜
+                cacheMaleGuardEarnSortSetWeek($guardUser["u_id"], $addCoin, Redis::factory());
+            }
+
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
+        }
     }
 }

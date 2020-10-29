@@ -110,7 +110,7 @@ class IMService extends Base
                 Db::commit();
 
                 // 计算魅力值放入队列
-                userGuardCallbackProduce($tUId, $user["id"], $bonus);
+                userGuardCallbackProduce($tUId, $user["id"], $bonus, Redis::factory());
 
             } catch (\Throwable $e) {
                 Db::rollback();

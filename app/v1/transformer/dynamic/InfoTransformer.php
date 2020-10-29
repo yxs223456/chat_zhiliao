@@ -85,7 +85,7 @@ class InfoTransformer extends TransformerAbstract
                 if ($startPid != $tmp['pid']) { // 当前评论父评论不是顶级评论的展示to_user
                     $tmp['show_to_user'] = 1;
                 }
-                array_push($ret[$startPid]['comment'], $tmp);
+                array_unshift($ret[$startPid]['comment'], $tmp);
                 $commentPidPath[$tmp['id']] = $pidPath . "-" . $tmp['id'];
             }
         }

@@ -286,4 +286,33 @@ class VideoService extends Base
 
         return array_values($ret);
     }
+
+    /**
+     * 获取个人小视频列表
+     *
+     * @param $startId
+     * @param $pageSize
+     * @param $requestUserId
+     * @return array
+     */
+    public function personal($startId, $pageSize, $requestUserId)
+    {
+        // 获取动态数据
+        $videoQuery = Db::name("video")->alias("v")
+            ->leftJoin("video_count vc", "vc.video_id = v.id")
+            ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.u_id", $requestUserId)
+            ->field("v.id,v.u_id,v.source,vc.like_count")
+            ->order("v.id", "desc");
+        if (!empty($startId)) {
+            $videoQuery = $videoQuery->where("v.id", "<", $startId);
+        }
+        $videos = $videoQuery->limit($pageSize)->select()->toArray();
+
+        if (empty($videos)) {
+            return [];
+        }
+
+        return $videos;
+    }
 }

@@ -34,7 +34,7 @@ class InfoTransformer extends TransformerAbstract
             'content' => $info["content"] ?? "",
             'source' => json_decode($info["source"], true),
             'like_count' => $info['like_count'] ?? 0,
-            'comment_count' => $data['comment_count'] ?? 0,
+            'comment_count' => $info['comment_count'] ?? 0,
             'is_like' => $this->getIsLike($likeUserIds),
             'is_followed' => $this->getIsFollow($info["u_id"]),
             'comment_list' => $this->getComment($comment)

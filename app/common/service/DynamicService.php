@@ -279,6 +279,10 @@ class DynamicService extends Base
      */
     public function unlike($id, $user)
     {
+        $dynamic = Db::name("dynamic")->where("id", $id)->field("id")->find();
+        if (empty($dynamic)) {
+            throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
+        }
         $isCancel = Db::name("dynamic_like")->where("dynamic_id", $id)
             ->where("u_id", $user["id"])->field("id")->find();
         if (empty($isCancel)) {

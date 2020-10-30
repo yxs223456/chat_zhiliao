@@ -93,6 +93,13 @@ class VideoService extends Base
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
+        $isLike = Db::name("video_like")
+            ->where("video_id", $id)->where("u_id", $user['id'])
+            ->field("id")->find();
+        if ($isLike) {
+            throw AppException::factory(AppException::DYNAMIC_IS_LIKE);
+        }
+
         // 添加访问记录队列
         VisitorService::addVisitorLog($uid, $user["id"]);
 
@@ -130,6 +137,13 @@ class VideoService extends Base
         if (empty($video)) {
             throw AppException::factory(AppException::VIDEO_NOT_EXISTS);
         }
+
+        $isLike = Db::name("video_like")->where("video_id", $id)
+            ->where("u_id", $user["id"])->field("id")->find();
+        if (empty($isLike)) {
+            throw AppException::factory(AppException::DYNAMIC_IS_CANCEL_LIKE);
+        }
+
         Db::startTrans();
         try {
             $flag = Db::name("video_like")->where("video_id", $id)

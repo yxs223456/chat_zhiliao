@@ -775,7 +775,7 @@ class DynamicService extends Base
      */
     private function sortArr($dynamics)
     {
-        if (count($dynamics)) {
+        if (count($dynamics) == 1) {
             return $dynamics;
         }
         $first = array_shift($dynamics);

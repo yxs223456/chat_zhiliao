@@ -658,10 +658,10 @@ class DynamicService extends Base
      * @param $pageNum
      * @param $pageSize
      * @param $userId
-     * @param Redis $redis
+     * @param \Redis $redis
      * @return array
      */
-    private function nearPage($pageNum, $pageSize, $userId, Redis $redis)
+    private function nearPage($pageNum, $pageSize, $userId, \Redis $redis)
     {
         // 缓存存在直接返回
         if (!empty($data = getNearDynamicSortData($userId, $redis))) {
@@ -676,10 +676,10 @@ class DynamicService extends Base
      * 更新缓存
      *
      * @param $userId
-     * @param Redis $redis
+     * @param \Redis $redis
      * @return array
      */
-    private function updateAndGetNearData($userId, Redis $redis)
+    private function updateAndGetNearData($userId, \Redis $redis)
     {
         // 获取附近用户ID
         $nearUserIds = getNearUserLongLatInfo($userId, $redis);

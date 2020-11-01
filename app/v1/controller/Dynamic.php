@@ -35,7 +35,7 @@ class Dynamic extends Base
      * @return \think\response\Json
      * @throws AppException
      */
-    public function near1()
+    public function near()
     {
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
@@ -59,7 +59,7 @@ class Dynamic extends Base
      * @return \think\response\Json
      * @throws AppException
      */
-    public function near()
+    public function near1()
     {
         $request = $this->query["content"];
         $pageNum = $request["page_num"] ?? 1;

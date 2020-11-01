@@ -710,7 +710,7 @@ class DynamicService extends Base
         $dynamics = Db::name("dynamic")
             ->whereIn("u_id", array_keys($userIds))
             ->where("is_delete", DbDataIsDeleteEnum::NO)
-            ->where("create_time", ">", date("Y-m-d H:i:s", strtotime("-15 days")))
+//            ->where("create_time", ">", date("Y-m-d H:i:s", strtotime("-15 days")))
             ->order("id", "desc")
             ->select()->toArray();
 

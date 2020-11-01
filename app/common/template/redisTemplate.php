@@ -1055,3 +1055,24 @@ function getMaleGuardEarnSortSetWeekScore($userId, Redis $redis)
     $key = REDIS_MALE_EARN_SORT_SET_WEEK . $startDate . "-" . $endDate;
     return $redis->zScore($key, $userId);
 }
+
+/**
+ * 缓存个人附近动态缓存数据
+ */
+define("REDIS_NEAR_DYNAMIC_SORT_DATA", REDIS_KEY_PREFIX . "nearDynamicSortData:");
+function cacheNearDynamicSortData($userId, $data, Redis $redis)
+{
+    $key = REDIS_NEAR_DYNAMIC_SORT_DATA . $userId;
+    $redis->set($key, json_encode($data), 600);
+}
+
+// 获取个人附近动态数据
+function getNearDynamicSortData($userId, Redis $redis)
+{
+    $key = REDIS_NEAR_DYNAMIC_SORT_DATA . $userId;
+    $data = $redis->get($key);
+    if ($data) {
+        return json_decode($data, true);
+    }
+    return null;
+}

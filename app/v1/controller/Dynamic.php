@@ -35,7 +35,7 @@ class Dynamic extends Base
      * @return \think\response\Json
      * @throws AppException
      */
-    public function near()
+    public function near1()
     {
         $request = $this->query["content"];
         $startId = $request["start_id"] ?? 0;
@@ -50,6 +50,31 @@ class Dynamic extends Base
 
         $service = new DynamicService();
         $dynamic = $service->near($startId, $pageSize, $long, $lat, $userId);
+        return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
+    }
+
+    /**
+     * 最近列表 注意去重复 id倒叙
+     *
+     * @return \think\response\Json
+     * @throws AppException
+     */
+    public function near()
+    {
+        $request = $this->query["content"];
+        $pageNum = $request["page_num"] ?? 1;
+        $pageSize = $request["page_size"] ?? 20;
+        $long = $request["long"] ?? ""; // 经度
+        $lat = $request["lat"] ?? ""; // 纬度
+        $isFlush = $request["is_flush"] ?? 0; // 刷新
+        $userId = $this->query["user"]["id"]; // 当前登陆用户ID
+
+        if (!checkInt($pageNum,false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new DynamicService();
+        $dynamic = $service->near1($pageNum, $pageSize, $long, $lat, $userId, $isFlush);
         return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
     }
 

@@ -622,4 +622,172 @@ class DynamicService extends Base
         return $dynamics;
     }
 
+    /**
+     * 附近人动态列表
+     *
+     * @param $pageNum int 起始ID
+     * @param $pageSize int 分页
+     * @param $long int 经度
+     * @param $lat int 纬度
+     * @param $userId int 用户ID
+     * @return mixed
+     */
+    public function near1($pageNum, $pageSize, $long, $lat, $userId, $isFlush)
+    {
+        // 经纬度不传返回空列表
+        if (empty($long) && empty($lat)) {
+            return [];
+        }
+        $redis = Redis::factory();
+        // 缓存当前用户坐标
+        cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        // 需要更新
+        if ($isFlush) {
+            // 更新缓存
+            $data = $this->updateAndGetNearData($userId, $redis);
+            // 返回第一页数据
+            return array_slice($data["data"], 0, $pageSize);
+        }
+        // 返回数据
+        return $this->nearPage($pageNum, $pageSize, $userId, $redis);
+    }
+
+    /**
+     * 附近动态分页
+     *
+     * @param $pageNum
+     * @param $pageSize
+     * @param $userId
+     * @param Redis $redis
+     * @return array
+     */
+    private function nearPage($pageNum, $pageSize, $userId, Redis $redis)
+    {
+        // 缓存存在直接返回
+        if (!empty($data = getNearDynamicSortData($userId, $redis))) {
+            return array_slice($data["data"], ($pageNum - 1) * $pageSize, $pageSize);
+        }
+        // 更新缓存
+        $data = $this->updateAndGetNearData($userId, $redis);
+        return array_slice($data["data"], ($pageNum - 1) * $pageSize, $pageSize);
+    }
+
+    /**
+     * 更新缓存
+     *
+     * @param $userId
+     * @param Redis $redis
+     * @return array
+     */
+    private function updateAndGetNearData($userId, Redis $redis)
+    {
+        // 获取附近用户ID
+        $nearUserIds = getNearUserLongLatInfo($userId, $redis);
+        $cacheData = [
+            "userId" => $userId,
+            "data" => []
+        ];
+
+        if (empty($nearUserIds)) {
+            cacheNearDynamicSortData($userId, $cacheData, $redis);
+            return $cacheData;
+        }
+
+        // 重新整理 删除当前用户的ID $value[0] = userId $value[1] = distance
+        $userIds = [];
+        foreach ($nearUserIds as $value) {
+            if ($value[0] == $userId) {
+                continue;
+            }
+            $userIds[$value[0]] = $value[1];
+        }
+        if (empty($userIds)) {
+            cacheNearDynamicSortData($userId, $cacheData, $redis);
+            return $cacheData;
+        }
+
+        // 获取动态数据 id 倒叙
+        $dynamics = Db::name("dynamic")
+            ->whereIn("u_id", array_keys($userIds))
+            ->where("is_delete", DbDataIsDeleteEnum::NO)
+            ->where("create_time", ">", date("Y-m-d H:i:s", strtotime("-15 days")))
+            ->order("id", "desc")
+            ->select()->toArray();
+
+        if (empty($dynamics)) {
+            cacheNearDynamicSortData($userId, $cacheData, $redis);
+            return $cacheData;
+        }
+
+        // 获取动态用户数据
+        $userInfo = Db::name("user")->alias("u")
+            ->leftJoin("user_info ui", "u.id = ui.u_id")
+            ->leftJoin("user_set us", "us.u_id = ui.u_id")
+            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
+            us.voice_chat_switch,us.voice_chat_price,us.video_chat_switch,us.video_chat_price,us.direct_message_free,
+            us.direct_message_price")
+            ->whereIn("u.id", array_column($dynamics, 'u_id'))
+            ->select()->toArray();
+        $userIdToUserInfo = array_combine(array_column($userInfo, 'id'), $userInfo);
+
+        // 获取动态统计数据
+        $dynamicCount = Db::name("dynamic_count")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->select()->toArray();
+        $dynamicIdToDynamicCount = array_combine(array_column($dynamicCount, 'dynamic_id'), $dynamicCount);
+
+        // 获取动态点赞的用户ID
+        $dynamicIdToUserIds = Db::name("dynamic_like")
+            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
+            ->field("dynamic_id,u_id")
+            ->select()->toArray();
+        $likeDynamicUserIds = [];
+        // 点赞用户ID根据动态ID分组
+        array_map(function ($item) use (&$likeDynamicUserIds) {
+            $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
+        }, $dynamicIdToUserIds);
+
+        // 获取用户是否关注数据
+        $userFollow = Db::name("user_follow")->where("u_id", $userId)
+            ->whereIn("follow_u_id", array_column($dynamics, 'u_id'))
+            ->column("follow_u_id");
+
+        foreach ($dynamics as &$item) {
+            $item["userInfo"] = isset($userIdToUserInfo[$item['u_id']]) ? $userIdToUserInfo[$item['u_id']] : [];
+            $item["dynamicCount"] = isset($dynamicIdToDynamicCount[$item['id']]) ? $dynamicIdToDynamicCount[$item['id']] : [];
+            $item["likeDynamicUserIds"] = isset($likeDynamicUserIds[$item['id']]) ? $likeDynamicUserIds[$item['id']] : [];
+            $item["is_followed"] = in_array($item["u_id"], $userFollow) ? 1 : 0;
+            // 计算距离
+            $item["distance"] = $userIds[$item["u_id"]] ?? 0;
+        }
+
+        // 排序
+        $cacheData["data"] = $this->sortArr($dynamics);
+        cacheNearDynamicSortData($userId, $cacheData, $redis);
+        return $cacheData;
+    }
+
+    /**
+     * 距离排序
+     *
+     * @param $dynamics
+     * @return array
+     */
+    private function sortArr($dynamics)
+    {
+        if (count($dynamics)) {
+            return $dynamics;
+        }
+        $first = array_shift($dynamics);
+        $left = [];
+        $right = [];
+        foreach ($dynamics as $item) {
+            if ($item["distance"] >= $first["distance"]) {
+                $right[] = $item;
+            } else {
+                $left[] = $item;
+            }
+        }
+        return array_merge($left, [$first], $right);
+    }
 }

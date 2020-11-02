@@ -55,7 +55,7 @@ class AppException extends \Exception
     const CHAT_VOICE_CLOSE = [7001, "对方关闭语音接听", "對方關閉語音接聽"];
     const CHAT_LESS_MONTY = [7002, "余额不足无法发起聊天", "餘額不足無法發起聊天"];
     const CHAT_USER_CHAT_ING = [7003, "您正处于通话中，无法发起新聊天", "您正處於通話中，無法發起新聊天"];
-    const CHAT_LINE_BUSY = [7004, "对方正处于通话中", "對法正處於通話中"];
+    const CHAT_LINE_BUSY = [7004, "对方正处于通话中", "對方正處於通話中"];
     const CHAT_HANG_UP_CALLING = [7005, "通话已接通无法拒接", "通話已接通無法拒接"];
     const CHAT_END_ALREADY = [7006, "通话已结束", "通話已結束"];
     const CHAT_NOT_CALLING = [7007, "不在通话中", "不在通話中"];

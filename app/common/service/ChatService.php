@@ -201,7 +201,7 @@ class ChatService extends Base
             if (empty($chat)) {
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
-            if ($user["id"] != $chat["s_u_id "] && $user["id"] != $chat["t_u_id"]) {
+            if ($user["id"] != $chat["s_u_id"] && $user["id"] != $chat["t_u_id"]) {
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
             if ($chat["status"] == ChatStatusEnum::CALLING) {
@@ -253,7 +253,7 @@ class ChatService extends Base
      */
     public function answer($user, $chatId)
     {
-        // 只有通话状态处于待接听时才可挂断通话请求
+        // 只有通话状态处于待接听时才可接听通话请求
         // 只有通话接听方可以接听
         Db::startTrans();
         try {
@@ -273,7 +273,7 @@ class ChatService extends Base
             $isFree = $price == 0 ? 1 : 0;      // 通话是否免费
             $minutes = $chat["free_minutes"];   // 不免费时最大通话分钟数
             if (!$isFree) {
-                $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
+                $userWallet = Db::name("user_wallet")->where("u_id", $chat["s_u_id"])->find();
                 $payMinutes = floor($userWallet["total_balance"]/$price);
                 $minutes += $payMinutes;
                 if ($minutes == 0) {

@@ -46,6 +46,7 @@ class ShengWang
         self::init();
         $appID = self::$appId;
         $appCertificate = self::$appCertificate;
+        $userId = (string) $userId;
 
         $role = \RtmTokenBuilder::RoleRtmUser;
         $expireTimeInSeconds = $expire;

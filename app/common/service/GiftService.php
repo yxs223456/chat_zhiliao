@@ -92,18 +92,23 @@ class GiftService extends Base
             if ($user["id"] == $chat["t_u_id"]) {
                 // 接听方送礼物 只考虑礼物价格和自己的钱包余额即可
                 $minBalance = $gift["price"];
+                $giftRUId = $chat["s_u_id"];
             } else {
                 // 拨打方送礼物不仅要考虑礼物价格和自己的钱包余额，还需考虑已经产生的聊天费用
                 $chatPrice = ChatService::getCallingChatPay($chat); // 通话已经产生的费用
                 $minBalance = $gift["price"] + $chatPrice;
+                $giftRUId = $chat["t_u_id"];
             }
-            $giveResp = $this->giveDbOperate($user, $gift, $chat["t_u_id"], $minBalance, $rUIncome);
+            $giveResp = $this->giveDbOperate($user, $gift, $giftRUId, $minBalance, $rUIncome);
 
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;
         }
+
+        // 向声网发送消息
+        IMService::sendGiftImMessage($user, $giftRUId, $gift);
 
         // 再次计算通话时长
         $price = $chat["t_user_price"];     // 通话价格
@@ -187,6 +192,9 @@ class GiftService extends Base
             Db::rollback();
             throw $e;
         }
+
+        // 向声网发送消息
+        IMService::sendGiftImMessage($user, $rUId, $gift);
 
         return [
             "gift_name" => $gift["name"],

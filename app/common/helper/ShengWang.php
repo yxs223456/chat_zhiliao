@@ -17,13 +17,20 @@ class ShengWang
 {
     private static $appId;
     private static $appCertificate;
+    private static $clientId;
+    private static $clientSecret;
 
     private static function init()
     {
-        if (empty(self::$appId) || empty(self::$appCertificate)) {
+        if (empty(self::$appId) ||
+            empty(self::$appCertificate) ||
+            empty(self::$clientId) ||
+            empty(self::$clientSecret)) {
             $config = config("account.sheng_wang");
             self::$appId = $config["app_id"];
             self::$appCertificate = $config["app_certificate"];
+            self::$clientId = $config["client_id"];
+            self::$clientSecret = $config["client_secret"];
         }
     }
 
@@ -71,5 +78,42 @@ class ShengWang
 
         $token = \RtcTokenBuilder::buildTokenWithUid($appID, $appCertificate, $channelName, $userId, $role, $privilegeExpiredTs);
         return $token;
+    }
+
+    /**
+     * 发送消息
+     * @param $userId
+     * @param $sendUserId
+     * @param $message
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function sendMessage($userId, $sendUserId, $message)
+    {
+        self::init();
+        $headers = [
+            "Content-type: application/json;charset=utf-8",
+            "x-agora-token: " . self::getRtmToken($userId),
+            "x-agora-uid: " . $userId,
+            "Authorization: " . self::getApiAuthorization(),
+        ];
+
+        $url = "https://api.agora.io/dev/v2/project/".self::$appId."/rtm/users/".$userId."/peer_messages?wait_for_ack=false";
+        $params = [
+            "destination" => (string) $sendUserId,
+            "enable_offline_messaging" => true,
+            "enable_historical_messaging" => false,
+            "payload" => $message,
+        ];
+
+        $response = curl($url, 'post', $params, true, true, $headers);
+
+        return $response;
+    }
+
+    private static function getApiAuthorization()
+    {
+        self::init();
+        return base64_encode(self::$clientId . ":" . self::$clientSecret);
     }
 }

@@ -10,7 +10,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\IMService;
-use app\v1\transformer\im\CheckSendMessage;
+use app\v1\transformer\im\SendMessage;
 
 class Im extends Base
 {
@@ -24,19 +24,24 @@ class Im extends Base
     ];
 
     /**
-     * 判断是否可以发送私聊
+     * 非通话发送私聊消息
      */
-    public function checkSendMessage()
+    public function sendMessage()
     {
         $request = $this->query["content"];
         $tUId = $request["t_u_id"] ?? 0;
-        $user = $this->query["user"];
+        $message = $request["message"] ?? "";
 
         if (!checkInt($tUId, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
+        if (empty($message)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
         $service = new IMService();
-        $returnData = $service->checkSendMessage($user, $tUId);
-        return $this->jsonResponse($returnData, new CheckSendMessage());
+        $returnData = $service->sendMessage($user, $tUId, $message);
+        return $this->jsonResponse($returnData, new SendMessage());
     }
 }

@@ -690,7 +690,7 @@ class UserService extends Base
             $femaleLevel = $userInfo["pretty_female_level"];
 //            $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
             $ruleCoin = Constant::PRETTY_FEMALE_LEVEL_CROWN;
-            if (isset($coin) && $coin > $ruleCoin) {
+            if (isset($coin) && ($coin > $ruleCoin || $coin % 50 != 0)) {
                 throw AppException::factory(AppException::USER_COIN_NOT_ALLOW);
             }
 
@@ -713,7 +713,7 @@ class UserService extends Base
         }
         //$ruleCoin = $this->getMaleCoinRule($maleLevel);
         $ruleCoin = Constant::PRETTY_FEMALE_LEVEL_CROWN;
-        if (isset($coin) && $coin > $ruleCoin) {
+        if (isset($coin) && ($coin > $ruleCoin || $coin % 50 != 0)) {
             throw AppException::factory(AppException::USER_COIN_NOT_ALLOW);
         }
 

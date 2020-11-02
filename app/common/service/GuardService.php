@@ -13,6 +13,7 @@ use app\common\AppException;
 use app\common\Constant;
 use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
+use app\common\enum\WalletAddEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -86,13 +87,19 @@ class GuardService extends Base
             return [];
         }
 
-        // 只查询21的数据
-        $guard = Db::query("select guard_u_id,sum(amount) as s from guard_charm_log where u_id = :uid and sex_type = :sex 
-and create_date >= :start_date and create_date <= :end_date 
-GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
+        // 只查询收入类型为3，4，5，6，7的数据
+        $addType = implode(",",
+            [WalletAddEnum::GIFT,
+                WalletAddEnum::VIDEO_CHAT,
+                WalletAddEnum::VOICE_CHAT,
+                WalletAddEnum::RED_PACKAGE,
+                WalletAddEnum::DIRECT_MESSAGE]);
+        $guard = Db::query("select add_u_id,sum(amount) as s from user_wallet_flow as uwf left join user as u on u.id = uwf.add_u_id where uwf.u_id = :uid and uwf.add_type in($addType) 
+and u.sex = :sex and uwf.create_date >= :start_date and uwf.create_date <= :end_date 
+GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
             [
                 'uid' => $userId,
-                'sex' => InteractSexTypeEnum::FEMALE_TO_MALE,
+                'sex' => UserSexEnum::MALE,
                 'start_date' => getLastWeekStartDate(),
                 'end_date' => getLastWeekEndDate(),
                 's' => Constant::GUARD_MIN_AMOUNT
@@ -107,7 +114,7 @@ GROUP BY guard_u_id having s >= :s ORDER by s desc limit 1",
         $data = Db::name("user_info")->alias("ui")
             ->leftJoin("user u", "ui.u_id = u.id")
             ->field("ui.*,u.sex")
-            ->where("ui.u_id", $guard['guard_u_id'])
+            ->where("ui.u_id", $guard['add_u_id'])
             ->find();
 
         cacheUserGuard($userId, ["data" => $data], $redis);

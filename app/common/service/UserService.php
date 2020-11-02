@@ -688,9 +688,10 @@ class UserService extends Base
         // 女神金额逻辑
         if ($sex == UserSexEnum::FEMALE) {
             $femaleLevel = $userInfo["pretty_female_level"];
-            $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
+//            $ruleCoin = $this->getFemaleCoinRule($femaleLevel);
+            $ruleCoin = Constant::PRETTY_FEMALE_LEVEL_CROWN;
             if (isset($coin) && $coin > $ruleCoin) {
-                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+                throw AppException::factory(AppException::USER_COIN_NOT_ALLOW);
             }
 
             Db::name("user_set")->where("u_id", $user["id"])->update($update);
@@ -708,11 +709,12 @@ class UserService extends Base
             && $today > $svipDeadline
             && isset($coin) && $coin > 0
         ) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            throw AppException::factory(AppException::USER_NOT_VIP);
         }
-        $ruleCoin = $this->getMaleCoinRule($maleLevel);
+        //$ruleCoin = $this->getMaleCoinRule($maleLevel);
+        $ruleCoin = Constant::PRETTY_FEMALE_LEVEL_CROWN;
         if (isset($coin) && $coin > $ruleCoin) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            throw AppException::factory(AppException::USER_COIN_NOT_ALLOW);
         }
 
         Db::name("user_set")->where("u_id", $user["id"])->update($update);

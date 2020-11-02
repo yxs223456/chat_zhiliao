@@ -114,7 +114,7 @@ GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
         $data = Db::name("user_info")->alias("ui")
             ->leftJoin("user u", "ui.u_id = u.id")
             ->field("ui.*,u.sex")
-            ->where("ui.u_id", $guard['add_u_id'])
+            ->where("ui.u_id", $guard[0]['add_u_id'])
             ->find();
 
         cacheUserGuard($userId, ["data" => $data], $redis);

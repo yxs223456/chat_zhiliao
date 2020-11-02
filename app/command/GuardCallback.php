@@ -125,16 +125,6 @@ class GuardCallback extends Command
 
         Db::startTrans();
         try {
-            // 添加魅力值贡献记录
-            Db::name("guard_charm_log")
-                ->insert([
-                    'u_id' => $this->incomeUserId,
-                    'guard_u_id' => $this->spendUserId,
-                    'sex_type' => $prettyUser["sex"] . $spendUser['sex'],
-                    'amount' => $this->coin,
-                    'create_date' => date("Y-m-d"),
-                ]);
-
             // 添加需要统计守护的女神ID
             $startEndDate = implode("-",getWeekStartAndEnd());
             $exists = Db::name("guard_user_callback")->where("u_id", $this->incomeUserId)
@@ -206,16 +196,6 @@ class GuardCallback extends Command
 
         Db::startTrans();
         try {
-            // 添加魅力值贡献记录
-            Db::name("guard_charm_log")
-                ->insert([
-                    'u_id' => $this->incomeUserId,
-                    'guard_u_id' => $this->spendUserId,
-                    'sex_type' => $prettyUser["sex"] . $spendUser['sex'],
-                    'amount' => $this->coin,
-                    'create_date' => date("Y-m-d"),
-                ]);
-
             // 添加需要统计守护的女神ID
             $startEndDate = implode("-",getWeekStartAndEnd());
             $exists = Db::name("guard_user_callback")->where("u_id", $this->incomeUserId)

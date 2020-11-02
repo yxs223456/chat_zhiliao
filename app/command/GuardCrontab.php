@@ -11,6 +11,7 @@ namespace app\command;
 use app\common\Constant;
 use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
+use app\common\enum\WalletAddEnum;
 use app\common\helper\WeChatWork;
 use app\common\service\UserService;
 use think\console\Command;
@@ -90,13 +91,19 @@ class GuardCrontab extends Command
                 return;
             }
 
-            // 只查询21的数据
-            $guard = Db::query("select guard_u_id,sum(amount) s from guard_charm_log where u_id = :uid and sex_type = :sex 
-and create_date >= :start_date and create_date <= :end_date 
-and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
+            // 只查询收入类型为3，4，5，6，7的数据
+            $addType = implode(",",
+                [WalletAddEnum::GIFT,
+                    WalletAddEnum::VIDEO_CHAT,
+                    WalletAddEnum::VOICE_CHAT,
+                    WalletAddEnum::RED_PACKAGE,
+                    WalletAddEnum::DIRECT_MESSAGE]);
+            $guard = Db::query("select add_u_id,sum(amount) as s from user_wallet_flow as uwf left join user as u on u.id = uwf.add_u_id where uwf.u_id = :uid and uwf.add_type in($addType) 
+and u.sex = :sex and uwf.create_date >= :start_date and uwf.create_date <= :end_date 
+GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
                 [
-                    'uid' => $user['u_id'],
-                    'sex' => InteractSexTypeEnum::FEMALE_TO_MALE,
+                    'uid' => $user["u_id"],
+                    'sex' => UserSexEnum::MALE,
                     'start_date' => getLastWeekStartDate(),
                     'end_date' => getLastWeekEndDate(),
                     's' => Constant::GUARD_MIN_AMOUNT
@@ -111,7 +118,7 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             // 添加守护历史记录
             Db::name("guard_history")->insert([
                 'u_id' => $user['u_id'],
-                'guard_u_id' => $guard['guard_u_id'],
+                'guard_u_id' => $guard['add_u_id'],
                 'sex_type' => InteractSexTypeEnum::FEMALE_TO_MALE,
                 'charm_amount' => $guard['s'],
                 'start_date' => getLastWeekStartDate(),
@@ -119,9 +126,9 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
             ]);
 
             // 添加守护总奖励记录
-            $exists = Db::name("guard_income")->where("u_id", $guard['guard_u_id'])->find();
+            $exists = Db::name("guard_income")->where("u_id", $guard['add_u_id'])->find();
             if ($exists) {
-                Db::name("guard_income")->where("u_id", $guard['guard_u_id'])
+                Db::name("guard_income")->where("u_id", $guard['add_u_id'])
                     ->inc('guard_count', 1)
                     ->inc('total_amount', $guard['s'])
                     ->update();
@@ -130,7 +137,7 @@ and s >= :s GROUP BY guard_u_id ORDER s desc limit 1",
                     'guard_count' => 1,
                     'total_amount' => $guard['s'],
                     'sex' => UserSexEnum::MALE,
-                    'u_id' => $guard['guard_u_id']
+                    'u_id' => $guard['add_u_id']
                 ]);
             }
 

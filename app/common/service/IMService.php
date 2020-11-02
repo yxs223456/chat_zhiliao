@@ -11,6 +11,7 @@ use app\common\AppException;
 use app\common\Constant;
 use app\common\enum\ChatStatusEnum;
 use app\common\enum\FlowTypeEnum;
+use app\common\enum\ImMessageTypeEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletAddEnum;
 use app\common\enum\WalletReduceEnum;
@@ -192,7 +193,7 @@ class IMService extends Base
     public static function sendGiftImMessage($user, $rUId, $gift)
     {
         $giftMessage = json_encode([
-            "type" => 2,
+            "type" => ImMessageTypeEnum::GIFT,
             "message" => "",
             "image" => [
                 "image_url" => "",

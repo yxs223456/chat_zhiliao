@@ -25,8 +25,9 @@ class UserWalletFlowModel extends Base
      * @param $sourceId
      * @param $bBalance
      * @param $aBalance
+     * @param $addUId int 增加流水相关用户ID
      */
-    public static function addFlow($userId, $amount, $addType, $sourceId, $bBalance, $aBalance)
+    public static function addFlow($userId, $amount, $addType, $sourceId, $bBalance, $aBalance, $addUId)
     {
         Db::name("user_wallet_flow")->insert([
             "u_id" => $userId,
@@ -37,6 +38,7 @@ class UserWalletFlowModel extends Base
             "before_balance" => $bBalance,
             "after_balance" => $aBalance,
             "create_date" => date("Y-m-d"),
+            "add_u_id" => $addUId
         ]);
     }
 

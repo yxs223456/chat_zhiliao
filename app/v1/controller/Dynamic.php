@@ -35,30 +35,6 @@ class Dynamic extends Base
      * @return \think\response\Json
      * @throws AppException
      */
-    public function near1()
-    {
-        $request = $this->query["content"];
-        $startId = $request["start_id"] ?? 0;
-        $pageSize = $request["page_size"] ?? 20;
-        $long = $request["long"] ?? ""; // 经度
-        $lat = $request["lat"] ?? ""; // 纬度
-        $userId = $this->query["user"]["id"]; // 当前登陆用户ID
-
-        if (!checkInt($startId) || !checkInt($pageSize, false)) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-        }
-
-        $service = new DynamicService();
-        $dynamic = $service->near($startId, $pageSize, $long, $lat, $userId);
-        return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
-    }
-
-    /**
-     * 最近列表 注意去重复 id倒叙
-     *
-     * @return \think\response\Json
-     * @throws AppException
-     */
     public function near()
     {
         $request = $this->query["content"];
@@ -74,7 +50,7 @@ class Dynamic extends Base
         }
 
         $service = new DynamicService();
-        $dynamic = $service->near1($pageNum, $pageSize, $long, $lat, $userId, $isFlush);
+        $dynamic = $service->near($pageNum, $pageSize, $long, $lat, $userId, $isFlush);
         return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
     }
 

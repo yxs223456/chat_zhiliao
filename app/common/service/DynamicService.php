@@ -520,107 +520,6 @@ class DynamicService extends Base
     }
 
     /**************************************************附近用户动态列表相关***********************************************/
-    /**
-     * 附近人动态列表
-     *
-     * @param $startId int 起始ID
-     * @param $pageSize int 分页
-     * @param $long int 经度
-     * @param $lat int 纬度
-     * @param $userId int 用户ID
-     * @return mixed
-     */
-    public function near($startId, $pageSize, $long, $lat, $userId)
-    {
-        // 经纬度不传返回空列表
-        if (empty($long) && empty($lat)) {
-            return [];
-        }
-        $redis = Redis::factory();
-        // 缓存当前用户坐标
-        cacheUserLongLatInfo($userId, $lat, $long, $redis);
-        // 获取附近用户ID
-        $nearUserIds = getNearUserLongLatInfo($userId, $redis);
-
-        if (empty($nearUserIds)) {
-            return [];
-        }
-
-        // 重新整理 删除当前用户的ID $value[0] = userId $value[1] = distance
-        $userIds = [];
-        foreach ($nearUserIds as $value) {
-            if ($value[0] == $userId) {
-                continue;
-            }
-            $userIds[$value[0]] = $value[1];
-        }
-
-        if (empty($userIds)) {
-            return [];
-        }
-        // 获取动态数据 id 倒叙
-        $query = Db::name("dynamic")
-            ->whereIn("u_id", array_keys($userIds))
-            ->where("is_delete", DbDataIsDeleteEnum::NO)
-            ->order("id", "desc");
-
-        if ($startId != 0) {
-            $query = $query->where("id", "<", $startId);
-        }
-
-        $dynamics = $query->limit($pageSize)->select()->toArray();
-        if (empty($dynamics)) {
-            return [];
-        }
-
-        // 获取动态用户数据
-        $userInfo = Db::name("user")->alias("u")
-            ->leftJoin("user_info ui", "u.id = ui.u_id")
-            ->leftJoin("user_set us","us.u_id = ui.u_id")
-            ->field("u.id,u.sex,u.user_number,ui.portrait,ui.nickname,ui.birthday,ui.city,
-            us.voice_chat_switch,us.voice_chat_price,us.video_chat_switch,us.video_chat_price,us.direct_message_free,
-            us.direct_message_price")
-            ->whereIn("u.id", array_column($dynamics, 'u_id'))
-            ->select()->toArray();
-        $userIdToUserInfo = array_combine(array_column($userInfo, 'id'), $userInfo);
-
-        // 获取动态统计数据
-        $dynamicCount = Db::name("dynamic_count")
-            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-            ->select()->toArray();
-        $dynamicIdToDynamicCount = array_combine(array_column($dynamicCount, 'dynamic_id'), $dynamicCount);
-
-        // 获取动态点赞的用户ID
-        $dynamicIdToUserIds = Db::name("dynamic_like")
-            ->whereIn("dynamic_id", array_column($dynamics, 'id'))
-            ->field("dynamic_id,u_id")
-            ->select()->toArray();
-        $likeDynamicUserIds = [];
-        // 点赞用户ID根据动态ID分组
-        array_map(function ($item) use (&$likeDynamicUserIds) {
-            $likeDynamicUserIds[$item['dynamic_id']][] = $item["u_id"];
-        }, $dynamicIdToUserIds);
-
-        // 获取用户是否关注数据
-        $userFollow = Db::name("user_follow")->where("u_id", $userId)
-            ->whereIn("follow_u_id", array_column($dynamics, 'u_id'))
-            ->column("follow_u_id");
-
-        foreach ($dynamics as &$item) {
-            $item["userInfo"] = isset($userIdToUserInfo[$item['u_id']]) ? $userIdToUserInfo[$item['u_id']] : [];
-            $item["dynamicCount"] = isset($dynamicIdToDynamicCount[$item['id']]) ? $dynamicIdToDynamicCount[$item['id']] : [];
-            $item["likeDynamicUserIds"] = isset($likeDynamicUserIds[$item['id']]) ? $likeDynamicUserIds[$item['id']] : [];
-            $item["is_followed"] = in_array($item["u_id"], $userFollow) ? 1 : 0;
-            // 计算距离
-            $item["distance"] = $userIds[$item["u_id"]] ?? 0;
-        }
-
-        $distanceSort = array_column($dynamics, 'distance');
-        array_multisort($distanceSort, SORT_ASC, $dynamics);
-
-        // 添加更新锁
-        return $dynamics;
-    }
 
     /**
      * 附近人动态列表
@@ -632,7 +531,7 @@ class DynamicService extends Base
      * @param $userId int 用户ID
      * @return mixed
      */
-    public function near1($pageNum, $pageSize, $long, $lat, $userId, $isFlush)
+    public function near($pageNum, $pageSize, $long, $lat, $userId, $isFlush)
     {
         // 经纬度不传返回空列表
         if (empty($long) && empty($lat)) {

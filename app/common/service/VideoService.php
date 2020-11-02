@@ -93,6 +93,13 @@ class VideoService extends Base
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
+        $isLike = Db::name("video_like")
+            ->where("video_id", $id)->where("u_id", $user['id'])
+            ->field("id")->find();
+        if ($isLike) {
+            throw AppException::factory(AppException::DYNAMIC_IS_LIKE);
+        }
+
         // 添加访问记录队列
         VisitorService::addVisitorLog($uid, $user["id"]);
 
@@ -130,6 +137,13 @@ class VideoService extends Base
         if (empty($video)) {
             throw AppException::factory(AppException::VIDEO_NOT_EXISTS);
         }
+
+        $isLike = Db::name("video_like")->where("video_id", $id)
+            ->where("u_id", $user["id"])->field("id")->find();
+        if (empty($isLike)) {
+            throw AppException::factory(AppException::DYNAMIC_IS_CANCEL_LIKE);
+        }
+
         Db::startTrans();
         try {
             $flag = Db::name("video_like")->where("video_id", $id)
@@ -271,5 +285,34 @@ class VideoService extends Base
         $ret["userFollow"] = $userFollow;
 
         return array_values($ret);
+    }
+
+    /**
+     * 获取个人小视频列表
+     *
+     * @param $startId
+     * @param $pageSize
+     * @param $requestUserId
+     * @return array
+     */
+    public function personal($startId, $pageSize, $requestUserId)
+    {
+        // 获取动态数据
+        $videoQuery = Db::name("video")->alias("v")
+            ->leftJoin("video_count vc", "vc.video_id = v.id")
+            ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.u_id", $requestUserId)
+            ->field("v.id,v.u_id,v.source,vc.like_count")
+            ->order("v.id", "desc");
+        if (!empty($startId)) {
+            $videoQuery = $videoQuery->where("v.id", "<", $startId);
+        }
+        $videos = $videoQuery->limit($pageSize)->select()->toArray();
+
+        if (empty($videos)) {
+            return [];
+        }
+
+        return $videos;
     }
 }

@@ -34,7 +34,7 @@ class InfoTransformer extends TransformerAbstract
             'content' => $info["content"] ?? "",
             'source' => json_decode($info["source"], true),
             'like_count' => $info['like_count'] ?? 0,
-            'comment_count' => $data['comment_count'] ?? 0,
+            'comment_count' => $info['comment_count'] ?? 0,
             'is_like' => $this->getIsLike($likeUserIds),
             'is_followed' => $this->getIsFollow($info["u_id"]),
             'comment_list' => $this->getComment($comment)
@@ -85,7 +85,7 @@ class InfoTransformer extends TransformerAbstract
                 if ($startPid != $tmp['pid']) { // 当前评论父评论不是顶级评论的展示to_user
                     $tmp['show_to_user'] = 1;
                 }
-                array_push($ret[$startPid]['comment'], $tmp);
+                array_unshift($ret[$startPid]['comment'], $tmp);
                 $commentPidPath[$tmp['id']] = $pidPath . "-" . $tmp['id'];
             }
         }

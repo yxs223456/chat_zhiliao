@@ -168,7 +168,8 @@ class GuardCallback extends Command
                     'object_source_id' => $this->incomeUserId,// 造成分润的女神ID
                     'before_balance' => $wallet["total_balance"] ?? 0,
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
-                    'create_date' => date("Y-m-d")
+                    'create_date' => date("Y-m-d"),
+                    'add_u_id' => $this->incomeUserId
                 ]);
 
                 // 更新守护奖励总记录表
@@ -248,7 +249,8 @@ class GuardCallback extends Command
                     'object_source_id' => $this->incomeUserId,// 造成分润的女神ID
                     'before_balance' => $wallet["total_balance"] ?? 0,
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
-                    'create_date' => date("Y-m-d")
+                    'create_date' => date("Y-m-d"),
+                    'add_u_id' => $this->incomeUserId
                 ]);
 
                 // 更新守护奖励总记录表

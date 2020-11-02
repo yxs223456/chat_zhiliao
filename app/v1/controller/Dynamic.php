@@ -10,6 +10,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\DynamicService;
+use app\v1\transformer\dynamic\CommentTransformer;
 use app\v1\transformer\dynamic\ConcernTransformer;
 use app\v1\transformer\dynamic\InfoTransformer;
 use app\v1\transformer\dynamic\NearTransformer;
@@ -37,18 +38,19 @@ class Dynamic extends Base
     public function near()
     {
         $request = $this->query["content"];
-        $startId = $request["start_id"] ?? 0;
+        $pageNum = $request["page_num"] ?? 1;
         $pageSize = $request["page_size"] ?? 20;
         $long = $request["long"] ?? ""; // 经度
         $lat = $request["lat"] ?? ""; // 纬度
+        $isFlush = $request["is_flush"] ?? 0; // 刷新
         $userId = $this->query["user"]["id"]; // 当前登陆用户ID
 
-        if (!checkInt($startId) || !checkInt($pageSize, false)) {
+        if (!checkInt($pageNum,false) || !checkInt($pageSize, false)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new DynamicService();
-        $dynamic = $service->near($startId, $pageSize, $long, $lat, $userId);
+        $dynamic = $service->near($pageNum, $pageSize, $long, $lat, $userId, $isFlush);
         return $this->jsonResponse($dynamic, new NearTransformer(['userId' => $this->query["user"]["id"]]));
     }
 
@@ -166,8 +168,8 @@ class Dynamic extends Base
 
         $user = $this->query["user"];
         $service = new DynamicService();
-        $service->comment($id, $pid, $content, $user);
-        return $this->jsonResponse(new \stdClass());
+        $data = $service->comment($id, $pid, $content, $user);
+        return $this->jsonResponse($data, new CommentTransformer());
     }
 
     /**

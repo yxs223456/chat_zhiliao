@@ -33,6 +33,8 @@ class AppException extends \Exception
     const USER_IS_FOLLOWED = [2015, "用户已关注", "用戶已關注"];
     const USER_NOT_FOLLOW_SELF = [2016, "不能关注自己", "不能關注自己"];
     const USER_NOT_FEMALE = [2017, "用户不是女生", "用戶不是女生"];
+    const USER_IS_ADD_BLACK = [2018, "已添加", "已添加"];
+    const USER_IS_REMOVE_BLACK = [2019, "已移除", "已移除"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空", "動態不能為空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在", "動態不存在"];
@@ -61,6 +63,8 @@ class AppException extends \Exception
     const VIDEO_NOT_EXISTS = [8001, "视频不存在", "視頻不存在"];
 
     const IM_SEND_SELF = [9000, "不能和自己聊天", "不能和自己聊天"];
+
+    const CONTENT_TOO_LONG = [1101, "内容太长", "內容太長"];
 
     public static function factory($errConst, $message = "", $lang = null)
     {

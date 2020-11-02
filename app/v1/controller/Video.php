@@ -10,6 +10,7 @@ namespace app\v1\controller;
 
 use app\common\AppException;
 use app\common\service\VideoService;
+use app\v1\transformer\video\PersonalListTransformer;
 use app\v1\transformer\video\VideoListTransformer;
 
 class Video extends Base
@@ -72,6 +73,31 @@ class Video extends Base
             ['user' => $user, 'likeVideoUserIds' => $likeVideoUserIds,
                 "userSetData" => $userSetData, 'userFollow' => $userFollow]
         ));
+    }
+
+    /**
+     * 个人小视频列表
+     *
+     * @return \think\response\Json
+     * @throws AppException
+     */
+    public function personal()
+    {
+        $request = $this->query["content"];
+        $startId = $request["start_id"] ?? 0;
+        $pageSize = $request["page_size"] ?? 20;
+        $requestUserId = $request["user_id"] ?? 0;
+        if (empty($requestUserId)) {
+            $requestUserId = $this->query["user"]["id"];
+        }
+
+        if (!checkInt($pageSize, false) || !checkInt($requestUserId,true) || !checkInt($startId,true)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new VideoService();
+        $videos = $service->personal($startId, $pageSize, $requestUserId);
+        return $this->jsonResponse($videos, new PersonalListTransformer());
     }
 
     /**

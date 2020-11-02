@@ -345,6 +345,7 @@ class User extends Base
         $city = $request["city"] ?? "";
         $sex = $request["sex"] ?? null;
         $photo = $request["photos"] ?? null;
+        $signatures = $request["signatures"] ?? null;
 
         if (!empty($birthday) && !checkDateFormat($birthday)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -365,6 +366,14 @@ class User extends Base
             }
             $photo = array_filter(explode(",", $photo));
             $update["photos"] = json_encode($photo);
+        }
+
+        if (isset($signatures)) {
+            if (!is_string($signatures)) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
+            $signatures = array_filter(explode(",", $signatures));
+            $update["signatures"] = json_encode($signatures);
         }
 
         if (empty(array_filter($update))) {

@@ -149,7 +149,8 @@ class ChatEndCallback extends Command
                         WalletAddEnum::VIDEO_CHAT : WalletAddEnum::VOICE_CHAT,
                     $chatId,
                     $tUWallet["total_balance"],
-                    $tUWallet["total_balance"] + $income
+                    $tUWallet["total_balance"] + $income,
+                    $chat["s_u_id"]
                 );
             }
 

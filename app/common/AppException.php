@@ -35,6 +35,7 @@ class AppException extends \Exception
     const USER_NOT_FEMALE = [2017, "用户不是女生", "用戶不是女生"];
     const USER_IS_ADD_BLACK = [2018, "已添加", "已添加"];
     const USER_IS_REMOVE_BLACK = [2019, "已移除", "已移除"];
+    const USER_IS_NOT_PRETTY = [2020, "您还未申请成为女神", "您還未申請成為女神"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空", "動態不能為空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在", "動態不存在"];

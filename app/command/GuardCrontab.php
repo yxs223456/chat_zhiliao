@@ -118,26 +118,26 @@ GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
             // 添加守护历史记录
             Db::name("guard_history")->insert([
                 'u_id' => $user['u_id'],
-                'guard_u_id' => $guard['add_u_id'],
+                'guard_u_id' => $guard[0]['add_u_id'],
                 'sex_type' => InteractSexTypeEnum::FEMALE_TO_MALE,
-                'charm_amount' => $guard['s'],
+                'charm_amount' => $guard[0]['s'],
                 'start_date' => getLastWeekStartDate(),
                 'end_date' => getLastWeekEndDate()
             ]);
 
             // 添加守护总奖励记录
-            $exists = Db::name("guard_income")->where("u_id", $guard['add_u_id'])->find();
+            $exists = Db::name("guard_income")->where("u_id", $guard[0]['add_u_id'])->find();
             if ($exists) {
-                Db::name("guard_income")->where("u_id", $guard['add_u_id'])
+                Db::name("guard_income")->where("u_id", $guard[0]['add_u_id'])
                     ->inc('guard_count', 1)
-                    ->inc('total_amount', $guard['s'])
+                    ->inc('total_amount', $guard[0]['s'])
                     ->update();
             } else {
                 Db::name("guard_income")->insert([
                     'guard_count' => 1,
-                    'total_amount' => $guard['s'],
+                    'total_amount' => $guard[0]['s'],
                     'sex' => UserSexEnum::MALE,
-                    'u_id' => $guard['add_u_id']
+                    'u_id' => $guard[0]['add_u_id']
                 ]);
             }
 

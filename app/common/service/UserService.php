@@ -745,10 +745,10 @@ class UserService extends Base
         }
         // 女神金额逻辑(是女神)
         if ($sex == UserSexEnum::FEMALE) {
-            $isPretty = $userInfo["is_pretty"];
-            if (!$isPretty) {
-                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-            }
+//            $isPretty = $userInfo["is_pretty"];
+//            if (!$isPretty) {
+//                throw AppException::factory(AppException::USER_IS_NOT_PRETTY);
+//            }
             Db::name("user_set")->where("u_id", $user["id"])->update(["direct_message_free" => $switch, "direct_message_price" => $coin]);
             deleteUserSetByUId($user["id"], Redis::factory());
             return;
@@ -760,7 +760,7 @@ class UserService extends Base
         $svipDeadline = empty($userInfo['svip_deadline']) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["svip_deadline"];
         // vip过期 不是vip不能设置通话聊天金额(不能开启，这里判断是否开启通过coin值判断)
         if ($today > $vipDeadline && $today > $svipDeadline && $coin > 0) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            throw AppException::factory(AppException::USER_NOT_VIP);
         }
 
         Db::name("user_set")->where("u_id", $user["id"])->update(["direct_message_free" => $switch, "direct_message_price" => $coin]);

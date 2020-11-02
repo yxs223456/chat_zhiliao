@@ -319,7 +319,7 @@ class ChatService extends Base
             if (empty($chat)) {
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
-            if ($user["id"] != $chat["s_u_id "] && $user["id"] != $chat["t_u_id"]) {
+            if ($user["id"] != $chat["s_u_id"] && $user["id"] != $chat["t_u_id"]) {
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
             if ($chat["status"] != ChatStatusEnum::CALLING) {

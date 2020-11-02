@@ -326,7 +326,18 @@ class ChatService extends Base
                 throw AppException::factory(AppException::CHAT_NOT_CALLING);
             }
 
+            // 修改通话纪录
+            $chatUpdateData = [
+                "status" => ChatStatusEnum::END,
+                "chat_end_time" => time(),
+                "chat_time_length" => time() - $chat["chat_begin_time"],
+                "hang_up_id" => $user["id"],
+            ];
+            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
+
             // 计算本次聊天费用
+            $chat["chat_end_time"] = $chatUpdateData["chat_end_time"];
+            $chat["chat_time_length"] = $chatUpdateData["chat_time_length"];
             $price = self::getEndChatPay($chat);
             if ($price > 0) {
                 // 扣除拨打人钱包余额
@@ -365,15 +376,6 @@ class ChatService extends Base
                     $sUWallet["total_balance"] - $price
                 );
             }
-
-            // 修改通话纪录
-            $chatUpdateData = [
-                "status" => ChatStatusEnum::END,
-                "chat_end_time" => time(),
-                "chat_time_length" => time() - $chat["chat_begin_time"],
-                "hang_up_id" => $user["id"],
-            ];
-            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
 
             // 后续处理通过队列异步处理
             // 数据库纪录回调数据

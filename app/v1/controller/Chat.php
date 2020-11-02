@@ -13,10 +13,12 @@ use app\common\Constant;
 use app\common\enum\ChatTypeEnum;
 use app\common\service\ChatService;
 use app\common\service\GiftService;
+use app\common\service\IMService;
 use app\v1\transformer\chat\Answer;
 use app\v1\transformer\chat\Dial;
 use app\v1\transformer\chat\Gift;
 use app\v1\transformer\chat\RedPackage;
+use app\v1\transformer\im\SendMessage;
 
 class Chat extends Base
 {
@@ -145,5 +147,28 @@ class Chat extends Base
         $returnData = $service->sendRedPackageWhenChat($user, $chatId, $amount);
 
         return $this->jsonResponse($returnData, new RedPackage());
+    }
+
+    /**
+     * 通话中发送私聊消息
+     */
+    public function sendMessage()
+    {
+        $request = $this->query["content"];
+        $message = $request["message"] ?? "";
+        $chatId = $request["chat_id"]??"";
+
+        if (!checkInt($chatId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+        if (empty($message)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new IMService();
+        $returnData = $service->sendMessageWhenChat($user, $chatId, $message);
+
+        return $this->jsonResponse($returnData, new SendMessage());
     }
 }

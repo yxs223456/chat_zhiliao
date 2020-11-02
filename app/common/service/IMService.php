@@ -9,25 +9,28 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\Constant;
+use app\common\enum\ChatStatusEnum;
 use app\common\enum\FlowTypeEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletAddEnum;
 use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
 use app\common\helper\ShengWang;
+use app\common\model\ChatModel;
 use think\facade\Db;
 
 class IMService extends Base
 {
     /**
-     * 判断是否可以发送私聊
+     * 非通话发送私聊消息
      * @param $user
      * @param $tUId
-     * @return array|\stdClass
+     * @param $message
+     * @return array
      * @throws AppException
      * @throws \Throwable
      */
-    public function checkSendMessage($user, $tUId)
+    public function sendMessage($user, $tUId, $message)
     {
         // 不能和自己聊天
         if ($tUId == $user["id"]) {
@@ -118,10 +121,52 @@ class IMService extends Base
             }
         }
 
+        ShengWang::sendMessage($user["id"], $tUId, $message);
+
         return [
             "is_free" => $isFree,
             "price" => $price,
             "bonus" => $bonus,
+        ];
+    }
+
+    /**
+     * 通话中发送私聊消息
+     * @param $user
+     * @param $chatId
+     * @param $message
+     * @return array
+     * @throws AppException
+     */
+    public function sendMessageWhenChat($user, $chatId, $message)
+    {
+        $chatModel = new ChatModel();
+        $chat = $chatModel->findById($chatId);
+
+        // 聊天必须是正在通话中状态
+        // 用户必须是参与通话一方
+        if ($chat == null) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        if ($chat["status"] != ChatStatusEnum::CALLING) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+        if ($user["id"] != $chat["s_u_id"] && $user["id"] != $chat["t_u_id"]) {
+            throw AppException::factory(AppException::QUERY_INVALID);
+        }
+
+        if ($user["id"] == $chat["t_u_id"]) {
+            $tUId = $chat["s_u_id"];
+        } else {
+            $tUId = $chat["t_u_id"];
+        }
+
+        ShengWang::sendMessage($user["id"], $tUId, $message);
+
+        return [
+            "is_free" => 1,
+            "price" => 0,
+            "bonus" => 0,
         ];
     }
 
@@ -140,5 +185,24 @@ class IMService extends Base
             "expire" => $expire,
         ];
         return $returnData;
+    }
+
+    public static function sendGiftImMessage($user, $rUId, $gift)
+    {
+        $giftMessage = json_encode([
+            "type" => 2,
+            "message" => "",
+            "image" => [
+                "image_url" => "",
+            ],
+            "gift" => [
+                "image_url" => $gift["image_url"],
+            ],
+            "sound" => [
+                "length" => 0,
+                "link" => "",
+            ],
+        ]);
+        ShengWang::sendMessage($user["id"], $rUId, $giftMessage);
     }
 }

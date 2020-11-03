@@ -154,15 +154,16 @@ class Video extends Base
     public function post()
     {
         $request = $this->query["content"];
+        $cover = $request["cover"] ?? ""; //小视频封面图片
         $source = $request["source"] ?? ""; //小视频链接
 
-        if (empty($source)) {
+        if (empty($source) || empty($cover)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $user = $this->query["user"];
         $service = new VideoService();
-        $service->post($source, $user);
+        $service->post($cover, $source, $user);
         return $this->jsonResponse(new \stdClass());
     }
 

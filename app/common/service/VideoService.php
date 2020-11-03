@@ -19,12 +19,13 @@ class VideoService extends Base
     /**
      * 发布小视频
      *
+     * @param $cover
      * @param $source
      * @param $user
      * @return int|string
      * @throws \Throwable
      */
-    public function post($source, $user)
+    public function post($cover, $source, $user)
     {
         // TODO 验证规则
         Db::startTrans();
@@ -32,6 +33,7 @@ class VideoService extends Base
             // 添加动态
             $videoData = [
                 'u_id' => $user["id"],
+                'cover' => $cover,
                 'source' => $source,
                 'create_time' => date("Y-m-d H:i:s")
             ];

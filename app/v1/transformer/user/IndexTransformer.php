@@ -84,6 +84,7 @@ class IndexTransformer extends TransformerAbstract
         foreach ($videos as $item) {
             $tmp = [];
             $tmp["id"] = $item["id"];
+            $tmp["cover"] = $item["cover"];
             $tmp["source"] = $item["source"];
             $tmp["like_count"] = $item["like_count"];
             $ret[] = $tmp;

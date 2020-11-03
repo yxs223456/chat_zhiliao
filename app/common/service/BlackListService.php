@@ -32,6 +32,7 @@ class BlackListService extends Base
 
         $blackUserIds = Db::name("black_list")->where("u_id", $userId)->column("black_u_id");
         $ret = [
+            'userId' => $userId,
             'blackUserIds' => $blackUserIds
         ];
         cacheUserBlackListByUId($ret, $redis);

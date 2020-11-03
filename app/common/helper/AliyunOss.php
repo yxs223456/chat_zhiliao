@@ -7,6 +7,10 @@
  */
 namespace app\common\helper;
 
+use AlibabaCloud\Client\AlibabaCloud;
+use AlibabaCloud\Client\Exception\ClientException;
+use AlibabaCloud\Client\Exception\ServerException;
+use AlibabaCloud\Sts\Sts;
 use OSS\OssClient;
 use Sts\Request\V20150401\AssumeRoleRequest;
 use think\facade\App;
@@ -94,5 +98,39 @@ class AliyunOss
             $rows['ErrorMessage'] = $content->Message;
         }
         return $rows;
+    }
+
+    public static function getToken1()
+    {
+        // 加载配置文件
+        self::getConfig();
+        $policy = read_file(self::$policyFile);
+        AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
+            ->regionId(self::$regionId)
+            ->asDefaultClient();
+
+        try {
+            $result = AlibabaCloud::rpc()
+                ->product('Sts')
+                 ->scheme('https') // https | http
+                ->version('2015-04-01')
+                ->action('AssumeRole')
+                ->method('POST')
+                ->host('sts.aliyuncs.com')
+                ->options([
+                    'query' => [
+                        'RegionId' => "cn-hangzhou",
+                        'RoleArn' => self::$roleArn,
+                        'RoleSessionName' => "client_name",
+                        'Policy' => $policy
+                    ],
+                ])
+                ->request();
+            return $result->toArray();
+        } catch (ClientException $e) {
+            echo $e->getErrorMessage() . PHP_EOL;
+        } catch (ServerException $e) {
+            echo $e->getErrorMessage() . PHP_EOL;
+        }
     }
 }

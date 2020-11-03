@@ -91,13 +91,17 @@ class Video extends Base
             $requestUserId = $this->query["user"]["id"];
         }
 
-        if (!checkInt($pageSize, false) || !checkInt($requestUserId,true) || !checkInt($startId,true)) {
+        if (!checkInt($pageSize, false) || !checkInt($requestUserId, true) || !checkInt($startId, true)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new VideoService();
-        $videos = $service->personal($startId, $pageSize, $requestUserId);
-        return $this->jsonResponse($videos, new PersonalListTransformer());
+        list($video, $currentUserLikeVideos, $userSetData, $userFollow) =
+            $service->personal($startId, $pageSize, $requestUserId, $this->query["user"]['id']);
+        return $this->jsonResponse($video, new PersonalListTransformer([
+            'currentUserLikeVideos' => $currentUserLikeVideos,
+            "userSetData" => $userSetData, 'userFollow' => $userFollow
+        ]));
     }
 
     /**

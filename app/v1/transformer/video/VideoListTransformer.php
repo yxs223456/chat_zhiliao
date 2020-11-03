@@ -39,6 +39,7 @@ class VideoListTransformer extends TransformerAbstract
             "id" => $data["id"] ?? 0,
             "u_id" => $data["u_id"] ?? 0,
             "avatar" => (string)$data["portrait"] ?? "",
+            "cover" => (string)$data["cover"] ?? "",
             "source" => $data["source"] ?? "",
             "like_count" => (int)$data["like_count"] ?? 0,
             "city" => empty($data["city"]) ? "" : CityService::getCityByCode($data['city']),

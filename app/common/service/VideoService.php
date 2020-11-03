@@ -187,7 +187,7 @@ class VideoService extends Base
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->whereLike("ui.city", $city . "%")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->field("v.id,v.u_id,v.source,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
@@ -249,7 +249,7 @@ class VideoService extends Base
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->field("v.id,v.u_id,v.source,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
@@ -295,16 +295,25 @@ class VideoService extends Base
      * @param $startId
      * @param $pageSize
      * @param $requestUserId
+     * @param $currentUserId
      * @return array
      */
-    public function personal($startId, $pageSize, $requestUserId)
+    public function personal($startId, $pageSize, $requestUserId, $currentUserId)
     {
-        // 获取动态数据
+        $ret = [
+            "video" => [],
+            "currentUserLikeVideos" => [],
+            "userSetData" => [],
+            "userFollow" => 0
+        ];
+
+        // 获取请求用户动态数据
         $videoQuery = Db::name("video")->alias("v")
+            ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->where("v.u_id", $requestUserId)
-            ->field("v.id,v.u_id,v.source,vc.like_count")
+            ->field("v.id,v.u_id,v.cover,v.source,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
@@ -312,9 +321,26 @@ class VideoService extends Base
         $videos = $videoQuery->limit($pageSize)->select()->toArray();
 
         if (empty($videos)) {
-            return [];
+            return array_values($ret);
         }
+        $ret["video"] = $videos;
+        // 获取当前用户点赞的小视频ID
+        $currentUserLikeVideos = Db::name("video_like")
+            ->whereIn("video_id", array_column($videos, 'id'))
+            ->where("u_id", $currentUserId)
+            ->column("video_id");
+        $ret["currentUserLikeVideos"] = $currentUserLikeVideos;
 
-        return $videos;
+        // 获取小视频用户配置
+        $userSet = Db::name("user_set")->where("u_id", $requestUserId)
+            ->find();
+        $ret["userSetData"] = $userSet;
+
+        // 查看当前用户关注动态用户的记录
+        $userFollow = Db::name("user_follow")->where("u_id", $currentUserId)
+            ->where("follow_u_id", $requestUserId)->find();
+        $ret["userFollow"] = empty($userFollow) ? 0 : 1;
+
+        return array_values($ret);
     }
 }

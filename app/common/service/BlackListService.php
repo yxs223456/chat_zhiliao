@@ -26,13 +26,12 @@ class BlackListService extends Base
     {
         $redis = $redis === null ? Redis::factory() : $redis;
         $cacheUserBlackList = getUserBlackListByUId($userId, $redis);
-        if (!empty($cacheUserBlackList)) {
+        if (isset($cacheUserBlackList["blackUserIds"])) {
             return $cacheUserBlackList["blackUserIds"];
         }
 
         $blackUserIds = Db::name("black_list")->where("u_id", $userId)->column("black_u_id");
         $ret = [
-            'userId' => $userId,
             'blackUserIds' => $blackUserIds
         ];
         cacheUserBlackListByUId($ret, $redis);
@@ -42,8 +41,8 @@ class BlackListService extends Base
     /**
      * 判读用户是否在另一个用户黑名单 在返回true
      *
-     * @param $userId int 查询的用户ID
-     * @param $blackUserId int 黑名单用户ID
+     * @param $userId int 黑名单用户
+     * @param $blackUserId int 查询用户
      * @param null $redis
      * @return bool
      */

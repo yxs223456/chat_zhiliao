@@ -148,7 +148,7 @@ class RelationService extends Base
         if (empty($followUser)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
-        if (BlackListService::inUserBlackList($userId, $followId)) {
+        if (BlackListService::inUserBlackList($followId, $userId)) {
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 

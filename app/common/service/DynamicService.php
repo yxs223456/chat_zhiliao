@@ -91,7 +91,7 @@ class DynamicService extends Base
         // 如果有数据
         if (!empty($info["info"]["u_id"])) {
             // 判断是否黑名单
-            if (BlackListService::inUserBlackList($user['id'], $info["info"]['u_id'])) {
+            if (BlackListService::inUserBlackList($info["info"]['u_id'], $user['id'])) {
                 throw AppException::factory(AppException::USER_IN_BLACK_LIST);
             }
             // 添加访问记录队列
@@ -183,7 +183,7 @@ class DynamicService extends Base
             throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
         }
         $uid = $dynamic["u_id"];
-        if (BlackListService::inUserBlackList($user['id'], $uid)) {
+        if (BlackListService::inUserBlackList($uid, $user['id'])) {
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 
@@ -239,7 +239,7 @@ class DynamicService extends Base
             throw AppException::factory(AppException::DYNAMIC_NOT_EXISTS);
         }
         $uid = $dynamic["u_id"];
-        if (BlackListService::inUserBlackList($user['id'], $uid)) {
+        if (BlackListService::inUserBlackList($uid, $user['id'])) {
             throw AppException::factory(AppException::USER_IN_BLACK_LIST);
         }
 

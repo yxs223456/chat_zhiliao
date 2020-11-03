@@ -562,7 +562,7 @@ function getUserBlackListByUId($userId, Redis $redis)
     if ($data) {
         return json_decode($data, true);
     } else {
-        return [];
+        return null;
     }
 }
 

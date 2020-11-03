@@ -135,8 +135,6 @@ class VisitorLogCallback extends Command
             Db::commit();
             // 添加今日访问缓存
             cacheUserVisitorIdData($this->userId, $this->visitorId, $redis);
-            // 删除分页缓存
-            deleteUserVisitorPageData($this->userId, $redis);
             // 更新总数缓存
             VisitorService::updateVisitorSumCount($this->userId, $redis);
 
@@ -192,8 +190,6 @@ class VisitorLogCallback extends Command
             Db::commit();
             // 添加今日访问缓存
             cacheUserVisitorIdData($this->userId, $this->visitorId, $redis);
-            // 删除分页缓存
-            deleteUserVisitorPageData($this->userId, $redis);
             // 更新总数缓存
             VisitorService::updateVisitorSumCount($this->userId, $redis);
 

@@ -63,12 +63,6 @@ class VisitorService extends Base
     public function user($startId, $pageSize, $userId)
     {
         $redis = Redis::factory();
-        $data = getUserVisitorPageData($userId, $startId, $pageSize, $redis);
-        // 如果有缓存直接返回
-        if (!empty($data)) {
-            return $data;
-        }
-
         $ret = [
             "today_count" => getUserVisitorTodayCount($userId, $redis), // 今天访问数
             "count" => $this->getVisitorSumCount($userId, $redis), // 总访问次数
@@ -85,8 +79,7 @@ class VisitorService extends Base
             $query = $query->where("vl.id", "<", $startId);
         }
 
-        $ret["list"] = $query->select()->toArray();
-        cacheUserVisitorPageData($userId, $startId, $pageSize, $ret, $redis);
+        $ret["list"] = $query->limit($pageSize)->select()->toArray();
         return $ret;
     }
 

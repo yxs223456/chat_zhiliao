@@ -632,35 +632,6 @@ function getUserVisitorTodayCount($userId, Redis $redis)
 }
 
 /**
- * 用户访客分页数据
- */
-define("REDIS_USER_VISITOR_PAGE_DATA", REDIS_KEY_PREFIX . "userVisitorPageData:");
-function cacheUserVisitorPageData($userId, $startId, $pageSize, $data, Redis $redis)
-{
-    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $startId;
-    $redis->setex($key, 7200, json_encode($data));
-}
-
-// 获取用户访客分页数据
-function getUserVisitorPageData($userId, $startId, $pageSize, Redis $redis)
-{
-    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":" . $pageSize . ":" . $startId;
-    $data = $redis->get($key);
-    if ($data) {
-        return json_decode($data, true);
-    }
-    return [];
-}
-
-// 删除用户所有访客分页数据缓存
-function deleteUserVisitorPageData($userId, Redis $redis)
-{
-    $key = REDIS_USER_VISITOR_PAGE_DATA . $userId . ":*";
-    $keys = $redis->keys($key);
-    $redis->del($keys);
-}
-
-/**
  * 缓存用户访客数据信息 每日访客的集合（去重复，减少数据库查询次数）
  */
 define("REDIS_USER_VISITOR_SUM_COUNT", REDIS_KEY_PREFIX . "userVisitorSumCount:");

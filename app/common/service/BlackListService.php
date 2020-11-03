@@ -41,15 +41,15 @@ class BlackListService extends Base
     /**
      * 判读用户是否在另一个用户黑名单 在返回true
      *
-     * @param $userId int 黑名单用户
-     * @param $blackUserId int 查询用户
+     * @param $blackId int 黑名单用户
+     * @param $searchId int 查询用户
      * @param null $redis
      * @return bool
      */
-    public static function inUserBlackList($userId, $blackUserId, $redis = null)
+    public static function inUserBlackList($blackId, $searchId, $redis = null)
     {
-        $blackUserIds = self::getUserBlackListById($blackUserId, $redis);
-        if (in_array($userId, $blackUserIds)) {
+        $blackUserLists = self::getUserBlackListById($blackId, $redis);
+        if (in_array($searchId, $blackUserLists)) {
             return true;
         }
         return false;

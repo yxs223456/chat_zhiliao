@@ -24,6 +24,33 @@ define("REDIS_KEY_MQ_KEY_PREFIX", REDIS_KEY_PREFIX . "message_queue:");
 define("REDIS_KEY_MQ_WAIT_TIME", 5);
 
 /**
+ * 通话状态检查队列
+ */
+define("REDIS_MQ_KEY_CHAT_STATUS_CHECK", REDIS_KEY_MQ_KEY_PREFIX . "chatStatusCheck");
+
+function chatStatusCheckProduce($chatId, \Redis $redis)
+{
+    $key = REDIS_MQ_KEY_CHAT_STATUS_CHECK;
+    $data = json_encode([
+        "chat_id" => $chatId,
+    ]);
+    $redis->rPush($key, $data);
+}
+
+function chatStatusCheckConsumer(\Redis $redis)
+{
+    $key = REDIS_MQ_KEY_CHAT_STATUS_CHECK;
+    $data = $redis->blPop([$key], REDIS_KEY_MQ_WAIT_TIME);
+
+    if ($data == null || empty($data[1])) {
+        return null;
+    }
+    $arr = json_decode($data[1], true);
+    return $arr;
+}
+
+
+/**
  * 用户充值后回调
  */
 define("REDIS_MQ_KEY_RECHARGE", REDIS_KEY_MQ_KEY_PREFIX . "recharge");

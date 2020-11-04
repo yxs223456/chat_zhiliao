@@ -311,12 +311,12 @@ class ChatService extends Base
 
     /**
      * 结束通话
-     * @param $user
+     * @param $userId
      * @param $chatId
      * @return \stdClass
      * @throws \Throwable
      */
-    public function end($user, $chatId)
+    public function end($userId, $chatId)
     {
         // 只有通话状态处于待接听时才可挂断通话请求
         // 只有通话双方可以挂断通话
@@ -327,71 +327,69 @@ class ChatService extends Base
             if (empty($chat)) {
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
-            if ($user["id"] != $chat["s_u_id"] && $user["id"] != $chat["t_u_id"]) {
+            if ($userId != $chat["s_u_id"] && $userId != $chat["t_u_id"]) {
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
-            if ($chat["status"] != ChatStatusEnum::CALLING) {
-                throw AppException::factory(AppException::CHAT_NOT_CALLING);
-            }
+            if ($chat["status"] == ChatStatusEnum::CALLING) {
+                // 修改通话纪录
+                $chatUpdateData = [
+                    "status" => ChatStatusEnum::END,
+                    "chat_end_time" => time(),
+                    "chat_time_length" => time() - $chat["chat_begin_time"],
+                    "hang_up_id" => $userId,
+                ];
+                Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
 
-            // 修改通话纪录
-            $chatUpdateData = [
-                "status" => ChatStatusEnum::END,
-                "chat_end_time" => time(),
-                "chat_time_length" => time() - $chat["chat_begin_time"],
-                "hang_up_id" => $user["id"],
-            ];
-            Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
+                // 计算本次聊天费用
+                $chat["chat_end_time"] = $chatUpdateData["chat_end_time"];
+                $chat["chat_time_length"] = $chatUpdateData["chat_time_length"];
+                $price = self::getEndChatPay($chat);
+                if ($price > 0) {
+                    // 扣除拨打人钱包余额
+                    $sUWallet = Db::name("user_wallet")
+                        ->where("u_id", $chat["s_u_id"])
+                        ->lock(true)
+                        ->find();
+                    $sUWalletUpdate = Db::name("user_wallet")
+                        ->where("id", $sUWallet["id"]);
+                    if ($sUWallet["balance_amount"] >= $price) {
+                        $sUWalletUpdate->dec("balance_amount", $price)
+                            ->dec("total_balance", $price)
+                            ->update();
+                    } else if ($sUWallet["total_balance"] >= $price) {
+                        $sUWalletUpdate->dec("balance_amount", $sUWallet["balance_amount"])
+                            ->dec("income_amount", $price - $sUWallet["balance_amount"])
+                            ->dec("total_balance", $price)
+                            ->update();
+                    } else {
+                        $sUWalletUpdate->update([
+                            "balance_amount" => 0,
+                            "income_amount" => 0,
+                            "total_balance" => 0,
+                        ]);
+                        $price = $sUWallet["total_balance"];
+                    }
 
-            // 计算本次聊天费用
-            $chat["chat_end_time"] = $chatUpdateData["chat_end_time"];
-            $chat["chat_time_length"] = $chatUpdateData["chat_time_length"];
-            $price = self::getEndChatPay($chat);
-            if ($price > 0) {
-                // 扣除拨打人钱包余额
-                $sUWallet = Db::name("user_wallet")
-                    ->where("u_id", $chat["s_u_id"])
-                    ->lock(true)
-                    ->find();
-                $sUWalletUpdate = Db::name("user_wallet")
-                    ->where("id", $sUWallet["id"]);
-                if ($sUWallet["balance_amount"] >= $price) {
-                    $sUWalletUpdate->dec("balance_amount", $price)
-                        ->dec("total_balance", $price)
-                        ->update();
-                } else if ($sUWallet["total_balance"] >= $price) {
-                    $sUWalletUpdate->dec("balance_amount", $sUWallet["balance_amount"])
-                        ->dec("income_amount", $price - $sUWallet["balance_amount"])
-                        ->dec("total_balance", $price)
-                        ->update();
-                } else {
-                    $sUWalletUpdate->update([
-                        "balance_amount" => 0,
-                        "income_amount" => 0,
-                        "total_balance" => 0,
-                    ]);
-                    $price = $sUWallet["total_balance"];
+                    // 纪录拨打人钱包流水
+                    UserWalletFlowModel::reduceFlow(
+                        $chat["s_u_id"],
+                        $price,
+                        $chat["chat_type"] == ChatTypeEnum::VIDEO ?
+                            WalletReduceEnum::VIDEO_CHAT : WalletReduceEnum::VOICE_CHAT,
+                        $chatId,
+                        $sUWallet["total_balance"],
+                        $sUWallet["total_balance"] - $price
+                    );
                 }
-                
-                // 纪录拨打人钱包流水
-                UserWalletFlowModel::reduceFlow(
-                    $chat["s_u_id"],
-                    $price,
-                    $chat["chat_type"] == ChatTypeEnum::VIDEO ?
-                        WalletReduceEnum::VIDEO_CHAT : WalletReduceEnum::VOICE_CHAT,
-                    $chatId,
-                    $sUWallet["total_balance"],
-                    $sUWallet["total_balance"] - $price
-                );
-            }
 
-            // 后续处理通过队列异步处理
-            // 数据库纪录回调数据
-            $callbackData = [
-                "chat_id" => $chatId,
-                "s_u_pay" => $price,
-            ];
-            Db::name("tmp_chat_end_callback")->insert($callbackData);
+                // 后续处理通过队列异步处理
+                // 数据库纪录回调数据
+                $callbackData = [
+                    "chat_id" => $chatId,
+                    "s_u_pay" => $price,
+                ];
+                Db::name("tmp_chat_end_callback")->insert($callbackData);
+            }
 
             Db::commit();
 

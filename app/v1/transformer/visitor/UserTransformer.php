@@ -35,6 +35,7 @@ class UserTransformer extends TransformerAbstract
             $tmp["nickname"] = $item["nickname"] ?? "";
             $tmp["age"] = (int)$this->getUserAge($item["birthday"] ?? "");
             $tmp["city"] = empty($item["city"]) ? "" : CityService::getCityByCode($item['city']);
+            $tmp['signatures'] = empty($item['signatures']) ? [] : json_decode($item['signatures'],true);
             $tmp["time"] = $item["create_time"] ?? 0;
             $ret[] = $tmp;
         }

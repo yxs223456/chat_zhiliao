@@ -74,6 +74,7 @@ class VisitorService extends Base
             ->field("vl.id,vl.visitor_u_id,vl.create_time,
             u.sex,u.user_number,
             ui.portrait,ui.nickname,ui.birthday,ui.city")
+            ->where("u_id", $userId)
             ->order("vl.create_time", 'desc');
         if (!empty($startId)) {
             $query = $query->where("vl.id", "<", $startId);

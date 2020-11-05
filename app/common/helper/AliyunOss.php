@@ -130,7 +130,23 @@ class AliyunOss
                     ],
                 ])
                 ->request();
-            return $result->toArray();
+
+            $rows = array();
+            $body = $result->getBody();
+            $content = json_decode($body);
+
+            if ($result->isSuccess()) {
+                $rows['StatusCode'] = 200;
+                $rows['AccessKeyId'] = $content->Credentials->AccessKeyId;
+                $rows['AccessKeySecret'] = $content->Credentials->AccessKeySecret;
+                $rows['Expiration'] = $content->Credentials->Expiration;
+                $rows['SecurityToken'] = $content->Credentials->SecurityToken;
+            } else {
+                $rows['StatusCode'] = 500;
+                $rows['ErrorCode'] = $content->Code;
+                $rows['ErrorMessage'] = $content->Message;
+            }
+            return $rows;
         } catch (ClientException $e) {
             echo $e->getErrorMessage() . PHP_EOL;
         } catch (ServerException $e) {

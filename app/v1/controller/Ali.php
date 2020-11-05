@@ -47,19 +47,19 @@ class Ali extends BaseController
         $date = $headers['Date'];
 
 
-        $stringToSign = strtoupper($method) . "\n" . $contentMd5 . "\n" . $contentType . "\n" . $date . "\n" . $canonicalizedMNSHeaders . "\n" . $canonicalizedResource;
-        error_log($stringToSign);
+//        $stringToSign = strtoupper($method) . "\n" . $contentMd5 . "\n" . $contentType . "\n" . $date . "\n" . $canonicalizedMNSHeaders . "\n" . $canonicalizedResource;
+//        error_log($stringToSign);
 
-        $publicKeyURL = base64_decode($headers['x-mns-signing-cert-url']);
-        $publicKey = $this->getByUrl($publicKeyURL);
-        $signature = $headers['Authorization'];
-
-        $pass = $this->verify($stringToSign, $signature, $publicKey);
-        if (!$pass) {
-            error_log("verify signature fail");
-            http_response_code(400);
-            return;
-        }
+//        $publicKeyURL = base64_decode($headers['x-mns-signing-cert-url']);
+//        $publicKey = $this->getByUrl($publicKeyURL);
+//        $signature = $headers['Authorization'];
+//
+//        $pass = $this->verify($stringToSign, $signature, $publicKey);
+//        if (!$pass) {
+//            error_log("verify signature fail");
+//            http_response_code(400);
+//            return;
+//        }
 
         // 2. now parse the content
         $content = file_get_contents("php://input");

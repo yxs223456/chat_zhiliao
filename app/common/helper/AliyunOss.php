@@ -10,7 +10,9 @@ namespace app\common\helper;
 use AlibabaCloud\Client\AlibabaCloud;
 use AlibabaCloud\Client\Exception\ClientException;
 use AlibabaCloud\Client\Exception\ServerException;
+use OSS\Core\OssException;
 use OSS\OssClient;
+use think\facade\Log;
 
 class AliyunOss
 {
@@ -107,9 +109,9 @@ class AliyunOss
             }
             return $rows;
         } catch (ClientException $e) {
-            echo $e->getErrorMessage() . PHP_EOL;
+            Log::error($e->getErrorMessage() . PHP_EOL);
         } catch (ServerException $e) {
-            echo $e->getErrorMessage() . PHP_EOL;
+            Log::error($e->getErrorMessage() . PHP_EOL);
         }
     }
 
@@ -117,9 +119,10 @@ class AliyunOss
      *  提交转码作业请求
      *
      * @param $objectName
-     * @return bool
+     * @param $toName
+     * @return array
      */
-    public static function mtsRequest($objectName)
+    public static function mtsRequest($objectName, $toName)
     {
         // 加载配置文件
         self::getConfig();
@@ -143,7 +146,7 @@ class AliyunOss
                         ]),
                         'Outputs' => json_encode([
                             [
-                                'OutputObject' => urlencode($objectName),
+                                'OutputObject' => urlencode($toName),
                                 'TemplateId' => self::$templateId
                             ]
                         ]),
@@ -153,16 +156,62 @@ class AliyunOss
                     ]
                 ])
                 ->request();
+
             $body = $result->getBody();
             $content = json_decode($body);
             if ($result->isSuccess() && !empty($content->JobResultList->JobResult[0]->Success)) {
-                return true;
+                return $result->toArray();
             }
         } catch (ClientException $e) {
-            echo $e->getErrorMessage() . PHP_EOL;
+            Log::error($e->getErrorMessage() . PHP_EOL);
         } catch (ServerException $e) {
-            echo $e->getErrorMessage() . PHP_EOL;
+            Log::error($e->getErrorMessage() . PHP_EOL);
         }
-        return false;
+        return [];
+    }
+
+    /**
+     * 删除oss文件
+     *
+     * @param $object string 文件名称
+     * @return string
+     * @throws \OSS\Core\OssException
+     */
+    public static function deleteObject($object)
+    {
+        self::getConfig();
+        try {
+            $ossClient = new OssClient(self::$accessKeyId, self::$accessKeySecret, self::$endpoint);
+            $ossClient->deleteObject(self::$bucket, $object);
+        } catch (OssException $e) {
+            throw $e;
+        }
+        return true;
+    }
+
+    /**
+     * 获取objectName
+     *
+     * @param $object
+     * @return string
+     */
+    public static function getObjectName($object)
+    {
+        $objectName = explode(self::$endpoint, $object);
+        return trim(array_pop($objectName), DIRECTORY_SEPARATOR);
+    }
+
+    /**
+     * 文件名称修改方法
+     *
+     * @param $object
+     * @return string
+     */
+    public static function objectNameToMp4($object)
+    {
+        if (strpos($object, ".") === false) {
+            return $object . ".mp4";
+        }
+        return substr($object, 0, strpos($object, ".")) . ".mp4";
     }
 }

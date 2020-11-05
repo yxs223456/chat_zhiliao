@@ -10,6 +10,7 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\enum\DbDataIsDeleteEnum;
+use app\common\enum\VideoIsTransCodeEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -49,6 +50,8 @@ class VideoService extends Base
             Db::rollback();
             throw $e;
         }
+        // 加入转码队列
+        videoTransCodeProduce($id, Redis::factory());
         return $id;
     }
 
@@ -181,12 +184,13 @@ class VideoService extends Base
             "userFollow" => []
         ];
 
-        // 获取动态数据
+        // 获取视频数据
         $videoQuery = Db::name("video")->alias("v")
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("ui.city", $city)
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.is_transcode", VideoIsTransCodeEnum::YES)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
@@ -249,6 +253,7 @@ class VideoService extends Base
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.is_transcode",VideoIsTransCodeEnum::YES)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
@@ -312,6 +317,7 @@ class VideoService extends Base
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.is_transcode",VideoIsTransCodeEnum::YES)
             ->where("v.u_id", $requestUserId)
             ->field("v.id,v.u_id,v.cover,v.source,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
@@ -342,5 +348,20 @@ class VideoService extends Base
         $ret["userFollow"] = empty($userFollow) ? 0 : 1;
 
         return array_values($ret);
+    }
+
+    /**
+     * 回调转码状态修改数据库
+     *
+     * @param $msg
+     */
+    public static function callback($msg)
+    {
+        // 判断是否成功
+
+        // 失败更新video_transcode 状态
+
+
+        // 成功修改video_transcode 状态更新 video source is_transcode,删除之前的文件
     }
 }

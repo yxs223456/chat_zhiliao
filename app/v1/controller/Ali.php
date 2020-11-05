@@ -10,6 +10,7 @@ namespace app\v1\controller;
 
 
 use app\BaseController;
+use app\common\service\VideoService;
 use think\facade\Log;
 
 class Ali extends BaseController
@@ -31,7 +32,7 @@ class Ali extends BaseController
 
         $method = $_SERVER['REQUEST_METHOD'];
         $canonicalizedResource = $_SERVER['REQUEST_URI'];
-        error_log($canonicalizedResource);
+//        error_log($canonicalizedResource);
 
         $contentMd5 = '';
         if (array_key_exists('Content-MD5', $headers)) {
@@ -63,17 +64,23 @@ class Ali extends BaseController
 
         // 2. now parse the content
         $content = file_get_contents("php://input");
-        error_log($content);
+//        error_log($content);
 
         if (!empty($contentMd5) && $contentMd5 != base64_encode(md5($content))) {
-            error_log("md5 mismatch");
+//            error_log("md5 mismatch");
             http_response_code(401);
             return;
         }
 
-        $msg = json_decode($content);
-        Log::info("mts", $msg);
-        http_response_code(200);
+        $msg = json_decode($content, true);
+//        Log::info("mts", $msg);
+        $result = VideoService::callback($msg);
+        if ($result) {
+            http_response_code(200);
+            return;
+        }
+        http_response_code(500);
+        return;
     }
 
     private function getByUrl($url)

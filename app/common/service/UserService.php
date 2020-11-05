@@ -11,6 +11,7 @@ use app\common\enum\PrettyMaleLevelEnum;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
+use app\common\enum\VideoIsTransCodeEnum;
 use app\common\helper\AliMobilePhoneCertificate;
 use app\common\helper\Pbkdf2;
 use app\common\helper\Redis;
@@ -954,7 +955,9 @@ class UserService extends Base
         $videos = Db::name("video")->alias("v")
             ->leftJoin("video_count vc", "v.id = vc.video_id")
             ->field("v.*,vc.like_count")
-            ->where("v.u_id", $userId)->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.u_id", $userId)
+            ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.is_transcode",VideoIsTransCodeEnum::YES)
             ->order("v.id", "desc")->limit(4)->select()->toArray();
         $data["videos"] = $videos;
         // 获取当前用户点赞的小视频ID

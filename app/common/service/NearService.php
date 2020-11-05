@@ -29,8 +29,7 @@ class NearService extends Base
     {
         if (empty($long) || empty($lat)) {
             return [
-                "userInfo" => [],
-                "distance" => []
+                [],[]
             ];
         }
         $redis = Redis::factory();

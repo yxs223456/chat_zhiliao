@@ -957,6 +957,13 @@ class UserService extends Base
             ->where("v.u_id", $userId)->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->order("v.id", "desc")->limit(4)->select()->toArray();
         $data["videos"] = $videos;
+        // 获取当前用户点赞的小视频ID
+        if (!empty($videos)) { // 有小视频查看当前用户点赞的小视频ID
+            $data["videoLike"] = Db::name("video_like")
+                ->where("u_id", $currentUserId)
+                ->whereIn("video_id", array_column($videos, "id"))
+                ->column("video_id");
+        }
 
         // 获取评分
         $data["score"] = ScoreService::getScore($userId);

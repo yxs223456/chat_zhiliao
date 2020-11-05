@@ -116,7 +116,6 @@ class ShengWang
         self::init();
 
         $headers = [
-            "Content-type: application/json;charset=utf-8",
             "Authorization: " . self::getApiAuthorization(),
         ];
         $url = "https://api.agora.io/dev/v1/channel/user/".self::$appId."/".$channelName;
@@ -128,6 +127,6 @@ class ShengWang
     private static function getApiAuthorization()
     {
         self::init();
-        return base64_encode(self::$clientId . ":" . self::$clientSecret);
+        return "Basic " . base64_encode(self::$clientId . ":" . self::$clientSecret);
     }
 }

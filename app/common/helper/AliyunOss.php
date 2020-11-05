@@ -10,7 +10,6 @@ namespace app\common\helper;
 use AlibabaCloud\Client\AlibabaCloud;
 use AlibabaCloud\Client\Exception\ClientException;
 use AlibabaCloud\Client\Exception\ServerException;
-use AlibabaCloud\Sts\Sts;
 use OSS\OssClient;
 use Sts\Request\V20150401\AssumeRoleRequest;
 use think\facade\App;
@@ -26,7 +25,10 @@ class AliyunOss
     protected static $roleArn = "";
     protected static $tokenExpireTime = 900;
     protected static $policyFile = "";
-    protected static $regionId = "cn-hangzhou";
+    protected static $regionId = "cn-beijing";
+    protected static $pipelineId = "";
+    protected static $templateId= "";
+    protected static $ossLocation= "oss-cn-beijing";
 
     private static function getConfig()
     {
@@ -38,6 +40,9 @@ class AliyunOss
         self::$roleArn = $config["role_arn"];
         self::$tokenExpireTime = $config["token_expire_time"];
         self::$regionId = $config["region_id"];
+        self::$pipelineId = $config["pipeline_id"];
+        self::$templateId = $config["template_id"];
+        self::$ossLocation = $config["oss_location"];
         self::$policyFile = app()->getRootPath() . "/extend/" . trim($config["policy_file"], "/");
     }
 
@@ -71,14 +76,14 @@ class AliyunOss
         // 加载配置文件
         self::getConfig();
 
-        $policy = read_file(self::$policyFile);
+//        $policy = read_file(self::$policyFile);
         $iClientProfile = \DefaultProfile::getProfile(self::$regionId, self::$accessKeyId, self::$accessKeySecret);
         $client = new \DefaultAcsClient($iClientProfile);
 
         $request = new AssumeRoleRequest();
         $request->setRoleSessionName("client_name");
         $request->setRoleArn(self::$roleArn);
-        $request->setPolicy($policy);
+//        $request->setPolicy($policy);
         $request->setDurationSeconds(self::$tokenExpireTime);
         $response = $client->doAction($request);
 
@@ -104,7 +109,6 @@ class AliyunOss
     {
         // 加载配置文件
         self::getConfig();
-        $policy = read_file(self::$policyFile);
         AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
             ->regionId(self::$regionId)
             ->asDefaultClient();
@@ -119,10 +123,10 @@ class AliyunOss
                 ->host('sts.aliyuncs.com')
                 ->options([
                     'query' => [
-                        'RegionId' => "cn-hangzhou",
+                        'RegionId' => self::$regionId,
                         'RoleArn' => self::$roleArn,
-                        'RoleSessionName' => "client_name",
-                        'Policy' => $policy
+                        'RoleSessionName' => "chat_zhiliao",
+                        'DurationSeconds' => self::$tokenExpireTime
                     ],
                 ])
                 ->request();
@@ -132,5 +136,51 @@ class AliyunOss
         } catch (ServerException $e) {
             echo $e->getErrorMessage() . PHP_EOL;
         }
+    }
+
+    public static function mtsRequest()
+    {
+        // 加载配置文件
+        self::getConfig();
+        AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
+            ->regionId(self::$regionId)
+            ->asDefaultClient();
+
+        try {
+
+            $result = AlibabaCloud::rpc()
+                ->product('Mts')
+                ->scheme('https') // https | http
+                ->version('2014-06-18')
+                ->action('SubmitJobs')
+                ->method('POST')
+                ->host('mts.cn-beijing.aliyuncs.com')
+                ->debug(true)
+                ->options([
+                    'query' => [
+                        'Input' => json_encode([
+                            'Location' => self::$ossLocation,
+                            'Bucket' => self::$bucket,
+                            "Object" => urlencode("1602656808842121.mp4")
+                        ]),
+                        'Outputs' => json_encode([
+                            [
+                                'OutputObject' => urlencode("1602656808842121-test.mp4"),
+                                'TemplateId' => self::$templateId
+                            ]
+                        ]),
+                        'OutputBucket' => self::$bucket,
+                        'OutputLocation' => self::$ossLocation,
+                        'PipelineId' => self::$pipelineId,
+                    ]
+                ])
+                ->request();
+            return $result->toArray();
+        } catch (ClientException $e) {
+            echo $e->getErrorMessage() . PHP_EOL;
+        } catch (ServerException $e) {
+            echo $e->getErrorMessage() . PHP_EOL;
+        }
+
     }
 }

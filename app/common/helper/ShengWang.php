@@ -82,7 +82,7 @@ class ShengWang
     }
 
     /**
-     * 发送消息
+     * 发送IM消息
      * @param $userId
      * @param $sendUserId
      * @param $message
@@ -92,13 +92,13 @@ class ShengWang
     public static function sendMessage($userId, $sendUserId, $message)
     {
         self::init();
+
         $headers = [
             "Content-type: application/json;charset=utf-8",
             "x-agora-token: " . self::getRtmToken($userId),
             "x-agora-uid: " . $userId,
             "Authorization: " . self::getApiAuthorization(),
         ];
-
         $url = "https://api.agora.io/dev/v2/project/".self::$appId."/rtm/users/".$userId."/peer_messages?wait_for_ack=false";
         $params = [
             "destination" => (string) $sendUserId,
@@ -108,7 +108,20 @@ class ShengWang
         ];
 
         $response = curl($url, 'post', $params, true, true, $headers);
+        return $response;
+    }
 
+    public static function getChannelInfo($channelName)
+    {
+        self::init();
+
+        $headers = [
+            "Content-type: application/json;charset=utf-8",
+            "Authorization: " . self::getApiAuthorization(),
+        ];
+        $url = "https://api.agora.io/dev/v1/channel/user/".self::$appId."/".$channelName;
+
+        $response = curl($url, "get", null, false, true, $headers);
         return $response;
     }
 

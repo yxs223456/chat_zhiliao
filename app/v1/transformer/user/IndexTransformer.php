@@ -24,6 +24,7 @@ class IndexTransformer extends TransformerAbstract
         $userInfo = $data["userInfo"] ?? [];
         $user = $data["user"] ?? [];
         $userSet = $data["userSet"] ?? [];
+        $videoLike = $data["videoLike"] ?? [];
         return [
             "user" => [
                 'id' => $user["id"] ?? 0,
@@ -52,7 +53,7 @@ class IndexTransformer extends TransformerAbstract
             ],
             "is_followed" => $data["is_follow"] ?? 0,
             "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"]),// 动态
-            "videos" => $this->getVideos($data['videos'] ?? []), // 视频
+            "videos" => $this->getVideos($data['videos'] ?? [], $userInfo, $userSet, $data["is_follow"] ?? 0, $videoLike), // 视频
             "gifts" => $this->getGifts($data["gifts"] ?? []),
             "have_angle" => empty($data["guard"]) ? 0 : 1,
             "angle" => $this->getGuard($data["guard"] ?? []),
@@ -75,7 +76,7 @@ class IndexTransformer extends TransformerAbstract
         return $ret;
     }
 
-    private function getVideos($videos)
+    private function getVideos($videos, $userInfo, $userSet, $follow, $videoLike)
     {
         if (empty($videos)) {
             return [];
@@ -84,9 +85,20 @@ class IndexTransformer extends TransformerAbstract
         foreach ($videos as $item) {
             $tmp = [];
             $tmp["id"] = $item["id"];
-            $tmp["cover"] = $item["cover"];
-            $tmp["source"] = $item["source"];
-            $tmp["like_count"] = $item["like_count"];
+            $tmp["u_id"] = $userInfo["u_id"];
+            $tmp["avatar"] = (string)$userInfo["portrait"] ?? "";
+            $tmp["cover"] = (string)$item["cover"] ?? "";
+            $tmp["source"] = (string)$item["source"] ?? "";
+            $tmp["like_count"] = (int)$item["like_count"] ?? 0;
+            $tmp["city"] = empty($userInfo["city"]) ? "" : CityService::getCityByCode($userInfo["city"]);
+            $tmp["is_like"] = in_array($item["id"], $videoLike) ? 1 : 0;
+            $tmp["is_followed"] = (int)$follow;
+            $tmp['voice_chat_switch'] = $userSet['voice_chat_switch'] ?? UserSwitchEnum::OFF;
+            $tmp['voice_chat_price'] = $userSet['voice_chat_price'] ?? 0;
+            $tmp['video_chat_switch'] = $userSet['video_chat_switch'] ?? UserSwitchEnum::OFF;
+            $tmp['video_chat_price'] = $userSet['video_chat_price'] ?? 0;
+            $tmp['direct_message_free'] = $userSet['direct_message_free'] ?? UserSwitchEnum::OFF;
+            $tmp['direct_message_price'] = $userSet['direct_message_price'] ?? 0;
             $ret[] = $tmp;
         }
         return $ret;

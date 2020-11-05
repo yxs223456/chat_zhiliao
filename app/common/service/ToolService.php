@@ -14,7 +14,7 @@ class ToolService extends Base
 {
     public function ossToken()
     {
-        return AliyunOss::getToken();
+        return AliyunOss::getToken1();
     }
 
     public function ossConfig()
@@ -24,5 +24,10 @@ class ToolService extends Base
         $data["bucket"] = $config["bucket"];
         $data["endpoint"] = $config['endpoint'];
         return $data;
+    }
+
+    public function mtsRequest()
+    {
+        return AliyunOss::mtsRequest();
     }
 }

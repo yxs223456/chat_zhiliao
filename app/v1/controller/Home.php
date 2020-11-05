@@ -148,4 +148,16 @@ class Home extends Base
         cacheUserLongLatInfo($userId, $lat, $long, Redis::factory());
         return $this->jsonResponse(new \stdClass());
     }
+
+    /**
+     * 获取oss前端上传token
+     *
+     * @return \think\response\Json
+     */
+    public function mst()
+    {
+        $service = new ToolService();
+        $data = $service->mtsRequest();
+        return json($data);
+    }
 }

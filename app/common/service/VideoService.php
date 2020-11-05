@@ -185,7 +185,7 @@ class VideoService extends Base
         $videoQuery = Db::name("video")->alias("v")
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
-            ->whereLike("ui.city", $city . "%")
+            ->where("ui.city", $city)
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");

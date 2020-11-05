@@ -11,10 +11,6 @@ use AlibabaCloud\Client\AlibabaCloud;
 use AlibabaCloud\Client\Exception\ClientException;
 use AlibabaCloud\Client\Exception\ServerException;
 use OSS\OssClient;
-use Sts\Request\V20150401\AssumeRoleRequest;
-use think\facade\App;
-
-include_once App::getRootPath() . "/extend/sts-server/aliyun-php-sdk-core/Config.php";
 
 class AliyunOss
 {
@@ -24,7 +20,6 @@ class AliyunOss
     protected static $bucket = "";
     protected static $roleArn = "";
     protected static $tokenExpireTime = 900;
-    protected static $policyFile = "";
     protected static $regionId = "cn-beijing";
     protected static $pipelineId = "";
     protected static $templateId= "";
@@ -43,7 +38,6 @@ class AliyunOss
         self::$pipelineId = $config["pipeline_id"];
         self::$templateId = $config["template_id"];
         self::$ossLocation = $config["oss_location"];
-        self::$policyFile = app()->getRootPath() . "/extend/" . trim($config["policy_file"], "/");
     }
 
     /**
@@ -67,45 +61,11 @@ class AliyunOss
     }
 
     /**
-     * 前端上传获取token
+     * 获取oss直传token
      *
      * @return array
      */
     public static function getToken()
-    {
-        // 加载配置文件
-        self::getConfig();
-
-//        $policy = read_file(self::$policyFile);
-        $iClientProfile = \DefaultProfile::getProfile(self::$regionId, self::$accessKeyId, self::$accessKeySecret);
-        $client = new \DefaultAcsClient($iClientProfile);
-
-        $request = new AssumeRoleRequest();
-        $request->setRoleSessionName("client_name");
-        $request->setRoleArn(self::$roleArn);
-//        $request->setPolicy($policy);
-        $request->setDurationSeconds(self::$tokenExpireTime);
-        $response = $client->doAction($request);
-
-        $rows = array();
-        $body = $response->getBody();
-        $content = json_decode($body);
-
-        if ($response->getStatus() == 200) {
-            $rows['StatusCode'] = 200;
-            $rows['AccessKeyId'] = $content->Credentials->AccessKeyId;
-            $rows['AccessKeySecret'] = $content->Credentials->AccessKeySecret;
-            $rows['Expiration'] = $content->Credentials->Expiration;
-            $rows['SecurityToken'] = $content->Credentials->SecurityToken;
-        } else {
-            $rows['StatusCode'] = 500;
-            $rows['ErrorCode'] = $content->Code;
-            $rows['ErrorMessage'] = $content->Message;
-        }
-        return $rows;
-    }
-
-    public static function getToken1()
     {
         // 加载配置文件
         self::getConfig();
@@ -120,7 +80,6 @@ class AliyunOss
                 ->version('2015-04-01')
                 ->action('AssumeRole')
                 ->method('POST')
-                ->host('sts.aliyuncs.com')
                 ->options([
                     'query' => [
                         'RegionId' => self::$regionId,
@@ -154,7 +113,13 @@ class AliyunOss
         }
     }
 
-    public static function mtsRequest()
+    /**
+     *  提交转码作业请求
+     *
+     * @param $objectName
+     * @return bool
+     */
+    public static function mtsRequest($objectName)
     {
         // 加载配置文件
         self::getConfig();
@@ -163,25 +128,22 @@ class AliyunOss
             ->asDefaultClient();
 
         try {
-
             $result = AlibabaCloud::rpc()
                 ->product('Mts')
-                ->scheme('https') // https | http
+                ->scheme('https')// https | http
                 ->version('2014-06-18')
                 ->action('SubmitJobs')
                 ->method('POST')
-                ->host('mts.cn-beijing.aliyuncs.com')
-                ->debug(true)
                 ->options([
                     'query' => [
                         'Input' => json_encode([
                             'Location' => self::$ossLocation,
                             'Bucket' => self::$bucket,
-                            "Object" => urlencode("1602656808842121.mp4")
+                            "Object" => urlencode($objectName)
                         ]),
                         'Outputs' => json_encode([
                             [
-                                'OutputObject' => urlencode("1602656808842121-test.mp4"),
+                                'OutputObject' => urlencode($objectName),
                                 'TemplateId' => self::$templateId
                             ]
                         ]),
@@ -191,12 +153,16 @@ class AliyunOss
                     ]
                 ])
                 ->request();
-            return $result->toArray();
+            $body = $result->getBody();
+            $content = json_decode($body);
+            if ($result->isSuccess() && !empty($content->JobResultList->JobResult[0]->Success)) {
+                return true;
+            }
         } catch (ClientException $e) {
             echo $e->getErrorMessage() . PHP_EOL;
         } catch (ServerException $e) {
             echo $e->getErrorMessage() . PHP_EOL;
         }
-
+        return false;
     }
 }

@@ -14,7 +14,7 @@ class ToolService extends Base
 {
     public function ossToken()
     {
-        return AliyunOss::getToken1();
+        return AliyunOss::getToken();
     }
 
     public function ossConfig()
@@ -28,6 +28,7 @@ class ToolService extends Base
 
     public function mtsRequest()
     {
-        return AliyunOss::mtsRequest();
+        $fileName = "1602656808842121.mp4";
+        return AliyunOss::mtsRequest($fileName);
     }
 }

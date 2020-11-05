@@ -71,7 +71,7 @@ class Ali extends BaseController
             return;
         }
 
-        $msg = new \SimpleXMLElement($content);
+        $msg = json_decode($content);
         Log::info("mts", $msg);
         http_response_code(200);
     }

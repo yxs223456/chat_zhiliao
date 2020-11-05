@@ -34,6 +34,8 @@ class Near extends Base
         $request = $this->query["content"];
         $pageNum = $request["page_num"] ?? 1;
         $pageSize = $request["page_size"] ?? 20;
+        $long = $request["long"] ?? ""; // 经度
+        $lat = $request["lat"] ?? ""; // 纬度
         $isFlush = $request["is_flush"] ?? 0; // 是否刷新 0-否，1-是
         $userId = $this->query["user"]["id"]; // 当前登陆用户ID
 
@@ -42,7 +44,7 @@ class Near extends Base
         }
 
         $service = new NearService();
-        list($userInfo, $distance) = $service->user($pageNum, $pageSize, $isFlush, $userId);
+        list($userInfo, $distance) = $service->user($pageNum, $pageSize, $long, $lat, $isFlush, $userId);
         return $this->jsonResponse($userInfo, new UserTransformer(['distance' => $distance]));
     }
 

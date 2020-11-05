@@ -534,7 +534,7 @@ class DynamicService extends Base
     public function near($pageNum, $pageSize, $long, $lat, $userId, $isFlush)
     {
         // 经纬度不传返回空列表
-        if (empty($long) && empty($lat)) {
+        if (empty($long) || empty($lat)) {
             return [];
         }
         $redis = Redis::factory();

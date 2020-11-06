@@ -369,4 +369,23 @@ class VipService extends Base
         }
         return $day;
     }
+
+    /**
+     *  判断用户是否是VIP
+     *
+     * @param $userId
+     * @return bool
+     */
+    public static function isVip($userId)
+    {
+        $userInfo = UserInfoService::getUserInfoById($userId, Redis::factory());
+        $today = date("Y-m-d");
+        $vipDeadline = empty($userInfo["vip_deadline"]) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["vip_deadline"];
+        $svipDeadline = empty($userInfo['svip_deadline']) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["svip_deadline"];
+        // vip过期 不是vip不能设置通话聊天金额
+        if ($today > $vipDeadline && $today > $svipDeadline) {
+            return false;
+        }
+        return true;
+    }
 }

@@ -64,6 +64,7 @@ class VisitorService extends Base
     {
         $redis = Redis::factory();
         $ret = [
+            "is_vip" => VipService::isVip($userId) ? 1 : 0,
             "today_count" => getUserVisitorTodayCount($userId, $redis), // 今天访问数
             "count" => $this->getVisitorSumCount($userId, $redis), // 总访问次数
             "list" => [] // 列表

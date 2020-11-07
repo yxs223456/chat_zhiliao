@@ -43,7 +43,7 @@ class DynamicReportTypeEnum
         ],
         self::USE_OTHER_PHOTO => [
             "cn" => "盗用他人照片",
-            "tw" => "盗用他人照片"
+            "tw" => "盜用他人照片"
         ],
         self::RELIGION => [
             "cn" => "政治宗教",

@@ -62,13 +62,17 @@ class VisitorService extends Base
      */
     public function user($startId, $pageSize, $userId)
     {
+        $isVip = VipService::isVip($userId);
         $redis = Redis::factory();
         $ret = [
-            "is_vip" => VipService::isVip($userId) ? 1 : 0,
+            "is_vip" => $isVip ? 1 : 0,
             "today_count" => getUserVisitorTodayCount($userId, $redis), // 今天访问数
             "count" => $this->getVisitorSumCount($userId, $redis), // 总访问次数
             "list" => [] // 列表
         ];
+        if (!$isVip) {
+            return $ret;
+        }
         $query = Db::name("visitor_log")->alias("vl")
             ->leftJoin("user u", "vl.visitor_u_id = u.id")
             ->leftJoin("user_info ui", "vl.visitor_u_id = ui.u_id")

@@ -87,8 +87,6 @@ class BlackListService extends Base
         $redis = Redis::factory();
         // 删除黑名单用户ID缓存
         deleteUserBlackListByUId($user["id"], $redis);
-        // 删除黑名单用户数据缓存
-        deleteUserBlackListDataByUId($user['id'], $redis);
     }
 
     /**
@@ -116,8 +114,6 @@ class BlackListService extends Base
         $redis = Redis::factory();
         // 删除用户黑名单ID缓存
         deleteUserBlackListByUId($user['id'], $redis);
-        // 删除用户黑名单用户数据缓存
-        deleteUserBlackListDataByUId($user['id'], $redis);
     }
 
     /**
@@ -128,20 +124,8 @@ class BlackListService extends Base
      */
     public function list($user)
     {
-        $redis = Redis::factory();
-        $userBlackList = getUserBlackListDataByUId($user['id'], $redis);
-        if (!empty($userBlackList)) {
-            return $userBlackList["list"];
-        }
-
-        $ret = [
-            "userId" => $user["id"],
-            "list" => []
-        ];
-
         $blackUserIds = self::getUserBlackListById($user["id"]);
         if (empty($blackUserIds)) {
-            cacheUserBlackListDataByUId($ret, $redis);
             return [];
         }
         $list = Db::name("user")->alias("u")
@@ -150,8 +134,6 @@ class BlackListService extends Base
             ->whereIn("u.id", $blackUserIds)
             ->select()->toArray();
 
-        $ret["list"] = $list;
-        cacheUserBlackListDataByUId($ret, $redis);
         return $list;
     }
 }

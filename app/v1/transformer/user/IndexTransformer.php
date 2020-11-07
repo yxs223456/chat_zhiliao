@@ -25,6 +25,7 @@ class IndexTransformer extends TransformerAbstract
         $user = $data["user"] ?? [];
         $userSet = $data["userSet"] ?? [];
         $videoLike = $data["videoLike"] ?? [];
+        $currentLikeDynamicId = $data["currentLikeDynamicId"] ?? [];
         return [
             "user" => [
                 'id' => $user["id"] ?? 0,
@@ -52,7 +53,8 @@ class IndexTransformer extends TransformerAbstract
                 "score" => $data["score"] ?? "0",
             ],
             "is_followed" => $data["is_follow"] ?? 0,
-            "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"]),// 动态
+            "is_blacked" => $data["is_black"] ?? 0,
+            "dynamics" => $this->getDynamic($data["dynamics"], $data["dynamicLike"],$currentLikeDynamicId),// 动态
             "videos" => $this->getVideos($data['videos'] ?? [], $userInfo, $userSet, $data["is_follow"] ?? 0, $videoLike), // 视频
             "gifts" => $this->getGifts($data["gifts"] ?? []),
             "have_angle" => empty($data["guard"]) ? 0 : 1,
@@ -60,7 +62,7 @@ class IndexTransformer extends TransformerAbstract
         ];
     }
 
-    private function getDynamic($dynamic, $dynamicLike)
+    private function getDynamic($dynamic, $dynamicLike, $currentLikeDynamicId)
     {
         if (empty($dynamic)) {
             return [];
@@ -71,6 +73,7 @@ class IndexTransformer extends TransformerAbstract
             $tmp["dynamic_id"] = $item["id"];
             $tmp["source"] = json_decode($item["source"],true);
             $tmp["like_count"] = isset($dynamicLike[$item["id"]]) ? $dynamicLike[$item['id']] : 0;
+            $tmp["is_like"] = in_array($item["id"], $currentLikeDynamicId) ? 1 : 0;
             $ret[] = $tmp;
         }
         return $ret;

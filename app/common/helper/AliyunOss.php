@@ -171,6 +171,45 @@ class AliyunOss
     }
 
     /**
+     *  查询转码作业结果
+     *
+     * @param $jobIds
+     * @return array
+     */
+    public static function mtsQuery($jobIds)
+    {
+        // 加载配置文件
+        self::getConfig();
+        AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
+            ->regionId(self::$regionId)
+            ->asDefaultClient();
+
+        try {
+            $result = AlibabaCloud::rpc()
+                ->product('Mts')
+                ->scheme('https')// https | http
+                ->version('2014-06-18')
+                ->action('QueryJobList')
+                ->method('POST')
+                ->options([
+                    'query' => [
+                        'JobIds' => $jobIds,
+                    ]
+                ])
+                ->request();
+
+            if ($result->isSuccess()) {
+                return $result->toArray();
+            }
+        } catch (ClientException $e) {
+            Log::error($e->getErrorMessage() . PHP_EOL);
+        } catch (ServerException $e) {
+            Log::error($e->getErrorMessage() . PHP_EOL);
+        }
+        return [];
+    }
+
+    /**
      * 删除oss文件
      *
      * @param $object string 文件名称

@@ -146,20 +146,20 @@ class VideoTransCode extends Command
             ->where("transcode_status", VideoIsTransCodeEnum::TRANSCODING)
             ->find();
         if (empty($video)) {// 视频不存在不需要转码
-            Log::write("视频不存在");
+            Log::write($this->videoId . "视频不存在\n");
             return;
         }
 
         // 已添加转码任务直接返回
         $transcode = Db::name('video_transcode')->where("video_id", $this->videoId)->field("id")->find();
         if (!empty($transcode)) {
-            Log::write("任务已添加");
+            Log::write($this->videoId . "任务已添加\n");
             return;
         }
 
         $bool = $this->needTransCode($video["source"]);
         if (!$bool) { // 是mp4不需要转码直接修改小视频转码状态
-            Log::write("不需要转码");
+            Log::write($this->videoId . "不需要转码\n");
             Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::SUCCESS]);
             return;
         }
@@ -186,7 +186,7 @@ class VideoTransCode extends Command
             'after_source' => $afterSource,
             'request_id' => $content->RequestId ?? "",
             'job_id' => $content->JobResultList->JobResult[0]->Job->JobId ?? "",
-            'request_result' => json_encode($body)
+            'request_result' => json_encode($content)
         ];
 
         return Db::name("video_transcode")->insert($insert);

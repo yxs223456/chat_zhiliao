@@ -157,13 +157,6 @@ class VideoTransCode extends Command
             return;
         }
 
-        $bool = $this->needTransCode($video["source"]);
-        if (!$bool) { // 是mp4不需要转码直接修改小视频转码状态
-            Log::write($this->videoId . "不需要转码\n");
-            Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::SUCCESS]);
-            return;
-        }
-
         $source = $video["source"];
         $originName = AliyunOss::getObjectName($source);
         $toName = AliyunOss::objectNameToMp4($originName);
@@ -190,22 +183,5 @@ class VideoTransCode extends Command
         ];
 
         return Db::name("video_transcode")->insert($insert);
-    }
-
-    /**
-     * 判断这个视频是否需要转码操作
-     * @param $source string 视频链接
-     *
-     * @return bool
-     */
-    private function needTransCode($source)
-    {
-        $file = file_get_contents($source);
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $type = $finfo->buffer($file);
-        if ($type == self::MP4) {
-            return false;
-        }
-        return true;
     }
 }

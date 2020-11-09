@@ -22,11 +22,12 @@ class VideoService extends Base
      *
      * @param $cover
      * @param $source
+     * @param $isTransCode
      * @param $user
      * @return int|string
      * @throws \Throwable
      */
-    public function post($cover, $source, $user)
+    public function post($cover, $source, $isTransCode, $user)
     {
         // TODO 验证规则
         Db::startTrans();
@@ -38,6 +39,10 @@ class VideoService extends Base
                 'source' => $source,
                 'create_time' => date("Y-m-d H:i:s")
             ];
+            // 不需要转码的直接更新状态
+            if (!$isTransCode) {
+                $videoData["transcode_status"] = VideoIsTransCodeEnum::SUCCESS;
+            }
             $id = Db::name("video")->insertGetId($videoData);
             $videoCountData = [
                 'u_id' => $user["id"],
@@ -50,8 +55,11 @@ class VideoService extends Base
             Db::rollback();
             throw $e;
         }
-        // 加入转码队列
-        videoTransCodeProduce($id, Redis::factory());
+        // 需要转码的放入队列
+        if ($isTransCode) {
+            // 加入转码队列
+            videoTransCodeProduce($id, Redis::factory());
+        }
         return $id;
     }
 

@@ -160,6 +160,7 @@ class Video extends Base
         $request = $this->query["content"];
         $cover = $request["cover"] ?? ""; //小视频封面图片
         $source = $request["source"] ?? ""; //小视频链接
+        $isTransCode = $request["transcode"] ?? 0; //是否需要转码
 
         if (empty($source) || empty($cover)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -167,7 +168,7 @@ class Video extends Base
 
         $user = $this->query["user"];
         $service = new VideoService();
-        $service->post($cover, $source, $user);
+        $service->post($cover, $source, $isTransCode, $user);
         return $this->jsonResponse(new \stdClass());
     }
 

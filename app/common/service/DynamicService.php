@@ -604,13 +604,12 @@ class DynamicService extends Base
             return $cacheData;
         }
 
-        // 获取动态数据 id 倒叙
+        // 获取动态数据
         $dynamics = Db::name("dynamic")
             ->whereIn("u_id", array_keys($userIds))
             ->field("id,u_id")
             ->where("is_delete", DbDataIsDeleteEnum::NO)
 //            ->where("create_time", ">", date("Y-m-d H:i:s", strtotime("-15 days")))
-            ->order("id", "desc")
             ->select()->toArray();
 
         if (empty($dynamics)) {

@@ -231,6 +231,7 @@ class AliyunOss
      */
     public static function getObjectName($object)
     {
+        self::getConfig();
         $objectName = explode(self::$endpoint, $object);
         return trim(array_pop($objectName), DIRECTORY_SEPARATOR);
     }

@@ -190,7 +190,7 @@ class VideoService extends Base
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("ui.city", $city)
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->where("v.is_transcode", VideoIsTransCodeEnum::YES)
+            ->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
@@ -253,7 +253,7 @@ class VideoService extends Base
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->where("v.is_transcode",VideoIsTransCodeEnum::YES)
+            ->where("v.transcode_status",VideoIsTransCodeEnum::SUCCESS)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
@@ -317,10 +317,13 @@ class VideoService extends Base
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->where("v.is_transcode",VideoIsTransCodeEnum::YES)
             ->where("v.u_id", $requestUserId)
-            ->field("v.id,v.u_id,v.cover,v.source,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.cover,v.source,v.transcode_status,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
+        // 不是查询自己的列表只展示转码成功的
+        if ($requestUserId != $currentUserId) {
+            $videoQuery = $videoQuery->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS);
+        }
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
         }
@@ -362,6 +365,6 @@ class VideoService extends Base
         // 失败更新video_transcode 状态
 
 
-        // 成功修改video_transcode 状态更新 video source is_transcode,删除之前的文件
+        // 成功修改video_transcode 状态更新 video source transcode_status,删除之前的文件
     }
 }

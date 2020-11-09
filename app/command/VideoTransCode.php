@@ -102,7 +102,7 @@ class VideoTransCode extends Command
         $video = Db::name("video")
             ->where("id", $this->videoId)
             ->field("u_id,source")
-            ->where("is_transcode", VideoIsTransCodeEnum::NO)
+            ->where("transcode_status", VideoIsTransCodeEnum::TRANSCODING)
             ->find();
         if (empty($video)) {// 视频不存在不需要转码
             RabbitMQ::ackMessage($message);
@@ -112,7 +112,7 @@ class VideoTransCode extends Command
         // 不需要转码更新转码状态
         if (!$bool) {
             RabbitMQ::ackMessage($message);
-            Db::name("video")->where("id", $this->videoId)->update(["is_transcode" => VideoIsTransCodeEnum::YES]);
+            Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::SUCCESS]);
             return;
         }
 
@@ -142,7 +142,7 @@ class VideoTransCode extends Command
         $video = Db::name("video")
             ->where("id", $this->videoId)
             ->field("u_id,source")
-            ->where("is_transcode", VideoIsTransCodeEnum::NO)
+            ->where("transcode_status", VideoIsTransCodeEnum::TRANSCODING)
             ->find();
         if (empty($video)) {// 视频不存在不需要转码
             return;
@@ -156,7 +156,7 @@ class VideoTransCode extends Command
 
         $bool = $this->needTransCode($video["source"]);
         if (!$bool) { // 是mp4不需要转码直接修改小视频转码状态
-            Db::name("video")->where("id", $this->videoId)->update(["is_transcode" => VideoIsTransCodeEnum::YES]);
+            Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::SUCCESS]);
             return;
         }
 
@@ -164,19 +164,25 @@ class VideoTransCode extends Command
         $originName = AliyunOss::getObjectName($source);
         $toName = AliyunOss::objectNameToMp4($originName);
         $afterSource = str_replace($originName, $toName, $source);
+
         // 发送转码请求
-        $request = AliyunOss::mtsRequest($originName, $toName);
-        if (empty($request)) {
+        $result = AliyunOss::mtsRequest($originName, $toName);
+        $body = $result->getBody();
+        $content = json_decode($body);
+        // 提交失败
+        if (!$result->isSuccess() || empty($content->JobResultList->JobResult[0]->Success)) {
+            Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::ERROR]);
             throw new Exception("videoId : $this->videoId transcode request error");
+            return;
         }
 
         $insert = [
             'video_id' => $this->videoId,
             'source' => $source,
             'after_source' => $afterSource,
-            'request_id' => $request["RequestId"] ?? "",
-            'job_id' => $request["JobResultList"]["JobResult"][0]["Job"]["JobId"] ?? "",
-            'request_result' => json_encode($request)
+            'request_id' => $content->RequestId ?? "",
+            'job_id' => $content->JobResultList->JobResult[0]->Job->JobId ?? "",
+            'request_result' => json_encode($body)
         ];
 
         return Db::name("video_transcode")->insert($insert);

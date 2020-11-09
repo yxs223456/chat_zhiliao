@@ -95,6 +95,7 @@ class IndexTransformer extends TransformerAbstract
             $tmp["like_count"] = (int)$item["like_count"] ?? 0;
             $tmp["city"] = empty($userInfo["city"]) ? "" : CityService::getCityByCode($userInfo["city"]);
             $tmp["is_like"] = in_array($item["id"], $videoLike) ? 1 : 0;
+            $tmp["transcode_status"] = (int)$item["transcode_status"] ?? 0;
             $tmp["is_followed"] = (int)$follow;
             $tmp['voice_chat_switch'] = $userSet['voice_chat_switch'] ?? UserSwitchEnum::OFF;
             $tmp['voice_chat_price'] = $userSet['voice_chat_price'] ?? 0;

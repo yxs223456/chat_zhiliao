@@ -71,7 +71,7 @@ class VideoTransCodeQuery extends Command
         $video = Db::name("video")
             ->where("id", $this->videoId)
             ->field("u_id,source")
-            ->where("is_transcode", VideoIsTransCodeEnum::NO)
+            ->where("transcode_status", VideoIsTransCodeEnum::TRANSCODING)
             ->find();
         if (empty($video)) {// 视频不存在不需要转码
             return;
@@ -85,7 +85,7 @@ class VideoTransCodeQuery extends Command
 
         $bool = $this->needTransCode($video["source"]);
         if (!$bool) { // 是mp4不需要转码直接修改小视频转码状态
-            Db::name("video")->where("id", $this->videoId)->update(["is_transcode" => VideoIsTransCodeEnum::YES]);
+            Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::SUCCESS]);
             return;
         }
 

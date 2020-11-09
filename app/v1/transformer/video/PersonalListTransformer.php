@@ -45,6 +45,7 @@ class PersonalListTransformer extends TransformerAbstract
             "like_count" => (int)$data["like_count"] ?? 0,
             "city" => empty($data["city"]) ? "" : CityService::getCityByCode($data['city']),
             "is_like" => $this->getIsLike($data["id"]),
+            "transcode_status" => (int)$data["transcode_status"] ?? 0,
             "is_followed" => (int)$this->userFollow,
             "voice_chat_switch" => (int)$this->getUserSet("voice_chat_switch"),
             "voice_chat_price" => (int)$this->getUserSet("voice_chat_price"),

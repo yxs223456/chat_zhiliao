@@ -959,13 +959,17 @@ class UserService extends Base
         $data['guard'] = $guardUser;
 
         // 获取小视频信息
-        $videos = Db::name("video")->alias("v")
+        $videoQuery = Db::name("video")->alias("v")
             ->leftJoin("video_count vc", "v.id = vc.video_id")
             ->field("v.*,vc.like_count")
             ->where("v.u_id", $userId)
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->where("v.is_transcode",VideoIsTransCodeEnum::YES)
-            ->order("v.id", "desc")->limit(4)->select()->toArray();
+            ->order("v.id", "desc");
+        // 不是查看自己的主页只查询转码成功的
+        if ($userId != $currentUserId) {
+            $videoQuery = $videoQuery->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS);
+        }
+        $videos = $videoQuery->limit(4)->select()->toArray();
         $data["videos"] = $videos;
         // 获取当前用户点赞的小视频ID
         if (!empty($videos)) { // 有小视频查看当前用户点赞的小视频ID

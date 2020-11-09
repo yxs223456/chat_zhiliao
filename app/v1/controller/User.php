@@ -13,8 +13,6 @@ use app\common\service\VisitorService;
 use app\v1\transformer\user\AllInfoTransformer;
 use app\v1\transformer\user\BlackListTransformer;
 use app\v1\transformer\user\IndexTransformer;
-use app\v1\transformer\user\InfoTransformer;
-use app\v1\transformer\user\LoginTransformer;
 use app\v1\transformer\user\WalletTransformer;
 
 class User extends Base

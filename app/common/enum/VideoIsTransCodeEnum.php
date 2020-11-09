@@ -15,15 +15,19 @@ class VideoIsTransCodeEnum
 {
     use EnumTrait;
 
-    const NO = 0;
-    const YES = 1;
+    const TRANSCODING = 0; //转码中
+    const SUCCESS = 1; // 成功
+    const ERROR = 2;// 失败
 
     protected static $desc = [
-        self::NO => [
-            "cn" => "否",
+        self::TRANSCODING => [
+            "cn" => "转码中",
         ],
-        self::YES => [
-            "cn" => "是",
+        self::SUCCESS => [
+            "cn" => "成功",
+        ],
+        self::ERROR => [
+            "cn" => "失败",
         ],
     ];
 }

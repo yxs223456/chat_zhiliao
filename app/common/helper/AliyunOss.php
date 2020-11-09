@@ -120,7 +120,7 @@ class AliyunOss
      *
      * @param $objectName
      * @param $toName
-     * @return array
+     * @return \AlibabaCloud\Client\Result\Result
      */
     public static function mtsRequest($objectName, $toName)
     {
@@ -157,17 +157,12 @@ class AliyunOss
                 ])
                 ->request();
 
-            $body = $result->getBody();
-            $content = json_decode($body);
-            if ($result->isSuccess() && !empty($content->JobResultList->JobResult[0]->Success)) {
-                return $result->toArray();
-            }
+            return $result;
         } catch (ClientException $e) {
             Log::error($e->getErrorMessage() . PHP_EOL);
         } catch (ServerException $e) {
             Log::error($e->getErrorMessage() . PHP_EOL);
         }
-        return [];
     }
 
     /**

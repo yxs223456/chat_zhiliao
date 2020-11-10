@@ -27,7 +27,14 @@ class VideoTransCodeQuery extends Command
     const MP4 = "video/mp4";
 
     private $beginTime;
-    private $videoId = "";
+    private $jobId;
+    private $jobIdToData;
+
+    const SUBMITTED = "Submitted";
+    const TRANSCODING = "Transcoding";
+    const TRANSCODE_SUCCESS = "TranscodeSuccess";
+    const TRANSCODE_FAIL = "TranscodeFail";
+    const TRANSCODE_CANCELLED = "TranscodeCancelled";
 
     protected function configure()
     {
@@ -46,7 +53,7 @@ class VideoTransCodeQuery extends Command
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
-                "video_id" => $this->videoId,
+                "job_id" => $this->jobId,
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),
@@ -67,47 +74,71 @@ class VideoTransCodeQuery extends Command
      */
     private function doWork()
     {
-        // 判断是否需要转码
-        $video = Db::name("video")
-            ->where("id", $this->videoId)
-            ->field("u_id,source")
-            ->where("transcode_status", VideoIsTransCodeEnum::TRANSCODING)
-            ->find();
-        if (empty($video)) {// 视频不存在不需要转码
+        // 获取转码中的视频
+        $transcode = Db::name("video_transcode")
+            ->where("status", VideoIsTransCodeEnum::TRANSCODING)
+            ->field("id,video_id,after_source,status,request_id,job_id")
+            ->limit(1)
+            ->select()->toArray();
+        if (empty($transcode)) {// 不存在转码中的视频
+            // 防止程序过快退出
+            sleep(10);
             return;
         }
+        // 把处理的数据放入全局
+        $this->jobIdToData = array_combine(array_column($transcode, "job_id"), $transcode);
+        $objectIdArr = array_column($transcode, "job_id");
+        $objectIds = implode(",", $objectIdArr);
 
-        // 已添加转码任务直接返回
-        $transcode = Db::name('video_transcode')->where("video_id", $this->videoId)->field("id")->find();
-        if (!empty($transcode)) {
+        // 发送转码查询请求
+        $result = AliyunOss::mtsQuery($objectIds);
+        if (!$result->isSuccess()) {
+            throw new Exception("transcode jobIds : $objectIds transcode result request error");
+        }
+
+        $queryResult = $result->JobList->Job ?? [];
+        foreach ($queryResult as $item) {
+            $this->updateDb($item);
+        }
+    }
+
+    private function updateDb($jobResult)
+    {
+        $jobId = $jobResult->JobId;
+        $state = $jobResult->State;
+        $video = $this->jobIdToData[$jobId] ?? [];
+        if (empty($jobId) || empty($state) || empty($video)) {
+            throw new Exception("jobId:$jobId, state:$state or video empty");
+        }
+        // 提交成功和转码中不处理
+        if (in_array($state, [self::SUBMITTED, self::TRANSCODING])) {
             return;
         }
+        Db::startTrans();
+        try {
+            $update = ["query_result" => json_encode($jobResult)];
+            $videoUpdate = [];
+            // 更新转码状态为成功
+            if ($state == self::TRANSCODE_SUCCESS) {
+                $update["status"] = VideoIsTransCodeEnum::SUCCESS;
 
-        $bool = $this->needTransCode($video["source"]);
-        if (!$bool) { // 是mp4不需要转码直接修改小视频转码状态
-            Db::name("video")->where("id", $this->videoId)->update(["transcode_status" => VideoIsTransCodeEnum::SUCCESS]);
-            return;
+                $videoUpdate["source"] = $video["after_source"] ?? "";
+                $videoUpdate["transcode_status"] = VideoIsTransCodeEnum::SUCCESS;
+            } else if ($state == self::TRANSCODE_FAIL) {
+                $update["status"] = VideoIsTransCodeEnum::ERROR;
+                $videoUpdate["transcode_status"] = VideoIsTransCodeEnum::ERROR;
+            } else if ($state == self::TRANSCODE_CANCELLED) {
+                $update["status"] = VideoIsTransCodeEnum::CANCEL;
+                $videoUpdate["transcode_status"] = VideoIsTransCodeEnum::SUCCESS;
+            }
+            // 更新转码请求表
+            Db::name("video_transcode")->where("job_id", $jobId)->update($update);
+            // 更新视频表
+            Db::name("video")->where("id", $video["video_id"])->update($videoUpdate);
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            throw $e;
         }
-
-        $source = $video["source"];
-        $originName = AliyunOss::getObjectName($source);
-        $toName = AliyunOss::objectNameToMp4($originName);
-        $afterSource = str_replace($originName, $toName, $source);
-        // 发送转码请求
-        $request = AliyunOss::mtsRequest($originName, $toName);
-        if (empty($request)) {
-            throw new Exception("videoId : $this->videoId transcode request error");
-        }
-
-        $insert = [
-            'video_id' => $this->videoId,
-            'source' => $source,
-            'after_source' => $afterSource,
-            'request_id' => $request["RequestId"] ?? "",
-            'job_id' => $request["JobResultList"]["JobResult"][0]["Job"]["JobId"] ?? "",
-            'request_result' => json_encode($request)
-        ];
-
-        return Db::name("video_transcode")->insert($insert);
     }
 }

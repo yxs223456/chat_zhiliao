@@ -353,19 +353,4 @@ class VideoService extends Base
 
         return array_values($ret);
     }
-
-    /**
-     * 回调转码状态修改数据库
-     *
-     * @param $msg
-     */
-    public static function callback($msg)
-    {
-        // 判断是否成功
-
-        // 失败更新video_transcode 状态
-
-
-        // 成功修改video_transcode 状态更新 video source transcode_status,删除之前的文件
-    }
 }

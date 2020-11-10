@@ -169,7 +169,7 @@ class AliyunOss
      *  查询转码作业结果
      *
      * @param $jobIds
-     * @return array
+     * @return \AlibabaCloud\Client\Result\Result
      */
     public static function mtsQuery($jobIds)
     {
@@ -193,15 +193,12 @@ class AliyunOss
                 ])
                 ->request();
 
-            if ($result->isSuccess()) {
-                return $result->toArray();
-            }
+            return $result;
         } catch (ClientException $e) {
             Log::error($e->getErrorMessage() . PHP_EOL);
         } catch (ServerException $e) {
             Log::error($e->getErrorMessage() . PHP_EOL);
         }
-        return [];
     }
 
     /**

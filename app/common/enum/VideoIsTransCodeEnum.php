@@ -18,6 +18,7 @@ class VideoIsTransCodeEnum
     const TRANSCODING = 0; //转码中
     const SUCCESS = 1; // 成功
     const ERROR = 2;// 失败
+    const CANCEL = 3;// 取消
 
     protected static $desc = [
         self::TRANSCODING => [
@@ -28,6 +29,9 @@ class VideoIsTransCodeEnum
         ],
         self::ERROR => [
             "cn" => "失败",
+        ],
+        self::CANCEL => [
+            "cn" => "取消",
         ],
     ];
 }

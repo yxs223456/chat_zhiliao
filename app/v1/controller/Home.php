@@ -149,22 +149,4 @@ class Home extends Base
         return $this->jsonResponse(new \stdClass());
     }
 
-//    /**
-//     * 获取oss前端上传token
-//     *
-//     * @return \think\response\Json
-//     */
-//    public function mst()
-//    {
-//        $service = new ToolService();
-//        $data = $service->mtsRequest();
-//        return json($data);
-//    }
-
-    public function delObj()
-    {
-        $service = new ToolService();
-        $data = $service->push();
-        return json($data);
-    }
 }

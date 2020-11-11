@@ -1,6 +1,6 @@
 <?php
 
-namespace app\v1\transformer\recharge;
+namespace app\v1\transformer\wallet;
 
 use app\common\transformer\TransformerAbstract;
 
@@ -10,12 +10,12 @@ use app\common\transformer\TransformerAbstract;
  * Date: 2020/9/29
  * Time: 下午4:35
  */
-class PayByAliTransformer extends TransformerAbstract
+class PayByWeChatTransformer extends TransformerAbstract
 {
     public function transformData(array $data)
     {
         return [
-            "h5_url" => (string)$data["url"],
+            "mweb_url" => (string)$data["mweb_url"],
         ];
     }
 }

@@ -8,7 +8,6 @@
 
 namespace app\common\service;
 
-
 use app\common\AppException;
 use app\common\enum\AliPayOrderTypeEnum;
 use app\common\enum\FlowTypeEnum;
@@ -22,14 +21,16 @@ use app\common\helper\AliPay;
 use app\common\helper\WechatPay;
 use think\facade\Db;
 
-class RechargeService extends Base
+class WalletService extends Base
 {
     /**
      * 获取充值规格数据
-     *
      * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
      */
-    public function index()
+    public function rechargePackage()
     {
         return Db::name("config_coin")
             ->field("id,coin_price,price,is_new,is_wechat,is_alipay,gaving")
@@ -48,7 +49,7 @@ class RechargeService extends Base
      * @throws AppException
      * @throws \Throwable
      */
-    public function payByWeChat($rechargeId, $user)
+    public function rechargeByWeChat($rechargeId, $user)
     {
         $rechargeConfig = Db::name("config_coin")->where("id", $rechargeId)->find();
         if (empty($rechargeConfig)) {
@@ -116,7 +117,7 @@ class RechargeService extends Base
      * @throws AppException
      * @throws \Throwable
      */
-    public function payByAli($rechargeId, $user)
+    public function rechargeByAli($rechargeId, $user)
     {
         $rechargeConfig = Db::name("config_coin")->where("id", $rechargeId)->find();
         if (empty($rechargeConfig)) {
@@ -175,6 +176,9 @@ class RechargeService extends Base
      * @param $userId
      * @param $rechargeId
      * @throws AppException
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
      */
     public static function afterPay($userId, $rechargeId)
     {

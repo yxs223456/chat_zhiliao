@@ -16,7 +16,7 @@ use app\common\helper\AliPay;
 use app\common\helper\LinePay;
 use app\common\helper\Redis;
 use app\common\helper\WechatPay;
-use app\common\service\RechargeService;
+use app\common\service\WalletService;
 use app\common\service\VipService;
 use think\facade\Db;
 
@@ -90,7 +90,7 @@ class PayCallback extends BaseController
                     VipService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                     break;
                 case PayOrderSceneEnum::COIN:
-                    RechargeService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                    WalletService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                     break;
             }
 
@@ -168,7 +168,7 @@ class PayCallback extends BaseController
                     VipService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                     break;
                 case PayOrderSceneEnum::COIN:
-                    RechargeService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                    WalletService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                     break;
             }
 
@@ -258,7 +258,7 @@ XML;
                         VipService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                         break;
                     case PayOrderSceneEnum::COIN:
-                        RechargeService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
+                        WalletService::afterPay($userPayOrder["u_id"], $userPayOrder["source_id"]);
                         break;
                 }
 

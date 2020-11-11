@@ -1,6 +1,6 @@
 <?php
 
-namespace app\v1\transformer\recharge;
+namespace app\v1\transformer\wallet;
 
 use app\common\transformer\TransformerAbstract;
 

@@ -25,8 +25,10 @@ class WalletService extends Base
 {
     /**
      * 获取充值规格数据
-     *
      * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
      */
     public function rechargePackage()
     {
@@ -47,7 +49,7 @@ class WalletService extends Base
      * @throws AppException
      * @throws \Throwable
      */
-    public function payByWeChat($rechargeId, $user)
+    public function rechargeByWeChat($rechargeId, $user)
     {
         $rechargeConfig = Db::name("config_coin")->where("id", $rechargeId)->find();
         if (empty($rechargeConfig)) {
@@ -115,7 +117,7 @@ class WalletService extends Base
      * @throws AppException
      * @throws \Throwable
      */
-    public function payByAli($rechargeId, $user)
+    public function rechargeByAli($rechargeId, $user)
     {
         $rechargeConfig = Db::name("config_coin")->where("id", $rechargeId)->find();
         if (empty($rechargeConfig)) {
@@ -174,6 +176,9 @@ class WalletService extends Base
      * @param $userId
      * @param $rechargeId
      * @throws AppException
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
      */
     public static function afterPay($userId, $rechargeId)
     {

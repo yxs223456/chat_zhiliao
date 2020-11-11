@@ -28,8 +28,6 @@ class Wallet extends Base
 
     /**
      * 充值规格获取
-     *
-     * @return \think\response\Json
      */
     public function rechargePackage()
     {
@@ -40,11 +38,8 @@ class Wallet extends Base
 
     /**
      * 微信充值
-     *
-     * @return \think\response\Json
-     * @throws AppException
      */
-    public function payByWeChat()
+    public function rechargeByWeChat()
     {
         $request = $this->query["content"];
         $rechargeId = $request["id"] ?? 0;
@@ -55,17 +50,14 @@ class Wallet extends Base
         $user = $this->query["user"];
 
         $service = new WalletService();
-        $data = $service->payByWeChat($rechargeId, $user);
+        $data = $service->rechargeByWeChat($rechargeId, $user);
         return $this->jsonResponse($data, new PayByWeChatTransformer());
     }
 
     /**
      * 支付宝充值
-     *
-     * @return string
-     * @throws AppException
      */
-    public function payByAli()
+    public function rechargeByAli()
     {
         $request = $this->query["content"];
         $rechargeId = $request["id"] ?? 0;
@@ -76,7 +68,12 @@ class Wallet extends Base
         $user = $this->query["user"];
 
         $service = new WalletService();
-        $data = $service->payByAli($rechargeId, $user);
+        $data = $service->rechargeByAli($rechargeId, $user);
         return $this->jsonResponse(["url" => $data], new PayByAliTransformer());
+    }
+
+    public function rechargeByLine()
+    {
+
     }
 }

@@ -174,7 +174,7 @@ class VipService extends Base
      * @throws AppException
      * @throws \Throwable
      */
-    public function payBylinePay($user, $id)
+    public function payByline($user, $id)
     {
         // vip 套餐
         $vipConfigModel = new ConfigVipModel();

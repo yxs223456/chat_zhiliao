@@ -74,7 +74,7 @@ class Vip extends Base
     /**
      * line pay 购买vip套餐
      */
-    public function payBylinePay()
+    public function payByline()
     {
         $request = $this->query["content"];
         $id = $request["id"]??0;
@@ -84,7 +84,7 @@ class Vip extends Base
 
         $user = $this->query["user"];
         $service = new VipService();
-        $returnData = $service->payBylinePay($user, $id);
+        $returnData = $service->payByline($user, $id);
 
         return $returnData;
     }

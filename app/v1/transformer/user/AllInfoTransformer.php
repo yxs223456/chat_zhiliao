@@ -40,6 +40,7 @@ class AllInfoTransformer extends TransformerAbstract
                 'birthday' => $userInfo["birthday"] ?? "",
                 'photos' => empty($userInfo["photos"]) ? [] : json_decode($userInfo["photos"], true),
                 'city' => empty($userInfo['city']) ? "" : CityService::getCityByCode($userInfo['city']),
+                'city_code' => $userInfo['city'] ?? "",
                 'is_pretty' => $userInfo["is_pretty"] ?? UserIsPrettyEnum::NO,
                 'pretty_female_level' => $userInfo["pretty_female_level"] ?? PrettyFemaleLevelEnum::COMMON,
                 'pretty_male_level' => $userInfo['pretty_male_level'] ?? PrettyMaleLevelEnum::COMMON,

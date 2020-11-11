@@ -31,10 +31,10 @@ class Wallet extends Base
      *
      * @return \think\response\Json
      */
-    public function index()
+    public function rechargePackage()
     {
         $service = new WalletService();
-        $data = $service->index();
+        $data = $service->rechargePackage();
         return $this->jsonResponse($data, new IndexTransformer());
     }
 

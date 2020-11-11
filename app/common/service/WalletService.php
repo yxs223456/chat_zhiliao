@@ -28,7 +28,7 @@ class WalletService extends Base
      *
      * @return array
      */
-    public function index()
+    public function rechargePackage()
     {
         return Db::name("config_coin")
             ->field("id,coin_price,price,is_new,is_wechat,is_alipay,gaving")

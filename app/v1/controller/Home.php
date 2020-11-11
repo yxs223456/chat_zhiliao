@@ -148,4 +148,5 @@ class Home extends Base
         cacheUserLongLatInfo($userId, $lat, $long, Redis::factory());
         return $this->jsonResponse(new \stdClass());
     }
+
 }

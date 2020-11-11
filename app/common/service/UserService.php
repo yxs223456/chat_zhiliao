@@ -11,6 +11,7 @@ use app\common\enum\PrettyMaleLevelEnum;
 use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
+use app\common\enum\VideoIsTransCodeEnum;
 use app\common\helper\AliMobilePhoneCertificate;
 use app\common\helper\Pbkdf2;
 use app\common\helper\Redis;
@@ -901,12 +902,14 @@ class UserService extends Base
             "userSet" => [],// 用户配置
             "dynamics" => [],
             "dynamicLike" => [],
+            "currentLikeDynamicId" => [], // 当前用户点赞的视频ID
             "videos" => [],
             "videoLike" => [],
             "gifts" => [],
             "guard" => [], //守护
             "score" => "0", // 评分
-            "is_follow" => 0 // 是否关注
+            "is_follow" => 0, // 是否关注
+            "is_black" => 0 // 是否加入黑名单
         ];
         $user = self::getUserById($userId, $redis);
         $userInfo = UserInfoService::getUserInfoById($userId, $redis);
@@ -924,6 +927,7 @@ class UserService extends Base
         // 查询四条带有图片的动态
         $dynamic = Db::query("select * from dynamic where u_id=:id and length(source) > 2 order by create_time desc limit 4", ['id' => $userId]);
         $dynamicLike = [];
+        $currentLikeDynamicId = [];
         if (!empty($dynamic)) {
             $dynamicLikeData = Db::name("dynamic_count")
                 ->whereIn("dynamic_id", array_column($dynamic, "id"))
@@ -932,9 +936,13 @@ class UserService extends Base
             if ($dynamicLikeData) {
                 $dynamicLike = array_column($dynamicLikeData, "like_count", 'dynamic_id');
             }
+            $currentLikeDynamicId = Db::name("dynamic_like")->where("u_id", $currentUserId)
+                ->whereIn("dynamic_id", array_column($dynamic, "id"))
+                ->column("dynamic_id");
         }
         $data["dynamics"] = $dynamic;
         $data["dynamicLike"] = $dynamicLike;
+        $data["currentLikeDynamicId"] = $currentLikeDynamicId;
 
         // 查询礼物数据
         $gifts = Db::name("gift_give_log")->alias("gl")
@@ -951,11 +959,17 @@ class UserService extends Base
         $data['guard'] = $guardUser;
 
         // 获取小视频信息
-        $videos = Db::name("video")->alias("v")
+        $videoQuery = Db::name("video")->alias("v")
             ->leftJoin("video_count vc", "v.id = vc.video_id")
             ->field("v.*,vc.like_count")
-            ->where("v.u_id", $userId)->where("v.is_delete", DbDataIsDeleteEnum::NO)
-            ->order("v.id", "desc")->limit(4)->select()->toArray();
+            ->where("v.u_id", $userId)
+            ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->order("v.id", "desc");
+        // 不是查看自己的主页只查询转码成功的
+        if ($userId != $currentUserId) {
+            $videoQuery = $videoQuery->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS);
+        }
+        $videos = $videoQuery->limit(4)->select()->toArray();
         $data["videos"] = $videos;
         // 获取当前用户点赞的小视频ID
         if (!empty($videos)) { // 有小视频查看当前用户点赞的小视频ID
@@ -967,12 +981,15 @@ class UserService extends Base
 
         // 获取评分
         $data["score"] = ScoreService::getScore($userId);
-        // 查看是否已关注
+        // 查看是否已关注 是否加入黑名单
         if ($userId != $currentUserId) {
             $exists = Db::name("user_follow")->where("u_id", $currentUserId)
                 ->where("follow_u_id", $userId)
                 ->find();
             $data["is_follow"] = empty($exists) ? 0 : 1;
+
+            $bexists = BlackListService::inUserBlackList($currentUserId, $userId);
+            $data["is_black"] = $bexists ? 1 : 0;
         }
         return $data;
     }

@@ -68,6 +68,8 @@ class AppException extends \Exception
 
     const CONTENT_TOO_LONG = [1101, "内容太长", "內容太長"];
 
+    const REPORT_CONTENT_NOT_EMPTY = [1102, "请完善投诉内容", "請完善投訴內容"];
+
     public static function factory($errConst, $message = "", $lang = null)
     {
         $code = $errConst[0];

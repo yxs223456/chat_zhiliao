@@ -8,6 +8,7 @@
 
 namespace app\v1\transformer\video;
 
+use app\common\enum\VideoIsTransCodeEnum;
 use app\common\service\CityService;
 use app\common\transformer\TransformerAbstract;
 
@@ -44,6 +45,7 @@ class VideoListTransformer extends TransformerAbstract
             "like_count" => (int)$data["like_count"] ?? 0,
             "city" => empty($data["city"]) ? "" : CityService::getCityByCode($data['city']),
             "is_like" => $this->getIsLike($data["id"]),
+            "transcode_status" => VideoIsTransCodeEnum::SUCCESS,
             "is_followed" => $this->getIsFollow($data["u_id"]),
             "voice_chat_switch" => (int)$this->getUserSet($data["u_id"], "voice_chat_switch"),
             "voice_chat_price" => (int)$this->getUserSet($data["u_id"], "voice_chat_price"),

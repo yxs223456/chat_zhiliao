@@ -10,6 +10,7 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\enum\DbDataIsDeleteEnum;
+use app\common\enum\VideoIsTransCodeEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -37,6 +38,7 @@ class VideoService extends Base
                 'source' => $source,
                 'create_time' => date("Y-m-d H:i:s")
             ];
+
             $id = Db::name("video")->insertGetId($videoData);
             $videoCountData = [
                 'u_id' => $user["id"],
@@ -49,6 +51,8 @@ class VideoService extends Base
             Db::rollback();
             throw $e;
         }
+        // 所有的都转码
+        videoTransCodeProduce($id, Redis::factory());
         return $id;
     }
 
@@ -181,12 +185,13 @@ class VideoService extends Base
             "userFollow" => []
         ];
 
-        // 获取动态数据
+        // 获取视频数据
         $videoQuery = Db::name("video")->alias("v")
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
-            ->whereLike("ui.city", $city . "%")
+            ->where("ui.city", $city)
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
@@ -249,6 +254,7 @@ class VideoService extends Base
             ->leftJoin("user_info ui", "v.u_id = ui.u_id")
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
+            ->where("v.transcode_status",VideoIsTransCodeEnum::SUCCESS)
             ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
         if (!empty($startId)) {
@@ -313,8 +319,12 @@ class VideoService extends Base
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->where("v.u_id", $requestUserId)
-            ->field("v.id,v.u_id,v.cover,v.source,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.cover,v.source,v.transcode_status,vc.like_count,ui.portrait,ui.city")
             ->order("v.id", "desc");
+        // 不是查询自己的列表只展示转码成功的
+        if ($requestUserId != $currentUserId) {
+            $videoQuery = $videoQuery->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS);
+        }
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
         }

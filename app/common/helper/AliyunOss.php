@@ -10,12 +10,9 @@ namespace app\common\helper;
 use AlibabaCloud\Client\AlibabaCloud;
 use AlibabaCloud\Client\Exception\ClientException;
 use AlibabaCloud\Client\Exception\ServerException;
-use AlibabaCloud\Sts\Sts;
+use OSS\Core\OssException;
 use OSS\OssClient;
-use Sts\Request\V20150401\AssumeRoleRequest;
-use think\facade\App;
-
-include_once App::getRootPath() . "/extend/sts-server/aliyun-php-sdk-core/Config.php";
+use think\facade\Log;
 
 class AliyunOss
 {
@@ -25,8 +22,10 @@ class AliyunOss
     protected static $bucket = "";
     protected static $roleArn = "";
     protected static $tokenExpireTime = 900;
-    protected static $policyFile = "";
-    protected static $regionId = "cn-hangzhou";
+    protected static $regionId = "cn-beijing";
+    protected static $pipelineId = "";
+    protected static $templateId= "";
+    protected static $ossLocation= "oss-cn-beijing";
 
     private static function getConfig()
     {
@@ -38,7 +37,9 @@ class AliyunOss
         self::$roleArn = $config["role_arn"];
         self::$tokenExpireTime = $config["token_expire_time"];
         self::$regionId = $config["region_id"];
-        self::$policyFile = app()->getRootPath() . "/extend/" . trim($config["policy_file"], "/");
+        self::$pipelineId = $config["pipeline_id"];
+        self::$templateId = $config["template_id"];
+        self::$ossLocation = $config["oss_location"];
     }
 
     /**
@@ -62,7 +63,7 @@ class AliyunOss
     }
 
     /**
-     * 前端上传获取token
+     * 获取oss直传token
      *
      * @return array
      */
@@ -70,41 +71,6 @@ class AliyunOss
     {
         // 加载配置文件
         self::getConfig();
-
-        $policy = read_file(self::$policyFile);
-        $iClientProfile = \DefaultProfile::getProfile(self::$regionId, self::$accessKeyId, self::$accessKeySecret);
-        $client = new \DefaultAcsClient($iClientProfile);
-
-        $request = new AssumeRoleRequest();
-        $request->setRoleSessionName("client_name");
-        $request->setRoleArn(self::$roleArn);
-        $request->setPolicy($policy);
-        $request->setDurationSeconds(self::$tokenExpireTime);
-        $response = $client->doAction($request);
-
-        $rows = array();
-        $body = $response->getBody();
-        $content = json_decode($body);
-
-        if ($response->getStatus() == 200) {
-            $rows['StatusCode'] = 200;
-            $rows['AccessKeyId'] = $content->Credentials->AccessKeyId;
-            $rows['AccessKeySecret'] = $content->Credentials->AccessKeySecret;
-            $rows['Expiration'] = $content->Credentials->Expiration;
-            $rows['SecurityToken'] = $content->Credentials->SecurityToken;
-        } else {
-            $rows['StatusCode'] = 500;
-            $rows['ErrorCode'] = $content->Code;
-            $rows['ErrorMessage'] = $content->Message;
-        }
-        return $rows;
-    }
-
-    public static function getToken1()
-    {
-        // 加载配置文件
-        self::getConfig();
-        $policy = read_file(self::$policyFile);
         AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
             ->regionId(self::$regionId)
             ->asDefaultClient();
@@ -116,21 +82,168 @@ class AliyunOss
                 ->version('2015-04-01')
                 ->action('AssumeRole')
                 ->method('POST')
-                ->host('sts.aliyuncs.com')
                 ->options([
                     'query' => [
-                        'RegionId' => "cn-hangzhou",
+                        'RegionId' => self::$regionId,
                         'RoleArn' => self::$roleArn,
-                        'RoleSessionName' => "client_name",
-                        'Policy' => $policy
+                        'RoleSessionName' => "chat_zhiliao",
+                        'DurationSeconds' => self::$tokenExpireTime
                     ],
                 ])
                 ->request();
-            return $result->toArray();
+
+            $rows = array();
+            $body = $result->getBody();
+            $content = json_decode($body);
+
+            if ($result->isSuccess()) {
+                $rows['StatusCode'] = 200;
+                $rows['AccessKeyId'] = $content->Credentials->AccessKeyId;
+                $rows['AccessKeySecret'] = $content->Credentials->AccessKeySecret;
+                $rows['Expiration'] = $content->Credentials->Expiration;
+                $rows['SecurityToken'] = $content->Credentials->SecurityToken;
+            } else {
+                $rows['StatusCode'] = 500;
+                $rows['ErrorCode'] = $content->Code;
+                $rows['ErrorMessage'] = $content->Message;
+            }
+            return $rows;
         } catch (ClientException $e) {
-            echo $e->getErrorMessage() . PHP_EOL;
+            Log::error($e->getErrorMessage() . PHP_EOL);
         } catch (ServerException $e) {
-            echo $e->getErrorMessage() . PHP_EOL;
+            Log::error($e->getErrorMessage() . PHP_EOL);
         }
+    }
+
+    /**
+     *  提交转码作业请求
+     *
+     * @param $objectName
+     * @param $toName
+     * @return \AlibabaCloud\Client\Result\Result
+     */
+    public static function mtsRequest($objectName, $toName)
+    {
+        // 加载配置文件
+        self::getConfig();
+        AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
+            ->regionId(self::$regionId)
+            ->asDefaultClient();
+
+        try {
+            $result = AlibabaCloud::rpc()
+                ->product('Mts')
+                ->scheme('https')// https | http
+                ->version('2014-06-18')
+                ->action('SubmitJobs')
+                ->method('POST')
+                ->options([
+                    'query' => [
+                        'Input' => json_encode([
+                            'Location' => self::$ossLocation,
+                            'Bucket' => self::$bucket,
+                            "Object" => urlencode($objectName)
+                        ]),
+                        'Outputs' => json_encode([
+                            [
+                                'OutputObject' => urlencode($toName),
+                                'TemplateId' => self::$templateId
+                            ]
+                        ]),
+                        'OutputBucket' => self::$bucket,
+                        'OutputLocation' => self::$ossLocation,
+                        'PipelineId' => self::$pipelineId,
+                    ]
+                ])
+                ->request();
+
+            return $result;
+        } catch (ClientException $e) {
+            Log::error($e->getErrorMessage() . PHP_EOL);
+        } catch (ServerException $e) {
+            Log::error($e->getErrorMessage() . PHP_EOL);
+        }
+    }
+
+    /**
+     *  查询转码作业结果
+     *
+     * @param $jobIds
+     * @return \AlibabaCloud\Client\Result\Result
+     */
+    public static function mtsQuery($jobIds)
+    {
+        // 加载配置文件
+        self::getConfig();
+        AlibabaCloud::accessKeyClient(self::$accessKeyId, self::$accessKeySecret)
+            ->regionId(self::$regionId)
+            ->asDefaultClient();
+
+        try {
+            $result = AlibabaCloud::rpc()
+                ->product('Mts')
+                ->scheme('https')// https | http
+                ->version('2014-06-18')
+                ->action('QueryJobList')
+                ->method('POST')
+                ->options([
+                    'query' => [
+                        'JobIds' => $jobIds,
+                    ]
+                ])
+                ->request();
+
+            return $result;
+        } catch (ClientException $e) {
+            Log::error($e->getErrorMessage() . PHP_EOL);
+        } catch (ServerException $e) {
+            Log::error($e->getErrorMessage() . PHP_EOL);
+        }
+    }
+
+    /**
+     * 删除oss文件
+     *
+     * @param $object string 文件名称
+     * @return string
+     * @throws \OSS\Core\OssException
+     */
+    public static function deleteObject($object)
+    {
+        self::getConfig();
+        try {
+            $ossClient = new OssClient(self::$accessKeyId, self::$accessKeySecret, self::$endpoint);
+            $ossClient->deleteObject(self::$bucket, $object);
+        } catch (OssException $e) {
+            throw $e;
+        }
+        return true;
+    }
+
+    /**
+     * 获取objectName
+     *
+     * @param $object
+     * @return string
+     */
+    public static function getObjectName($object)
+    {
+        self::getConfig();
+        $objectName = explode(self::$endpoint, $object);
+        return trim(array_pop($objectName), DIRECTORY_SEPARATOR);
+    }
+
+    /**
+     * 文件名称修改方法
+     *
+     * @param $object
+     * @return string
+     */
+    public static function objectNameToMp4($object)
+    {
+        if (strpos($object, ".") === false) {
+            return $object . ".mp4";
+        }
+        return substr($object, 0, strpos($object, ".")) . ".mp4";
     }
 }

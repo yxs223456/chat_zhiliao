@@ -286,3 +286,45 @@ function userGuardCallBackConsumer(Redis $redis)
     $arr = json_decode($data[1], true);
     return $arr;
 }
+
+
+/**
+ * 上传视频转码队列
+ *
+ * @param $incomeUserId
+ * @param $spendUserId
+ * @param $coin
+ */
+define("REDIS_MQ_KEY_VIDEO_TRANSCODE", REDIS_KEY_MQ_KEY_PREFIX . "videoTransCode");
+function videoTransCodeProduce($videoId, Redis $redis)
+{
+//    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "video_transcode";
+//    $routingKey = "video_transcode";
+//    RabbitMQ::directProduce($routingKey, $exchangeName, json_encode([
+//        'videoId' => $videoId
+//    ]));
+
+    $key = REDIS_MQ_KEY_VIDEO_TRANSCODE;
+    $data = json_encode([
+        "videoId" => $videoId
+    ]);
+    $redis->rPush($key, $data);
+}
+
+function videoTransCodeConsumer(Redis $redis)
+{
+//    $exchangeName = RABBIT_MQ_DIRECT_EXCHANGE_PREFIX . "video_transcode";
+//    $queueName = RABBIT_MQ_QUEUE_PREFIX . "video_transcode";
+//    $routingKey = "video_transcode";
+//
+//    RabbitMQ::directConsumer($routingKey, $exchangeName, $queueName, $callback);
+
+    $key = REDIS_MQ_KEY_VIDEO_TRANSCODE;
+    $data = $redis->blPop([$key], REDIS_KEY_MQ_WAIT_TIME);
+
+    if ($data == null || empty($data[1])) {
+        return null;
+    }
+    $arr = json_decode($data[1], true);
+    return $arr;
+}

@@ -17,6 +17,7 @@ class UserTransformer extends TransformerAbstract
     public function transformData(array $data): array
     {
         return [
+            'is_vip' => $data['is_vip'] ?? 0,
             'count' => $data["count"] ?? 0,
             'today_count' => $data["today_count"]??0,
             'list' => $this->getList($data["list"])

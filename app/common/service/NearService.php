@@ -19,12 +19,22 @@ class NearService extends Base
      *
      * @param $pageNum int 起始ID
      * @param $pageSize int 分页
+     * @param $long int 经度
+     * @param $lat int 纬度
      * @param $isFlush int 是否刷新
      * @param $userId int 用户ID
      * @return array
      */
-    public function user($pageNum, $pageSize, $isFlush, $userId)
+    public function user($pageNum, $pageSize, $long, $lat, $isFlush, $userId)
     {
+        if (empty($long) || empty($lat)) {
+            return [
+                [],[]
+            ];
+        }
+        $redis = Redis::factory();
+        // 缓存当前用户坐标
+        cacheUserLongLatInfo($userId, $lat, $long, $redis);
         // 需要刷新更新缓存内容
         if ($isFlush) {
             return $this->userUpdate($pageSize, $userId);

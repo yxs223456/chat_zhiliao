@@ -28,13 +28,15 @@ class JPush
     /**
      * 给某个设备推送消息
      *
-     * @param $deviceId
-     * @param $message
+     * @param $deviceId string 设备注册ID
+     * @param $content string 内容
+     * @param $title string 标题
+     * @param $extra array 业务数据
      * @return bool
      * @throws Exception
      * @throws JPushException
      */
-    public static function pushOne($deviceId, $message)
+    public static function pushOne($deviceId, $content, $title, $extra = [])
     {
         if (empty($deviceId)) {
             throw new Exception("device id not empty");
@@ -47,7 +49,7 @@ class JPush
         $pusher = $client->push();
         $pusher->setPlatform("all");
         $pusher->addRegistrationId($deviceId);
-        $pusher->setMessage("hello push", "test push");
+        $pusher->setMessage($content, $title, null, $extra);
         try {
             $pusher->send();
         } catch (JPushException $e) {

@@ -26,6 +26,7 @@ class Base extends BaseController
         'user' => [],
         "v" => "",
         "os" => "",
+        "device_no" => ""
     ];
 
     protected $beforeActionList = [
@@ -44,6 +45,7 @@ class Base extends BaseController
         header("Access-Control-Allow-Headers:token");
         $this->query["v"] = $this->request->header('v');
         $this->query["os"] = $this->request->header('os');
+        $this->query["device_no"] = $this->request->header("deviceNo");
 
         $content = $this->request->getContent();
         if ($content) {

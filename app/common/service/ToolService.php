@@ -30,16 +30,18 @@ class ToolService extends Base
     public function mtsRequest()
     {
         $fileName = "1602656808842121.mp4";
-        return AliyunOss::mtsRequest($fileName,"1602656808842121-test-test.mp4");
+        return AliyunOss::mtsRequest($fileName, "1602656808842121-test-test.mp4");
     }
 
-    public function del(){
+    public function del()
+    {
 //        return AliyunOss::deleteObject("https://yanglc.oss-cn-beijing.aliyuncs.com/xxxxx");
         return AliyunOss::objectNameToMp4("asdfasdfadsf123.api.asdf");
     }
 
-    public function push(){
-        videoTransCodeProduce(58,Redis::factory());
+    public function push()
+    {
+        videoTransCodeProduce(58, Redis::factory());
         return ["code" => 200];
     }
 }

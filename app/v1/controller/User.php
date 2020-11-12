@@ -7,6 +7,7 @@ use app\common\enum\SmsSceneEnum;
 use app\common\enum\UserOccupationEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
+use app\common\helper\JPush;
 use app\common\service\BlackListService;
 use app\common\service\UserService;
 use app\common\service\VisitorService;
@@ -65,6 +66,7 @@ class User extends Base
         $verifyCode = $request["verify_code"] ?? null;
         $inviteUserNumber = $request["invite_user_number"] ?? "";
         $password = $request["password"] ?? "";
+        $deviceNo = $this->query["device_no"] ?? ""; // 设备标示
 
         if (empty($mobilePhone) || $verifyCode === null || empty($areaCode)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -77,7 +79,7 @@ class User extends Base
         }
 
         $us = new UserService();
-        $returnData = $us->register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber);
+        $returnData = $us->register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -92,13 +94,14 @@ class User extends Base
         $request = $this->query["content"];
         $account = $request["account"] ?? "";
         $password = $request["password"] ?? "";
+        $deviceNo = $this->query["device_no"] ?? "";
 
         if (empty($account) || $password === "") {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        $returnData = $us->passwordLogin($account, $password);
+        $returnData = $us->passwordLogin($account, $password, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -113,6 +116,7 @@ class User extends Base
         $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
         $verifyCode = $request["verify_code"] ?? null;
         $inviteUserNumber = $request["invite_user_number"] ?? "";
+        $deviceNo = $this->query["device_no"] ?? "";
 
         if (empty($mobilePhone) || $verifyCode === null || empty($areaCode)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -122,7 +126,7 @@ class User extends Base
         }
 
         $us = new UserService();
-        $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber);
+        $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -135,12 +139,13 @@ class User extends Base
         $request = $this->query["content"];
         $accessToken = $request["access_token"]??"";
         $inviteUserNumber = $request["invite_user_number"] ?? "";
+        $deviceNo = $this->query["device_no"] ?? "";
         if (empty($accessToken)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        $returnData = $us->phoneLogin($accessToken, $inviteUserNumber);
+        $returnData = $us->phoneLogin($accessToken, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -153,13 +158,14 @@ class User extends Base
         $request = $this->query["content"];
         $weChatCode = $request["code"]??"";
         $inviteUserNumber = $request["invite_user_number"] ?? "";
+        $deviceNo = $this->query["device_no"] ?? "";
 
         if (empty($weChatCode)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber);
+        $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }

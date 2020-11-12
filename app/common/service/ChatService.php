@@ -11,8 +11,6 @@ namespace app\common\service;
 use app\common\AppException;
 use app\common\enum\ChatStatusEnum;
 use app\common\enum\ChatTypeEnum;
-use app\common\enum\UserIsPrettyEnum;
-use app\common\enum\UserSexEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;

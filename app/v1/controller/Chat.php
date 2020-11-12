@@ -171,4 +171,24 @@ class Chat extends Base
 
         return $this->jsonResponse($returnData, new SendMessage());
     }
+
+    /**
+     * 聊天纪录
+     */
+    public function chatList()
+    {
+        $request = $this->query["content"];
+        $pageNum = $request["page_num"]??1;
+        $pageSize = $request["page_size"]??10;
+        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+        $service = new ChatService();
+        $returnData = $service->chatList($user, $pageNum, $pageSize);
+
+        return $this->jsonResponse($returnData);
+    }
+
 }

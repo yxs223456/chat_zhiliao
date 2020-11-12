@@ -18,6 +18,7 @@ use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
 use app\common\helper\ShengWang;
 use app\common\model\UserWalletFlowModel;
+use app\gateway\GatewayClient;
 use think\facade\Db;
 
 class ChatService extends Base
@@ -404,6 +405,93 @@ class ChatService extends Base
 
         return new \stdClass();
     }
+
+    /**
+     * 聊天纪录
+     * @param $user
+     * @param $pageNum
+     * @param $pageSize
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function chatList($user, $pageNum, $pageSize)
+    {
+        $returnData["list"] = [];
+        $list = Db::name("chat")
+            ->where("s_u_id=".$user["id"]." or t_u_id=".$user["id"])
+            ->order("id", "desc")
+            ->limit(($pageNum-1)*$pageSize, $pageSize)
+            ->select();
+
+        if (empty($list)) {
+            return $returnData;
+        }
+
+        $userIds = [];
+        foreach ($list as $item) {
+            if ($item["s_u_id"] == $user["id"]) {
+                $userIds[] = $item["t_u_id"];
+            } elseif ($item["t_u_id"] == $user["id"]) {
+                $userIds[] = $item["s_u_id"];
+            }
+        }
+
+        $usersInfo = Db::name("user_info")
+            ->whereIn("u_id", $userIds)
+            ->field("u_id,portrait,nickname")
+            ->select()
+            ->toArray();
+        $usersInfo = array_column($usersInfo, null, "u_id");
+
+        foreach ($list as $item) {
+            if ($user["id"] == $item["s_u_id"]) {
+                $uId = $item["t_u_id"];
+                $callType = 1;
+            } else {
+                $uId = $item["s_u_id"];
+                $callType = 2;
+            }
+
+            $isOnline = GatewayClient::isUidOnline($uId);
+            $returnData["list"][] = [
+                "u_id" => $uId,
+                "nickname" =>  $usersInfo[$uId]["nickname"],
+                "portrait" =>  $usersInfo[$uId]["portrait"],
+                "chat_type" => $item["chat_type"],
+                "call_type" => $callType,
+                "chat_status_message" => $this->chatStatusMessage($item),
+                "chat_create_time" => date("m-d H:i", strtotime($item["create_time"])),
+                "is_online" => $isOnline,
+            ];
+        }
+
+        return $returnData;
+    }
+
+    private function chatStatusMessage($chat, $lang = null)
+    {
+        if ($lang == null) {
+            $lang = config("app.api_language");
+        }
+
+        if ($chat["status"] == ChatStatusEnum::NO_ANSWER) {
+            $message = ($lang == "zh-cn")?"通话已取消":"通話已取消";
+        } elseif ($chat["status"] == ChatStatusEnum::WAIT_ANSWER) {
+            $message = ($lang == "zh-cn")?"拨打中":"撥打中";
+        } elseif ($chat["status"] == ChatStatusEnum::CALLING) {
+            $message = ($lang == "zh-cn")?"通话中":"通話中";
+        } else {
+            $mLength = (int)($chat["chat_time_length"]/60);
+            $sLength = $chat["chat_time_length"]%60;
+            $sLength<10 ? $sLength="0".$sLength : null;
+            $timeLength = $mLength.":".$sLength;
+            $message = ($lang == "zh-cn")?"通话时长 ".$timeLength:"通話時長 ".$timeLength;
+        }
+        return $message;
+    }
+
 
     /**
      * 计算已结束通话费用

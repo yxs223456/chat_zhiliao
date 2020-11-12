@@ -47,7 +47,7 @@ class PayCallback extends BaseController
         Db::startTrans();
         try {
             /**
-             * 微信支付订单处理
+             * line pay 支付订单处理
              */
             $linePayOrder = Db::name("pay_order_line")
                 ->where("out_trade_no", $outTradeNo)

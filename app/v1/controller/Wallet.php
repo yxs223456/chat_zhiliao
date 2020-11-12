@@ -72,8 +72,51 @@ class Wallet extends Base
         return $this->jsonResponse(["url" => $data], new PayByAliTransformer());
     }
 
+    /**
+     * line pay 充值
+     */
     public function rechargeByLine()
     {
+        $request = $this->query["content"];
+        $rechargeId = $request["id"] ?? 0;
+        if (!checkInt($rechargeId, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
 
+        $user = $this->query["user"];
+
+        $service = new WalletService();
+        $returnData = $service->rechargeByLine($rechargeId, $user);
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 提现页面信息
+     */
+    public function withdrawInfo()
+    {
+        $user = $this->query["user"];
+
+        $service = new WalletService();
+        $returnData = $service->withdrawInfo($user);
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 提现
+     */
+    public function withdrawBy()
+    {
+        $request = $this->query["content"];
+        $amount = $request["amount"] ?? 0;
+        if (!checkInt($amount, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $user = $this->query["user"];
+
+        $service = new WalletService();
+        $returnData = $service->withdrawBy($amount, $user);
+        return $this->jsonResponse($returnData);
     }
 }

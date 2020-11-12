@@ -66,9 +66,7 @@ class User extends Base
         $verifyCode = $request["verify_code"] ?? null;
         $inviteUserNumber = $request["invite_user_number"] ?? "";
         $password = $request["password"] ?? "";
-        $platform = $this->query["os"] ?? ""; // 设备操作系统
         $deviceNo = $this->query["device_no"] ?? ""; // 设备标示
-        $platform = array_search(strtolower($platform), JPush::PLATFORM_LIST);
 
         if (empty($mobilePhone) || $verifyCode === null || empty($areaCode)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -81,7 +79,7 @@ class User extends Base
         }
 
         $us = new UserService();
-        $returnData = $us->register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber, $platform, $deviceNo);
+        $returnData = $us->register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -96,16 +94,14 @@ class User extends Base
         $request = $this->query["content"];
         $account = $request["account"] ?? "";
         $password = $request["password"] ?? "";
-        $platform = $this->query["os"] ?? "";
         $deviceNo = $this->query["device_no"] ?? "";
-        $platform = array_search(strtolower($platform), JPush::PLATFORM_LIST);
 
         if (empty($account) || $password === "") {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        $returnData = $us->passwordLogin($account, $password, $platform, $deviceNo);
+        $returnData = $us->passwordLogin($account, $password, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -120,9 +116,7 @@ class User extends Base
         $areaCode = !empty($request["area_code"]) ? $request["area_code"] : "86";
         $verifyCode = $request["verify_code"] ?? null;
         $inviteUserNumber = $request["invite_user_number"] ?? "";
-        $platform = $this->query["os"] ?? "";
         $deviceNo = $this->query["device_no"] ?? "";
-        $platform = array_search(strtolower($platform), JPush::PLATFORM_LIST);
 
         if (empty($mobilePhone) || $verifyCode === null || empty($areaCode)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -132,7 +126,7 @@ class User extends Base
         }
 
         $us = new UserService();
-        $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber, $platform, $deviceNo);
+        $returnData = $us->codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -145,15 +139,13 @@ class User extends Base
         $request = $this->query["content"];
         $accessToken = $request["access_token"]??"";
         $inviteUserNumber = $request["invite_user_number"] ?? "";
-        $platform = $this->query["os"] ?? "";
         $deviceNo = $this->query["device_no"] ?? "";
-        $platform = array_search(strtolower($platform), JPush::PLATFORM_LIST);
         if (empty($accessToken)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        $returnData = $us->phoneLogin($accessToken, $inviteUserNumber, $platform, $deviceNo);
+        $returnData = $us->phoneLogin($accessToken, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }
@@ -166,16 +158,14 @@ class User extends Base
         $request = $this->query["content"];
         $weChatCode = $request["code"]??"";
         $inviteUserNumber = $request["invite_user_number"] ?? "";
-        $platform = $this->query["os"] ?? "";
         $deviceNo = $this->query["device_no"] ?? "";
-        $platform = array_search(strtolower($platform), JPush::PLATFORM_LIST);
 
         if (empty($weChatCode)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $us = new UserService();
-        $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber, $platform, $deviceNo);
+        $returnData = $us->weChatLogin($weChatCode, $inviteUserNumber, $deviceNo);
 
         return $this->jsonResponse($returnData, new AllInfoTransformer());
     }

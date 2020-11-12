@@ -78,13 +78,12 @@ class UserService extends Base
      * @param $password
      * @param $verifyCode
      * @param $inviteUserNumber
-     * @param $platform
      * @param $deviceNo
      * @return array
      * @throws AppException
      * @throws \Throwable
      */
-    public function register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber, $platform, $deviceNo)
+    public function register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber, $deviceNo)
     {
         // 判断验证码是否正确
         $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;
@@ -95,7 +94,7 @@ class UserService extends Base
         }
 
         // 执行注册流程
-        $returnData = $this->registerByPhoneAndPassword($areaCode, $mobilePhone, $password, $inviteUserNumber, $platform, $deviceNo);
+        $returnData = $this->registerByPhoneAndPassword($areaCode, $mobilePhone, $password, $inviteUserNumber, $deviceNo);
         return $returnData;
     }
 
@@ -103,12 +102,11 @@ class UserService extends Base
      * 密码登录
      * @param $account
      * @param $password
-     * @param $platform
      * @param $deviceNo
      * @return array
      * @throws AppException
      */
-    public function passwordLogin($account, $password, $platform, $deviceNo)
+    public function passwordLogin($account, $password, $deviceNo)
     {
         $userModel = new UserModel();
         $user = $userModel->findByMobilePhone($account);
@@ -120,7 +118,7 @@ class UserService extends Base
             throw AppException::factory(AppException::USER_ACCOUNT_ERROR);
         }
 
-        $returnData = $this->doLogin($user->toArray(), $platform, $deviceNo);
+        $returnData = $this->doLogin($user->toArray(), $deviceNo);
         return $returnData;
     }
 
@@ -161,13 +159,12 @@ class UserService extends Base
      * @param $mobilePhone
      * @param $verifyCode
      * @param $inviteUserNumber
-     * @param $platform
      * @param $deviceNo
      * @return array
      * @throws AppException
      * @throws \Throwable
      */
-    public function codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber, $platform, $deviceNo)
+    public function codeLogin($areaCode, $mobilePhone, $verifyCode, $inviteUserNumber, $deviceNo)
     {
         // 判断验证码是否正确
         $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;
@@ -183,10 +180,10 @@ class UserService extends Base
 
         if ($user == null) {
             // 用户不存在执行注册流程
-            $returnData = $this->registerByPhone($areaCode, $mobilePhone, $inviteUserNumber, $platform, $deviceNo);
+            $returnData = $this->registerByPhone($areaCode, $mobilePhone, $inviteUserNumber, $deviceNo);
         } else {
             // 用户存在直接登录
-            $returnData = $this->doLogin($user->toArray(), $platform, $deviceNo);
+            $returnData = $this->doLogin($user->toArray(), $deviceNo);
         }
         return $returnData;
     }
@@ -195,7 +192,6 @@ class UserService extends Base
      * 手机号直接登录
      * @param $accessToken
      * @param $inviteUserNumber
-     * @param $platform
      * @param $deviceNo
      * @return array
      * @throws AppException
@@ -203,7 +199,7 @@ class UserService extends Base
      * @throws \AlibabaCloud\Client\Exception\ServerException
      * @throws \Throwable
      */
-    public function phoneLogin($accessToken, $inviteUserNumber, $platform, $deviceNo)
+    public function phoneLogin($accessToken, $inviteUserNumber, $deviceNo)
     {
         // 通过access_token获取手机号
         $mobile = AliMobilePhoneCertificate::getMobile($accessToken);
@@ -214,10 +210,10 @@ class UserService extends Base
 
         if ($user == null) {
             // 用户不存在执行注册流程
-            $returnData = $this->registerByPhone("86", $mobile, $inviteUserNumber, $platform, $deviceNo);
+            $returnData = $this->registerByPhone("86", $mobile, $inviteUserNumber, $deviceNo);
         } else {
             // 用户存在直接登录
-            $returnData = $this->doLogin($user->toArray(), $platform, $deviceNo);
+            $returnData = $this->doLogin($user->toArray(), $deviceNo);
         }
         return $returnData;
     }
@@ -226,13 +222,12 @@ class UserService extends Base
      * app端微信登录
      * @param $weChatCode
      * @param $inviteUserNumber
-     * @param $platform
      * @param $deviceNo
      * @return array
      * @throws AppException
      * @throws \Throwable
      */
-    public function weChatLogin($weChatCode, $inviteUserNumber, $platform, $deviceNo)
+    public function weChatLogin($weChatCode, $inviteUserNumber, $deviceNo)
     {
         // 获取用户微信信息
         $weChatLogin = WechatLogin::getObject();
@@ -244,16 +239,16 @@ class UserService extends Base
 
         if ($user == null) {
             // 用户不存在执行注册流程
-            $returnData = $this->registerByWeChatApp($weChatUserInfo, $inviteUserNumber, $platform, $deviceNo);
+            $returnData = $this->registerByWeChatApp($weChatUserInfo, $inviteUserNumber, $deviceNo);
         } else {
             // 用户存在直接登录
-            $returnData = $this->doLogin($user->toArray(), $platform, $deviceNo);
+            $returnData = $this->doLogin($user->toArray(), $deviceNo);
         }
         return $returnData;
     }
 
     // 通过微信移动应用注册用户
-    private function registerByWeChatApp($weChatUserInfo, $inviteUserNumber, $platform, $deviceNo)
+    private function registerByWeChatApp($weChatUserInfo, $inviteUserNumber, $deviceNo)
     {
         //判断邀请用户是否存在
         $userModel = new UserModel();
@@ -296,7 +291,7 @@ class UserService extends Base
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
             // 后续处理
-            $this->registerAfter($newUser, $parent, $nickname, $portrait, $platform, $deviceNo);
+            $this->registerAfter($newUser, $parent, $nickname, $portrait, $deviceNo);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -319,13 +314,12 @@ class UserService extends Base
      * @param $mobilePhone
      * @param $password
      * @param $inviteUserNumber
-     * @param $system
      * @param $deviceNo
      * @return array
      * @throws AppException
      * @throws \Throwable
      */
-    private function registerByPhoneAndPassword($areaCode, $mobilePhone, $password, $inviteUserNumber, $system, $deviceNo)
+    private function registerByPhoneAndPassword($areaCode, $mobilePhone, $password, $inviteUserNumber, $deviceNo)
     {
         //判断邀请用户是否存在
         $userModel = new UserModel();
@@ -368,7 +362,7 @@ class UserService extends Base
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
             // 后续处理
-            $this->registerAfter($newUser, $parent, $nickname, $portrait, $system, $deviceNo);
+            $this->registerAfter($newUser, $parent, $nickname, $portrait, $deviceNo);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -386,7 +380,7 @@ class UserService extends Base
     }
 
     // 通过手机号注册用户
-    private function registerByPhone($areaCode, $mobilePhone, $inviteUserNumber, $platform, $deviceNo)
+    private function registerByPhone($areaCode, $mobilePhone, $inviteUserNumber, $deviceNo)
     {
         //判断邀请用户是否存在
         $userModel = new UserModel();
@@ -428,7 +422,7 @@ class UserService extends Base
             $newUser["id"] = Db::name("user")->insertGetId($newUser);
 
             // 后续处理
-            $this->registerAfter($newUser, $parent, $nickname, $portrait, $platform, $deviceNo);
+            $this->registerAfter($newUser, $parent, $nickname, $portrait, $deviceNo);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -446,14 +440,13 @@ class UserService extends Base
     }
 
     // 封装新用户注册公共处理部分
-    private function registerAfter($newUser, $parent, $nickname, $portrait, $platform, $deviceNo)
+    private function registerAfter($newUser, $parent, $nickname, $portrait, $deviceNo)
     {
         // user_info 表
         $userInfoData = [
             "u_id" => $newUser["id"],
             "portrait" => $portrait,
             "nickname" => $nickname,
-            "platform" => $platform,
             "device_no" => $deviceNo
         ];
         Db::name("user_info")->insert($userInfoData);
@@ -535,7 +528,7 @@ class UserService extends Base
     }
 
     // 用户登录
-    private function doLogin($user, $platform, $deviceNo)
+    private function doLogin($user, $deviceNo)
     {
         // 修改用户token
         $oldToken = $user["token"];
@@ -549,7 +542,7 @@ class UserService extends Base
         cacheUserInfoByToken($user, $redis, $oldToken);
         cacheUserInfoById($user, $redis);
 
-        Db::name("user_info")->where("u_id", $user["id"])->update(["platform" => $platform, "device_no" => $deviceNo]);
+        Db::name("user_info")->where("u_id", $user["id"])->update(["device_no" => $deviceNo]);
         deleteUserInfoDataByUId($user["id"], Redis::factory());
         return self::getUserAllInfo($user["id"]);
     }

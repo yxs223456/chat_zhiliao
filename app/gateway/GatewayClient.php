@@ -35,6 +35,7 @@ class GatewayClient
 
     public static function isUidOnline($userId)
     {
+        self::init();
         return Gateway::isUidOnline($userId);
     }
 }

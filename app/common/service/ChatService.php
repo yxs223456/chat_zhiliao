@@ -462,7 +462,7 @@ class ChatService extends Base
                 "chat_type" => $item["chat_type"],
                 "call_type" => $callType,
                 "chat_status_message" => $this->chatStatusMessage($item),
-                "chat_create_time" => date("m-d H:i", strtotime($item["create_time"])),
+                "chat_time" => date("m-d H:i", strtotime($item["create_time"])),
                 "is_online" => $isOnline,
             ];
         }

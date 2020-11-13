@@ -50,6 +50,7 @@ class Chat extends Base
         $user = $this->query["user"];
         $s = new ChatService();
         $returnData = $s->dial($user, $tUId, $chatType);
+        var_dump($returnData);
 
         return $this->jsonResponse($returnData, new Dial());
     }

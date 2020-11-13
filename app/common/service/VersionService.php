@@ -12,6 +12,8 @@ namespace app\common\service;
 use app\common\AppException;
 use app\common\enum\AppIsDownEnum;
 use app\common\enum\AppIsForceEnum;
+use app\common\enum\AppVersionTypeEnum;
+use app\common\helper\AliyunOss;
 use think\facade\Db;
 
 class VersionService extends Base
@@ -61,5 +63,37 @@ class VersionService extends Base
         }
 
         return $buck;
+    }
+
+    /**
+     * 从header获取os类型
+     *
+     * @param $os
+     * @return mixed
+     */
+    public static function getOs($os)
+    {
+        $os = strtolower($os);
+        $allow = [AppVersionTypeEnum::ANDROID => "android", AppVersionTypeEnum::IOS => "ios"];
+        return array_search($os, $allow);
+    }
+
+    /**
+     * 上传包
+     *
+     * @param $id
+     * @param $update
+     * @return array|null|\think\Model
+     */
+    public function addAndUpdate($id, $update)
+    {
+
+        if (!empty($id)) { // 添加操作
+            Db::name("app_versions")->where("id", $id)->update($update);
+        } else {
+            $id = Db::name("app_versions")->insertGetId($update);
+        }
+
+        return Db::name("app_versions")->where("id", $id)->find();
     }
 }

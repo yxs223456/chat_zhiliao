@@ -246,4 +246,25 @@ class AliyunOss
         }
         return substr($object, 0, strpos($object, ".")) . ".mp4";
     }
+
+    /**
+     * 上传文件
+     *
+     * @param $object
+     * @param $content
+     * @return bool
+     * @throws OssException
+     */
+    public static function putFile($object, $content)
+    {
+        self::getConfig();
+        try {
+            $ossClient = new OssClient(self::$accessKeyId, self::$accessKeySecret, self::$endpoint);
+
+            $ossClient->putObject(self::$bucket, $object, $content);
+        } catch (OssException $e) {
+            throw $e;
+        }
+        return true;
+    }
 }

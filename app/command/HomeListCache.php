@@ -70,7 +70,7 @@ class HomeListCache extends Command
         $homeCondition1 = "0:0";
         $recommendList1 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("ui.photos", "<>", "[]")
@@ -103,7 +103,7 @@ class HomeListCache extends Command
         $homeCondition2 = "0:100_200";
         $recommendList2 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("ui.photos", "<>", "[]")
@@ -137,7 +137,7 @@ class HomeListCache extends Command
         $homeCondition3 = "0:200_350";
         $recommendList3 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("ui.photos", "<>", "[]")
@@ -172,7 +172,7 @@ class HomeListCache extends Command
         $homeCondition4 = "0:350_500";
         $recommendList4 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("ui.photos", "<>", "[]")
@@ -207,7 +207,7 @@ class HomeListCache extends Command
         $homeCondition5 = "1:0";
         $recommendList5 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -241,7 +241,7 @@ class HomeListCache extends Command
         $homeCondition6 = "1:100_200";
         $recommendList6 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -276,7 +276,7 @@ class HomeListCache extends Command
         $homeCondition7 = "0:200_350";
         $recommendList7 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -312,7 +312,7 @@ class HomeListCache extends Command
         $homeCondition8 = "1:350_500";
         $recommendList8 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -348,7 +348,7 @@ class HomeListCache extends Command
         $homeCondition9 = "2:0";
         $recommendList9 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -382,7 +382,7 @@ class HomeListCache extends Command
         $homeCondition10 = "2:100_200";
         $recommendList10 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -417,7 +417,7 @@ class HomeListCache extends Command
         $homeCondition11 = "2:200_350";
         $recommendList11 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -453,7 +453,7 @@ class HomeListCache extends Command
         $homeCondition12 = "2:350_500";
         $recommendList12 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -492,7 +492,7 @@ class HomeListCache extends Command
         $homeCondition1 = "0:0";
         $recommendList1 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->whereTime("ui.create_time", ">=", date("Y-m-d", strtotime("- 2 weeks")))
@@ -526,7 +526,7 @@ class HomeListCache extends Command
         $homeCondition2 = "0:100_200";
         $recommendList2 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->whereTime("ui.create_time", ">=", date("Y-m-d", strtotime("- 2 weeks")))
@@ -561,7 +561,7 @@ class HomeListCache extends Command
         $homeCondition3 = "0:200_350";
         $recommendList3 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("ui.photos", "<>", "[]")
@@ -597,7 +597,7 @@ class HomeListCache extends Command
         $homeCondition4 = "0:350_500";
         $recommendList4 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("ui.photos", "<>", "[]")
@@ -633,7 +633,7 @@ class HomeListCache extends Command
         $homeCondition5 = "1:0";
         $recommendList5 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -668,7 +668,7 @@ class HomeListCache extends Command
         $homeCondition6 = "1:100_200";
         $recommendList6 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -704,7 +704,7 @@ class HomeListCache extends Command
         $homeCondition7 = "0:200_350";
         $recommendList7 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -741,7 +741,7 @@ class HomeListCache extends Command
         $homeCondition8 = "1:350_500";
         $recommendList8 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "1")
@@ -778,7 +778,7 @@ class HomeListCache extends Command
         $homeCondition9 = "2:0";
         $recommendList9 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -813,7 +813,7 @@ class HomeListCache extends Command
         $homeCondition10 = "2:100_200";
         $recommendList10 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -849,7 +849,7 @@ class HomeListCache extends Command
         $homeCondition11 = "2:200_350";
         $recommendList11 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")
@@ -886,7 +886,7 @@ class HomeListCache extends Command
         $homeCondition12 = "2:350_500";
         $recommendList12 = Db::name("user")->alias("u")
             ->leftJoin("user_info ui", "ui.u_id=u.id")
-            ->leftJoin("user_wallet uw", "ui.u_id=u.id")
+            ->leftJoin("user_wallet uw", "uw.u_id=u.id")
             ->leftJoin("user_set us", "u.id=us.u_id")
             ->leftJoin("user_score uss", "u.id=uss.u_id")
             ->where("u.sex", "=", "2")

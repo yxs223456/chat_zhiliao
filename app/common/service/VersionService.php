@@ -47,26 +47,22 @@ class VersionService extends Base
             return $default;
         }
 
+        $buck["is_update"] = AppIsUpdateEnum::YES;
         $buck["is_force"] = AppIsForceEnum::NO;
-        if ($buck["version"] == $version) {
+        if ($buck["version"] <= $version) {
             $buck["is_update"] = AppIsUpdateEnum::NO;
             return $buck;
-        } else if ($buck["version"] < $version) {
-            $buck["is_force"] = AppIsForceEnum::YES;
-            $buck["is_update"] = AppIsUpdateEnum::YES;
-            return $buck;
-        } else {
-            $isForce = Db::name("app_versions")
-                ->where("type", $system)
-                ->where("is_force", AppIsForceEnum::YES)
-                ->where("version", ">", $version)
-                ->count();
-            if ($isForce) {
-                $buck["is_force"] = AppIsForceEnum::YES;
-            }
-            $buck["is_update"] = AppIsUpdateEnum::YES;
         }
 
+        $isForce = Db::name("app_versions")
+            ->where("type", $system)
+            ->where("is_force", AppIsForceEnum::YES)
+            ->where("version", ">", $version)
+            ->count();
+        if ($isForce) {
+            $buck["is_force"] = AppIsForceEnum::YES;
+        }
+        
         return $buck;
     }
 

@@ -72,19 +72,18 @@ class VersionService extends Base
     /**
      * 上传包
      *
-     * @param $id
      * @param $update
      * @return array|null|\think\Model
      */
-    public function addAndUpdate($id, $update)
+    public function addAndUpdate($update)
     {
-
-        if (!empty($id)) { // 添加操作
-            Db::name("app_versions")->where("id", $id)->update($update);
-        } else {
-            $id = Db::name("app_versions")->insertGetId($update);
+        $exists = Db::name("app_versions")->where("version", $update["version"])->find();
+        if (!empty($exists)) { // 添加操作
+            Db::name("app_versions")->where("version", $update["version"])->update($update);
+            return Db::name("app_versions")->where("version", $update["version"])->find();
         }
 
+        $id = Db::name("app_versions")->insertGetId($update);
         return Db::name("app_versions")->where("id", $id)->find();
     }
 }

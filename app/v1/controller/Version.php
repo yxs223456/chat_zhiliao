@@ -53,7 +53,6 @@ class Version extends Base
      */
     public function post()
     {
-        $id = input("id");
         $download = input("download_url") ?? null;
         $type = input("type", null);
         $version = input("version", null);
@@ -77,14 +76,12 @@ class Version extends Base
             }
 
         }
-        if (isset($version)) {
-            if (empty($version)) {
-                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
-            } else {
-                $update["version"] = $version;
-            }
 
+        if (empty($version)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
+        $update["version"] = $version;
+
         if (isset($description)) {
             if (empty($description)) {
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
@@ -103,7 +100,7 @@ class Version extends Base
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
         $service = new VersionService();
-        $data = $service->addAndUpdate($id, $update);
+        $data = $service->addAndUpdate($update);
 
         return $this->jsonResponse($data);
     }

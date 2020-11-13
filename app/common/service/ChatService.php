@@ -310,14 +310,10 @@ class ChatService extends Base
             throw $e;
         }
 
-        // 声网token
-        $swTokenInfo = $this->getSwRtcToken($user, $chatId);
-
         $returnData = [
             "is_free" => $isFree,
             "current_time" => time(),
             "deadline" => $isFree ? 0 : time() + ($minutes * 60),
-            "sw_token_info" => $swTokenInfo,
         ];
         return $returnData;
     }

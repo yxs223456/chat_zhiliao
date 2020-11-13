@@ -56,6 +56,6 @@ class Sw extends Base
         $service = new ChatService();
         $returnData = $service->getSwRtcToken($user, $chatId);
 
-        return $this->jsonResponse($returnData);
+        return $this->jsonResponse($returnData, new GetChatToken());
     }
 }

@@ -238,11 +238,25 @@ class ChatService extends Base
         $expire = 86400;
         $token = ShengWang::getRtcToken($user["id"], $chatId, $expire);
 
+        $chat = Db::name("chat")->where("id", $chatId)->find();
+        if ($user["id"] == $chat["s_u_id"]) {
+            $tUId = $chat["t_u_id"];
+        } else {
+            $tUId = $chat["s_u_id"];
+        }
+        $tUInfo = UserInfoService::getUserInfoById($tUId);
+
         $returnData = [
-            "token" => $token,
-            "u_id" => $user["id"],
-            "channel_name" => $chatId,
-            "expire" => $expire,
+            "t_u_info" => [
+                "portrait" => $tUInfo["portrait"],
+                "nickname" => $tUInfo["nickname"],
+            ],
+            "sw_token_info" => [
+                "token" => $token,
+                "u_id" => $user["id"],
+                "channel_name" => $chatId,
+                "expire" => $expire,
+            ],
         ];
         return $returnData;
     }

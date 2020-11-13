@@ -145,6 +145,7 @@ class ChatService extends Base
 
         // 声网token
         $swTokenInfo = $this->getSwRtcToken($user, $chatId);
+        $swTokenInfo = $swTokenInfo["sw_token_info"];
 
         $returnData = [
             "chat_id" => $chatId,

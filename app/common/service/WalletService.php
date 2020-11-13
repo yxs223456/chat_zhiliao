@@ -39,7 +39,9 @@ class WalletService extends Base
     public function rechargePackage()
     {
         return Db::name("config_coin")
-            ->field("id,coin_price,price,is_new,is_wechat,is_alipay,gaving")
+            ->field("id,coin_price,price")
+            ->where("is_sale", RechargePackageIsSaleEnum::YES)
+            ->where("is_delete", DbDataIsDeleteEnum::NO)
             ->order("sort")
             ->select()->toArray();
     }

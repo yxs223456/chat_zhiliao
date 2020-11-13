@@ -51,6 +51,7 @@ class AppException extends \Exception
     const GIFT_GIVE_SELF = [5002, "不能送自己礼物或红包", "不能送自己禮物或紅包"];
 
     const WALLET_MONEY_LESS = [6000, "余额不足", "餘額不足"];
+    const WALLET_RECHARGE_PACKAGE_OFFLINE = [6001, "该充值套餐已经下架", "該充值套餐已經下架"];
 
     const CHAT_VIDEO_CLOSE = [7000, "对方关闭视频接听", "對方關閉視頻接聽"];
     const CHAT_VOICE_CLOSE = [7001, "对方关闭语音接听", "對方關閉語音接聽"];

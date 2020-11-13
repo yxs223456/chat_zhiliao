@@ -29,7 +29,7 @@ function getCityConfigByCache(\Redis $redis)
 }
 
 /**
- * 首页推荐集合
+ * 首页推荐集合1
  */
 define("REDIS_KEY_HOME_RECOMMEND_LIST", REDIS_KEY_PREFIX . "homeRecommendList:");
 
@@ -52,6 +52,31 @@ function getUserListFromHomeRecommendList($condition, $pageNum, $pageSize, \Redi
 {
     $key = REDIS_KEY_HOME_RECOMMEND_LIST . $condition;
     return $redis->zRange($key, ($pageNum-1)*$pageSize, $pageSize);
+}
+
+
+/**
+ * 首页推荐集合2
+ */
+define("REDIS_KEY_HOME_RECOMMEND_LIST2", REDIS_KEY_PREFIX . "homeRecommendList2:");
+
+// 缓存首页推荐集合
+function cacheUserToHomeRecommendList2(array $list, $condition, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_RECOMMEND_LIST2 . $condition;
+    $redis->setex($key, 86400, json_encode($list));
+}
+
+// 首页推荐集合获取分页数据
+function getUserListFromHomeRecommendList2($condition, $pageNum, $pageSize, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_RECOMMEND_LIST2 . $condition;
+    $data = $redis->get($key);
+    if (!$data) {
+        return [];
+    }
+    $data = json_decode($data, true);
+    return array_slice($data, ($pageNum-1)*$pageSize, $pageSize);
 }
 
 /**
@@ -78,6 +103,31 @@ function getUserListFromHomeNewUserList($condition, $pageNum, $pageSize, \Redis 
 {
     $key = REDIS_KEY_HOME_NEW_USER_LIST . $condition;
     return $redis->zRange($key, ($pageNum-1)*$pageSize, $pageSize);
+}
+
+
+/**
+ * 首页新人集合2
+ */
+define("REDIS_KEY_HOME_NEW_USER_LIST2", REDIS_KEY_PREFIX . "homeNewUserList2:");
+
+// 将用户放入首页新人列表
+function cacheUserToHomeNewUserList2(array $list, $condition, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_NEW_USER_LIST2 . $condition;
+    $redis->setex($key, 86400, json_encode($list));
+}
+
+// 首页新人集合获取分页数据
+function getUserListFromHomeNewUserList2($condition, $pageNum, $pageSize, \Redis $redis)
+{
+    $key = REDIS_KEY_HOME_NEW_USER_LIST2 . $condition;
+    $data = $redis->get($key);
+    if (!$data) {
+        return [];
+    }
+    $data = json_decode($data, true);
+    return array_slice($data, ($pageNum-1)*$pageSize, $pageSize);
 }
 
 /**

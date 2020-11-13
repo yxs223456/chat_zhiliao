@@ -19,6 +19,7 @@ use app\common\helper\Redis;
 use app\common\helper\ShengWang;
 use app\common\model\ChatModel;
 use think\facade\Db;
+use think\facade\Log;
 
 class IMService extends Base
 {
@@ -124,7 +125,8 @@ class IMService extends Base
             }
         }
 
-        ShengWang::sendMessage($user["id"], $tUId, $message);
+        $response = ShengWang::sendMessage($user["id"], $tUId, $message);
+        Log::write(json_encode($response));
 
         return [
             "is_free" => $isFree,

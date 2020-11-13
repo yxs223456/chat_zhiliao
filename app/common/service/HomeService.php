@@ -31,6 +31,9 @@ class HomeService extends Base
 
         // 首页推荐用户
         $condition = $sex . ":" . $price;
+        $users = getUserListFromHomeRecommendList2($condition, $pageNum, $pageSize, $redis);
+        $returnData["list"] = $users;
+        return $returnData;
         $userIds = getUserListFromHomeRecommendList($condition, $pageNum, $pageSize, $redis);
         if (empty($userIds)) {
             return $returnData;
@@ -80,11 +83,15 @@ class HomeService extends Base
      */
     public function newUserList($sex, $price, $pageNum, $pageSize)
     {
+
         $redis = Redis::factory();
         $returnData["list"] = [];
 
         // 首页新人用户
         $condition = $sex . ":" . $price;
+        $users = getUserListFromHomeNewUserList2($condition, $pageNum, $pageSize, $redis);
+        $returnData["list"] = $users;
+        return $returnData;
         $userIds = getUserListFromHomeNewUserList($condition, $pageNum, $pageSize, $redis);
         if (empty($userIds)) {
             return $returnData;

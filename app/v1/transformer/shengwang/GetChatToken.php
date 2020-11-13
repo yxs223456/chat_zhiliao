@@ -21,10 +21,17 @@ class GetChatToken extends TransformerAbstract
     public function transformData(array $data): array
     {
         $returnData = [
-            "token" => (string) $data["token"],
-            "u_id" => (int) $data["u_id"],
-            "channel_name" => (string) $data["channel_name"],
-            "expire" => (int) $data["expire"],
+            "t_u_info" => [
+                "portrait" => (string)$data["t_u_info"]["portrait"],
+                "nickname" => (string)$data["t_u_info"]["nickname"],
+            ],
+            "sw_token_info" => [
+                "token" => (string) $data["sw_token_info"]["token"],
+                "u_id" => (int) $data["sw_token_info"]["u_id"],
+                "channel_name" => (string) $data["sw_token_info"]["channel_name"],
+                "expire" => (int) $data["sw_token_info"]["expire"],
+            ],
+
         ];
 
         return $returnData;

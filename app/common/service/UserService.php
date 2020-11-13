@@ -447,6 +447,7 @@ class UserService extends Base
             "u_id" => $newUser["id"],
             "portrait" => $portrait,
             "nickname" => $nickname,
+            "photos" => "[]",
             "device_no" => $deviceNo
         ];
         Db::name("user_info")->insert($userInfoData);

@@ -20,6 +20,7 @@ class ListTransformer extends TransformerAbstract
             'description' => $data["description"] ?? "",
             'is_force' => $data["is_force"] ?? 0,
             'download_url' => $data["download_url"] ?? "",
+            'is_update' => $data["is_update"] ?? 0
         ];
     }
 }

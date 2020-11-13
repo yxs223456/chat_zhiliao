@@ -12,6 +12,7 @@ namespace app\common\service;
 use app\common\AppException;
 use app\common\enum\AppIsDownEnum;
 use app\common\enum\AppIsForceEnum;
+use app\common\enum\AppIsUpdateEnum;
 use app\common\enum\AppVersionTypeEnum;
 use app\common\helper\AliyunOss;
 use think\facade\Db;
@@ -30,10 +31,11 @@ class VersionService extends Base
     public function appVersion($version, $system)
     {
         $default = [
-            'version' => "",
+            'version' => $version,
             'description' => "",
             'is_force' => AppIsForceEnum::NO,
-            'download_url' => ''
+            'download_url' => '',
+            'is_update' => AppIsUpdateEnum::NO,
         ];
 
         $buck = Db::name("app_versions")
@@ -47,9 +49,11 @@ class VersionService extends Base
 
         $buck["is_force"] = AppIsForceEnum::NO;
         if ($buck["version"] == $version) {
+            $buck["is_update"] = AppIsUpdateEnum::NO;
             return $buck;
         } else if ($buck["version"] < $version) {
             $buck["is_force"] = AppIsForceEnum::YES;
+            $buck["is_update"] = AppIsUpdateEnum::YES;
             return $buck;
         } else {
             $isForce = Db::name("app_versions")
@@ -60,6 +64,7 @@ class VersionService extends Base
             if ($isForce) {
                 $buck["is_force"] = AppIsForceEnum::YES;
             }
+            $buck["is_update"] = AppIsUpdateEnum::YES;
         }
 
         return $buck;

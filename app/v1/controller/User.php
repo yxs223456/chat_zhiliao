@@ -369,6 +369,9 @@ class User extends Base
                 throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
             }
             $photo = array_filter(explode(",", $photo));
+            if (count($photo) > 10) {
+                throw AppException::factory(AppException::USER_PHOTOS_TOO_MUCH);
+            }
             $update["photos"] = json_encode($photo);
         }
 

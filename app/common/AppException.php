@@ -37,6 +37,7 @@ class AppException extends \Exception
     const USER_IS_REMOVE_BLACK = [2019, "已移除", "已移除"];
     const USER_IS_NOT_PRETTY = [2020, "您还未申请成为女神", "您還未申請成為女神"];
     const USER_COIN_NOT_ALLOW = [2021, "设置金额值不允许", "設置金額值不允許"];
+    const USER_PHOTOS_TOO_MUCH = [2022, "相册不能超过10张", "相冊不能超過10張"];
 
     const DYNAMIC_CONTENT_EMPTY = [3001, "动态不能为空", "動態不能為空"];
     const DYNAMIC_NOT_EXISTS = [3002, "动态不存在", "動態不存在"];

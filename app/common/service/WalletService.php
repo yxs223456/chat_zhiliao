@@ -309,13 +309,15 @@ class WalletService extends Base
                 ->update();
 
             // 纪录钱包流水
+            $logMsg = (config("app.api_language")=="zh-tw") ? "提現" : "提现";
             UserWalletFlowModel::reduceFlow(
                 $user["id"],
                 $amount,
                 WalletReduceEnum::WITHDRAW,
                 $withdrawId,
                 $userWallet["total_balance"],
-                $userWallet["total_balance"]-$amount
+                $userWallet["total_balance"]-$amount,
+                $logMsg
             );
 
             Db::commit();

@@ -17,6 +17,7 @@ use app\common\helper\WeChatWork;
 use app\common\service\CharmService;
 use app\common\service\GuardService;
 use app\common\service\PrettyService;
+use app\common\service\UserInfoService;
 use app\common\service\UserService;
 use PhpAmqpLib\Message\AMQPMessage;
 use think\console\Command;
@@ -115,6 +116,7 @@ class GuardCallback extends Command
     {
         // 男神女神信息
         $prettyUser = UserService::getUserById($this->incomeUserId);
+        $prettyUserInfo = UserInfoService::getUserInfoById($this->incomeUserId);
         // 贡献人信息
         $spendUser = UserService::getUserById($this->spendUserId);
         // 上周守护人
@@ -139,7 +141,8 @@ class GuardCallback extends Command
             // 如果守护存在计算守护
             if ($guardUser) {
                 // 更新守护钱包金额
-                $addCoin = round($this->coin * Constant::GUARD_SHARE_RATE);
+                $bonusRate = Constant::GUARD_SHARE_RATE;
+                $addCoin = round($this->coin * $bonusRate);
                 if ($addCoin < Constant::GUARD_SHARE_MIN_COIN) {
                     $addCoin = Constant::GUARD_SHARE_MIN_COIN;
                 }
@@ -150,6 +153,9 @@ class GuardCallback extends Command
                     ->update();
                 // 添加守护分润流水
                 $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
+                $logMsg = (config("app.api_language")=="zh-tw")?
+                    "守護 ".$prettyUserInfo["nickname"]." 分潤":
+                    "守护 ".$prettyUserInfo["nickname"]." 分润";
                 Db::name("user_wallet_flow")->insert([
                     'u_id' => $guardUser["u_id"],
                     'flow_type' => FlowTypeEnum::ADD,
@@ -159,7 +165,9 @@ class GuardCallback extends Command
                     'before_balance' => $wallet["total_balance"] ?? 0,
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
                     'create_date' => date("Y-m-d"),
-                    'add_u_id' => $this->incomeUserId
+                    'add_u_id' => $this->incomeUserId,
+                    "log_msg" => $logMsg,
+                    "add_bonus_rate" => $bonusRate,
                 ]);
 
                 // 更新守护奖励总记录表
@@ -186,6 +194,7 @@ class GuardCallback extends Command
     {
         // 男神女神信息
         $prettyUser = UserService::getUserById($this->incomeUserId);
+        $prettyUserInfo = UserInfoService::getUserInfoById($this->incomeUserId);
         // 贡献人信息
         $spendUser = UserService::getUserById($this->spendUserId);
         // 上周守护人
@@ -210,7 +219,8 @@ class GuardCallback extends Command
             // 如果守护存在计算守护
             if ($guardUser) {
                 // 更新守护钱包金额
-                $addCoin = round($this->coin * Constant::GUARD_SHARE_RATE);
+                $bonusRate = Constant::GUARD_SHARE_RATE;
+                $addCoin = round($this->coin * $bonusRate);
                 if ($addCoin < Constant::GUARD_SHARE_MIN_COIN) {
                     $addCoin = Constant::GUARD_SHARE_MIN_COIN;
                 }
@@ -221,6 +231,9 @@ class GuardCallback extends Command
                     ->update();
                 // 添加守护分润流水
                 $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
+                $logMsg = (config("app.api_language")=="zh-tw")?
+                    "守護 ".$prettyUserInfo["nickname"]." 分潤":
+                    "守护 ".$prettyUserInfo["nickname"]." 分润";
                 Db::name("user_wallet_flow")->insert([
                     'u_id' => $guardUser["u_id"],
                     'flow_type' => FlowTypeEnum::ADD,
@@ -230,7 +243,9 @@ class GuardCallback extends Command
                     'before_balance' => $wallet["total_balance"] ?? 0,
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
                     'create_date' => date("Y-m-d"),
-                    'add_u_id' => $this->incomeUserId
+                    'add_u_id' => $this->incomeUserId,
+                    "log_msg" => $logMsg,
+                    "add_bonus_rate" => $bonusRate,
                 ]);
 
                 // 更新守护奖励总记录表

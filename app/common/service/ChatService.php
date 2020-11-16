@@ -328,9 +328,9 @@ class ChatService extends Base
      */
     public function end($userId, $chatId)
     {
+        $redis = Redis::factory();
         // 只有通话状态处于待接听时才可挂断通话请求
         // 只有通话双方可以挂断通话
-        // 需要后续处理
         Db::startTrans();
         try {
             $chat = Db::name("chat")->where("id", $chatId)->lock(true)->find();
@@ -381,6 +381,10 @@ class ChatService extends Base
                     }
 
                     // 纪录拨打人钱包流水
+                    $tUInfo = UserInfoService::getUserInfoById($chat["t_u_id"], $redis);
+                    $logMsg = (config("app.api_language")=="zh-tw")?
+                        "與 ".$tUInfo["nickname"]." 通話":
+                        "与 ".$tUInfo["nickname"]." 通话";
                     UserWalletFlowModel::reduceFlow(
                         $chat["s_u_id"],
                         $price,
@@ -388,7 +392,8 @@ class ChatService extends Base
                             WalletReduceEnum::VIDEO_CHAT : WalletReduceEnum::VOICE_CHAT,
                         $chatId,
                         $sUWallet["total_balance"],
-                        $sUWallet["total_balance"] - $price
+                        $sUWallet["total_balance"] - $price,
+                        $logMsg
                     );
                 }
 

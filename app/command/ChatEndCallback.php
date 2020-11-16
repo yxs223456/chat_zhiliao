@@ -123,17 +123,17 @@ class ChatEndCallback extends Command
 
         // 需要处理的通话
         $chat = Db::name("chat")->where("id", $chatId)->find();
+        $tUInfo = UserInfoService::getUserInfoById($chat["t_u_id"], $redis);
 
         Db::startTrans();
         try {
             // 通话产生费用时，接听方获取通话收益
             if ($is_callback_sign["s_u_pay"]) {
                 // 通话分成比例，男、女神0.8，普通人0.5
-                $tUInfo = UserInfoService::getUserInfoById($chat["t_u_id"], $redis);
-                $dividedRate = $tUInfo["is_pretty"] == UserIsPrettyEnum::NO ?
-                    Constant::ORDINARY_CHAT_DIVIDED_RATE : Constant::PRETTY_CHAT_DIVIDED_RATE;
+                $bonusRate = $tUInfo["is_pretty"] == UserIsPrettyEnum::NO ?
+                    Constant::ORDINARY_CHAT_BONUS_RATE : Constant::PRETTY_CHAT_BONUS_RATE;
                 // 本次通话收入
-                $income = (int) ceil($dividedRate * $is_callback_sign["s_u_pay"]);
+                $income = (int) round($bonusRate * $is_callback_sign["s_u_pay"]);
                 // 增加接听人钱包余额
                 $tUWallet = Db::name("user_wallet")->where("u_id", $chat["t_u_id"])->find();
                 Db::name("user_wallet")->where("id", $tUWallet["id"])
@@ -142,6 +142,9 @@ class ChatEndCallback extends Command
                     ->inc("total_balance", $income)
                     ->update();
                 // 纪录接听人钱包流水
+                $logMsg = (config("app.api_language")=="zh-tw")?
+                    "接聽 ".$tUInfo["nickname"]." 的通話":
+                    "接听 ".$tUInfo["nickname"]." 的通话";
                 UserWalletFlowModel::addFlow(
                     $chat["t_u_id"],
                     $income,
@@ -150,7 +153,9 @@ class ChatEndCallback extends Command
                     $chatId,
                     $tUWallet["total_balance"],
                     $tUWallet["total_balance"] + $income,
-                    $chat["s_u_id"]
+                    $chat["s_u_id"],
+                    $logMsg,
+                    $bonusRate
                 );
             }
 

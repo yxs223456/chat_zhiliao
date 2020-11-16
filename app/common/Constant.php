@@ -65,10 +65,10 @@ class Constant
     const MESSAGE_BONUS_RATE = 0.6;
 
     // 普通人通话分润比例
-    const ORDINARY_CHAT_DIVIDED_RATE = 0.5;
+    const ORDINARY_CHAT_BONUS_RATE = 0.8;
 
     // 女、男神通话分润比例
-    const PRETTY_CHAT_DIVIDED_RATE = 0.8;
+    const PRETTY_CHAT_BONUS_RATE = 0.8;
 
     // 女神通话，视频等级金额限制(聊币)
     // 普通女性

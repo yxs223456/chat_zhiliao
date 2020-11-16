@@ -256,14 +256,12 @@ class WalletService extends Base
     {
         $userWallet = Db::name("user_wallet")->where("u_id", $user["id"])->find();
 
-        $totalBalance = $userWallet["total_balance"];
         $incomeAmount = $userWallet["income_amount"];
         $withdrawAmount = bcmul($userWallet["income_amount"], config("app.coin_exchange_rate"), 2);
 
         $returnData = [
-            "total_balance" => $totalBalance,
             "income_amount" => $incomeAmount,
-            "withdraw_amount" => $withdrawAmount,
+            "money_amount" => $withdrawAmount,
         ];
         return $returnData;
     }
@@ -276,7 +274,7 @@ class WalletService extends Base
      * @return \stdClass
      * @throws \Throwable
      */
-    public function withdrawBy($amount, $user)
+    public function withdraw($amount, $user)
     {
 
         Db::startTrans();
@@ -293,10 +291,11 @@ class WalletService extends Base
             $outTradeNo = "WITHDRAW" . date("ymdhis") . getRandomString(10);
             $withdrawMoney = bcmul($amount, config("app.coin_exchange_rate"), 2);
             $currency = config("app.currency");
-            $withdrawId = Db::name("withdraw_order")->insertGetId([
+            $withdrawId = Db::name("user_withdraw_log")->insertGetId([
                 "u_id" => $user["id"],
                 "out_trade_no" => $outTradeNo,
-                "amount" => $withdrawMoney,
+                "coin_amount" => $amount,
+                "money_amount" => $withdrawMoney,
                 "currency" => $currency,
                 "method" => "", // todo 提现方式
                 "source_id" => "", // todo 提现方式id

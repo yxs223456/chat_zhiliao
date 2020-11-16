@@ -105,7 +105,7 @@ class Wallet extends Base
     /**
      * 提现
      */
-    public function withdrawBy()
+    public function withdraw()
     {
         $request = $this->query["content"];
         $amount = $request["amount"] ?? 0;
@@ -116,7 +116,7 @@ class Wallet extends Base
         $user = $this->query["user"];
 
         $service = new WalletService();
-        $returnData = $service->withdrawBy($amount, $user);
+        $returnData = $service->withdraw($amount, $user);
         return $this->jsonResponse($returnData);
     }
 }

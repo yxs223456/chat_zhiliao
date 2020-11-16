@@ -40,6 +40,7 @@ class PersonalListTransformer extends TransformerAbstract
             "id" => $data["id"] ?? 0,
             "u_id" => $data["u_id"] ?? 0,
             "avatar" => (string)$data["portrait"] ?? "",
+            "nickname" => (string)$data["nickname"] ?? "",
             "cover" => (string)$data["cover"] ?? "",
             "source" => (string)$data["source"] ?? "",
             "like_count" => (int)$data["like_count"] ?? 0,

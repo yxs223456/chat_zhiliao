@@ -647,7 +647,7 @@ class HomeListCache extends Command
             ->order("uw.income_total_amount", "desc")
             ->limit(200)
             ->select()->toArray();
-        foreach ($recommendList1 as $key => $user) {
+        foreach ($recommendList5 as $key => $user) {
             $photos = json_decode($user["photos"], true);
             $recommendList5[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList5[$key]["photos"]);

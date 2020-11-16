@@ -146,13 +146,14 @@ class GuardCallback extends Command
                 if ($addCoin < Constant::GUARD_SHARE_MIN_COIN) {
                     $addCoin = Constant::GUARD_SHARE_MIN_COIN;
                 }
+
+                // 添加守护分润流水
+                $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
                 Db::name("user_wallet")->where("u_id", $guardUser["u_id"])
                     ->inc('income_total_amount', $addCoin)
                     ->inc('balance_amount', $addCoin)
                     ->inc('total_balance', $addCoin)
                     ->update();
-                // 添加守护分润流水
-                $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
                 $logMsg = (config("app.api_language")=="zh-tw")?
                     "守護 ".$prettyUserInfo["nickname"]." 分潤":
                     "守护 ".$prettyUserInfo["nickname"]." 分润";
@@ -224,13 +225,14 @@ class GuardCallback extends Command
                 if ($addCoin < Constant::GUARD_SHARE_MIN_COIN) {
                     $addCoin = Constant::GUARD_SHARE_MIN_COIN;
                 }
+
+                // 添加守护分润流水
+                $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
                 Db::name("user_wallet")->where("u_id", $guardUser["u_id"])
                     ->inc('income_total_amount', $addCoin)
                     ->inc('balance_amount', $addCoin)
                     ->inc('total_balance', $addCoin)
                     ->update();
-                // 添加守护分润流水
-                $wallet = Db::name('user_wallet')->where("u_id", $guardUser['u_id'])->lock(true)->find();
                 $logMsg = (config("app.api_language")=="zh-tw")?
                     "守護 ".$prettyUserInfo["nickname"]." 分潤":
                     "守护 ".$prettyUserInfo["nickname"]." 分润";

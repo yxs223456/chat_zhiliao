@@ -47,7 +47,6 @@ class VideoTransCode extends Command
             $redis = Redis::factory();
             while (time() - $this->beginTime <= $this->maxAllowTime) {
                 $data = videoTransCodeConsumer($redis);
-                Log::write(json_encode($data),"error");
                 if (!empty($data["videoId"])) {
                     $this->videoId = $data["videoId"];
                     $this->doWorkR();

@@ -192,7 +192,7 @@ class VideoService extends Base
             ->where("ui.city", $city)
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->where("v.transcode_status", VideoIsTransCodeEnum::SUCCESS)
-            ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city,ui.nickname")
             ->order("v.id", "desc");
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
@@ -255,7 +255,7 @@ class VideoService extends Base
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->where("v.transcode_status",VideoIsTransCodeEnum::SUCCESS)
-            ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.source,v.cover,vc.like_count,ui.portrait,ui.city,ui.nickname")
             ->order("v.id", "desc");
         if (!empty($startId)) {
             $videoQuery = $videoQuery->where("v.id", "<", $startId);
@@ -319,7 +319,7 @@ class VideoService extends Base
             ->leftJoin("video_count vc", "vc.video_id = v.id")
             ->where("v.is_delete", DbDataIsDeleteEnum::NO)
             ->where("v.u_id", $requestUserId)
-            ->field("v.id,v.u_id,v.cover,v.source,v.transcode_status,vc.like_count,ui.portrait,ui.city")
+            ->field("v.id,v.u_id,v.cover,v.source,v.transcode_status,vc.like_count,ui.portrait,ui.city,ui.nickname")
             ->order("v.id", "desc");
         // 不是查询自己的列表只展示转码成功的
         if ($requestUserId != $currentUserId) {

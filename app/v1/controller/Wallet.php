@@ -127,13 +127,18 @@ class Wallet extends Base
     {
         $request = $this->query["content"];
         $date = $request["date"]??"";
+        $pageNum = $request["page_num"]??1;
+        $pageSize = $request["page_size"]??10;
+        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         if (!checkDateFormat2($date)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new WalletService();
         $user = $this->query["user"];
-        $returnData = $service->incomeList($user, $date);
+        $returnData = $service->incomeList($user, $date, $pageNum, $pageSize);
         return $this->jsonResponse($returnData);
     }
 
@@ -144,13 +149,18 @@ class Wallet extends Base
     {
         $request = $this->query["content"];
         $date = $request["date"]??"";
+        $pageNum = $request["page_num"]??1;
+        $pageSize = $request["page_size"]??10;
+        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         if (!checkDateFormat2($date)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new WalletService();
         $user = $this->query["user"];
-        $returnData = $service->spendList($user, $date);
+        $returnData = $service->spendList($user, $date, $pageNum, $pageSize);
         return $this->jsonResponse($returnData);
     }
 
@@ -161,13 +171,18 @@ class Wallet extends Base
     {
         $request = $this->query["content"];
         $date = $request["date"]??"";
+        $pageNum = $request["page_num"]??1;
+        $pageSize = $request["page_size"]??10;
+        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         if (!checkDateFormat2($date)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new WalletService();
         $user = $this->query["user"];
-        $returnData = $service->rechargeList($user, $date);
+        $returnData = $service->rechargeList($user, $date, $pageNum, $pageSize);
         return $this->jsonResponse($returnData);
     }
 
@@ -178,13 +193,18 @@ class Wallet extends Base
     {
         $request = $this->query["content"];
         $date = $request["date"]??"";
+        $pageNum = $request["page_num"]??1;
+        $pageSize = $request["page_size"]??10;
+        if (!checkInt($pageNum, false) || !checkInt($pageSize, false)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
         if (!checkDateFormat2($date)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
         $service = new WalletService();
         $user = $this->query["user"];
-        $returnData = $service->withdrawList($user, $date);
+        $returnData = $service->withdrawList($user, $date, $pageNum, $pageSize);
         return $this->jsonResponse($returnData);
     }
 }

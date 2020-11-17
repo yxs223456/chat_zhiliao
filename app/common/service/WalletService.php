@@ -334,12 +334,14 @@ class WalletService extends Base
      * 收入明细
      * @param $user
      * @param $date
+     * @param $pageNum
+     * @param $pageSize
      * @return mixed
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function incomeList($user, $date)
+    public function incomeList($user, $date, $pageNum, $pageSize)
     {
         // 查询月份开始时间和结束时间
         $beginDate = $date . "-01 00:00:00";
@@ -352,6 +354,7 @@ class WalletService extends Base
             ->whereTime("create_time", "<=", $endDate)
             ->field("amount,msg,bonus_rate,create_time")
             ->order("id", "desc")
+            ->limit(($pageNum-1)*$pageSize, $pageSize)
             ->select()->toArray();
 
         $returnData["list"] = [];
@@ -369,12 +372,14 @@ class WalletService extends Base
      * 支出明细
      * @param $user
      * @param $date
+     * @param $pageNum
+     * @param $pageSize
      * @return mixed
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function spendList($user, $date)
+    public function spendList($user, $date, $pageNum, $pageSize)
     {
         // 查询月份开始时间和结束时间
         $beginDate = $date . "-01 00:00:00";
@@ -387,6 +392,7 @@ class WalletService extends Base
             ->whereTime("create_time", "<=", $endDate)
             ->field("amount,msg,create_time")
             ->order("id", "desc")
+            ->limit(($pageNum-1)*$pageSize, $pageSize)
             ->select()->toArray();
 
         $returnData["list"] = [];
@@ -402,12 +408,14 @@ class WalletService extends Base
      * 充值明细
      * @param $user
      * @param $date
+     * @param $pageNum
+     * @param $pageSize
      * @return mixed
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function rechargeList($user, $date)
+    public function rechargeList($user, $date, $pageNum, $pageSize)
     {
         // 查询月份开始时间和结束时间
         $beginDate = $date . "-01 00:00:00";
@@ -420,6 +428,7 @@ class WalletService extends Base
             ->whereTime("create_time", "<=", $endDate)
             ->field("coin_price,create_time")
             ->order("id", "desc")
+            ->limit(($pageNum-1)*$pageSize, $pageSize)
             ->select()->toArray();
 
         $returnData["list"] = [];
@@ -438,12 +447,14 @@ class WalletService extends Base
      * 提现明细
      * @param $user
      * @param $date
+     * @param $pageNum
+     * @param $pageSize
      * @return mixed
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function withdrawList($user, $date)
+    public function withdrawList($user, $date, $pageNum, $pageSize)
     {
         // 查询月份开始时间和结束时间
         $beginDate = $date . "-01 00:00:00";
@@ -457,6 +468,7 @@ class WalletService extends Base
             ->where("status", "<>", WithdrawStatusEnum::FAIL)
             ->field("coin_amount,create_time")
             ->order("id", "desc")
+            ->limit(($pageNum-1)*$pageSize, $pageSize)
             ->select()->toArray();
 
         $returnData["list"] = [];

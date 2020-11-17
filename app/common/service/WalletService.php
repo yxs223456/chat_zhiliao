@@ -331,6 +331,147 @@ class WalletService extends Base
     }
 
     /**
+     * 收入明细
+     * @param $user
+     * @param $date
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function incomeList($user, $date)
+    {
+        // 查询月份开始时间和结束时间
+        $beginDate = $date . "-01 00:00:00";
+        $dateNum = date("t", strtotime($date));
+        $endDate = $date . "-$dateNum 23:59:59";
+
+        $list = Db::name("user_income_log")
+            ->where("u_id", $user["id"])
+            ->whereTime("create_time", ">=", $beginDate)
+            ->whereTime("create_time", "<=", $endDate)
+            ->field("amount,msg,bonus_rate,create_time")
+            ->order("id", "desc")
+            ->select()->toArray();
+
+        $returnData["list"] = [];
+        foreach ($list as $key=>$item) {
+            $item["create_time"] = date("m-d H:i:s", strtotime($item["create_time"]));
+            $item["bonus_rate_msg"] = ((getLanguage() == "zh-cn") ? "分账比例：" : "分賬比例：").($item["bonus_rate"]*100)."%";
+            unset($item["bonus_rate"]);
+            $returnData["list"][] = $item;
+        }
+
+        return $returnData;
+    }
+
+    /**
+     * 支出明细
+     * @param $user
+     * @param $date
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function spendList($user, $date)
+    {
+        // 查询月份开始时间和结束时间
+        $beginDate = $date . "-01 00:00:00";
+        $dateNum = date("t", strtotime($date));
+        $endDate = $date . "-$dateNum 23:59:59";
+
+        $list = Db::name("user_spend_log")
+            ->where("u_id", $user["id"])
+            ->whereTime("create_time", ">=", $beginDate)
+            ->whereTime("create_time", "<=", $endDate)
+            ->field("amount,msg,create_time")
+            ->order("id", "desc")
+            ->select()->toArray();
+
+        $returnData["list"] = [];
+        foreach ($list as $key=>$item) {
+            $item["create_time"] = date("m-d H:i:s", strtotime($item["create_time"]));
+            $returnData["list"][] = $item;
+        }
+
+        return $returnData;
+    }
+
+    /**
+     * 充值明细
+     * @param $user
+     * @param $date
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function rechargeList($user, $date)
+    {
+        // 查询月份开始时间和结束时间
+        $beginDate = $date . "-01 00:00:00";
+        $dateNum = date("t", strtotime($date));
+        $endDate = $date . "-$dateNum 23:59:59";
+
+        $list = Db::name("user_recharge_coin_log")
+            ->where("u_id", $user["id"])
+            ->whereTime("create_time", ">=", $beginDate)
+            ->whereTime("create_time", "<=", $endDate)
+            ->field("coin_price,create_time")
+            ->order("id", "desc")
+            ->select()->toArray();
+
+        $returnData["list"] = [];
+        foreach ($list as $key=>$item) {
+            $item["create_time"] = date("m-d H:i:s", strtotime($item["create_time"]));
+            $item["amount"] = $item["coin_price"];
+            $item["msg"] = getLanguage() == "zh-cn"?"充值":"充值";
+            unset($item["coin_price"]);
+            $returnData["list"][] = $item;
+        }
+
+        return $returnData;
+    }
+
+    /**
+     * 提现明细
+     * @param $user
+     * @param $date
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function withdrawList($user, $date)
+    {
+        // 查询月份开始时间和结束时间
+        $beginDate = $date . "-01 00:00:00";
+        $dateNum = date("t", strtotime($date));
+        $endDate = $date . "-$dateNum 23:59:59";
+
+        $list = Db::name("user_withdraw_log")
+            ->where("u_id", $user["id"])
+            ->whereTime("create_time", ">=", $beginDate)
+            ->whereTime("create_time", "<=", $endDate)
+            ->where("status", "<>", WithdrawStatusEnum::FAIL)
+            ->field("coin_amount,create_time")
+            ->order("id", "desc")
+            ->select()->toArray();
+
+        $returnData["list"] = [];
+        foreach ($list as $key=>$item) {
+            $item["create_time"] = date("m-d H:i:s", strtotime($item["create_time"]));
+            $item["amount"] = $item["coin_amount"];
+            $item["msg"] = getLanguage() == "zh-cn"?"提现":"提現";
+            unset($item["coin_amount"]);
+            $returnData["list"][] = $item;
+        }
+
+        return $returnData;
+    }
+
+    /**
      * 充值支付回调处理
      * 1.添加钱包余额
      * 2.添加流水

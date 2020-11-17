@@ -119,4 +119,72 @@ class Wallet extends Base
         $returnData = $service->withdraw($amount, $user);
         return $this->jsonResponse($returnData);
     }
+
+    /**
+     * 收入明细
+     */
+    public function incomeList()
+    {
+        $request = $this->query["content"];
+        $date = $request["date"]??"";
+        if (!checkDateFormat2($date)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new WalletService();
+        $user = $this->query["user"];
+        $returnData = $service->incomeList($user, $date);
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 支出明细
+     */
+    public function spendList()
+    {
+        $request = $this->query["content"];
+        $date = $request["date"]??"";
+        if (!checkDateFormat2($date)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new WalletService();
+        $user = $this->query["user"];
+        $returnData = $service->spendList($user, $date);
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 充值明细
+     */
+    public function rechargeList()
+    {
+        $request = $this->query["content"];
+        $date = $request["date"]??"";
+        if (!checkDateFormat2($date)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new WalletService();
+        $user = $this->query["user"];
+        $returnData = $service->rechargeList($user, $date);
+        return $this->jsonResponse($returnData);
+    }
+
+    /**
+     * 提现明细
+     */
+    public function withdrawList()
+    {
+        $request = $this->query["content"];
+        $date = $request["date"]??"";
+        if (!checkDateFormat2($date)) {
+            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        }
+
+        $service = new WalletService();
+        $user = $this->query["user"];
+        $returnData = $service->withdrawList($user, $date);
+        return $this->jsonResponse($returnData);
+    }
 }

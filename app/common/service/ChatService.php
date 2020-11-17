@@ -322,14 +322,13 @@ class ChatService extends Base
 
     /**
      * 结束通话
-     * @param $user
+     * @param $userId
      * @param $chatId
      * @return \stdClass
      * @throws \Throwable
      */
-    public function end($user, $chatId)
+    public function end($userId, $chatId)
     {
-        $userId = $user["id"];
         $redis = Redis::factory();
         // 只有通话状态处于待接听时才可挂断通话请求
         // 只有通话双方可以挂断通话

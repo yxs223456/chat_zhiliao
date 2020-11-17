@@ -15,6 +15,7 @@ use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
 use app\common\helper\ShengWang;
+use app\common\model\UserSpendLogModel;
 use app\common\model\UserWalletFlowModel;
 use app\gateway\GatewayClient;
 use think\facade\Db;
@@ -321,13 +322,14 @@ class ChatService extends Base
 
     /**
      * 结束通话
-     * @param $userId
+     * @param $user
      * @param $chatId
      * @return \stdClass
      * @throws \Throwable
      */
-    public function end($userId, $chatId)
+    public function end($user, $chatId)
     {
+        $userId = $user["id"];
         $redis = Redis::factory();
         // 只有通话状态处于待接听时才可挂断通话请求
         // 只有通话双方可以挂断通话
@@ -382,19 +384,23 @@ class ChatService extends Base
 
                     // 纪录拨打人钱包流水
                     $tUInfo = UserInfoService::getUserInfoById($chat["t_u_id"], $redis);
+                    $reduceType = $chat["chat_type"] == ChatTypeEnum::VIDEO ?
+                        WalletReduceEnum::VIDEO_CHAT : WalletReduceEnum::VOICE_CHAT;
                     $logMsg = (config("app.api_language")=="zh-tw")?
                         "與 ".$tUInfo["nickname"]." 通話":
                         "与 ".$tUInfo["nickname"]." 通话";
                     UserWalletFlowModel::reduceFlow(
                         $chat["s_u_id"],
                         $price,
-                        $chat["chat_type"] == ChatTypeEnum::VIDEO ?
-                            WalletReduceEnum::VIDEO_CHAT : WalletReduceEnum::VOICE_CHAT,
+                        $reduceType,
                         $chatId,
                         $sUWallet["total_balance"],
                         $sUWallet["total_balance"] - $price,
                         $logMsg
                     );
+
+                    // 添加支出纪录
+                    UserSpendLogModel::addLog($chat["s_u_id"], $price, $reduceType, $chatId, $logMsg);
                 }
 
                 // 后续处理通过队列异步处理

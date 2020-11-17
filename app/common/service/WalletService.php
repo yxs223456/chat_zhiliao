@@ -24,6 +24,7 @@ use app\common\enum\WithdrawStatusEnum;
 use app\common\helper\AliPay;
 use app\common\helper\LinePay;
 use app\common\helper\WechatPay;
+use app\common\model\UserSpendLogModel;
 use app\common\model\UserWalletFlowModel;
 use think\facade\Db;
 

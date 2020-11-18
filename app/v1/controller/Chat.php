@@ -103,7 +103,7 @@ class Chat extends Base
 
         $user = $this->query["user"];
         $s = new ChatService();
-        $returnData = $s->end($user, $chatId);
+        $returnData = $s->end($user["id"], $chatId);
 
         return $this->jsonResponse($returnData);
     }

@@ -14,6 +14,7 @@ use app\common\enum\WalletAddEnum;
 use app\common\helper\RabbitMQ;
 use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
+use app\common\model\UserIncomeLogModel;
 use app\common\model\UserWalletFlowModel;
 use app\common\service\UserInfoService;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -145,17 +146,19 @@ class ChatEndCallback extends Command
                 $logMsg = (config("app.api_language")=="zh-tw")?
                     "接聽 ".$tUInfo["nickname"]." 的通話":
                     "接听 ".$tUInfo["nickname"]." 的通话";
+                $addType = $chat["chat_type"] == ChatTypeEnum::VIDEO ?
+                    WalletAddEnum::VIDEO_CHAT : WalletAddEnum::VOICE_CHAT;
                 UserWalletFlowModel::addFlow(
                     $chat["t_u_id"],
                     $income,
-                    $chat["chat_type"] == ChatTypeEnum::VIDEO ?
-                        WalletAddEnum::VIDEO_CHAT : WalletAddEnum::VOICE_CHAT,
+                    $addType,
                     $chatId,
                     $tUWallet["total_balance"],
                     $tUWallet["total_balance"] + $income,
-                    $logMsg,
-                    $bonusRate
+                    $logMsg
                 );
+                // 添加收入纪录
+                UserIncomeLogModel::addLog($chat["t_u_id"], $income, $addType, $chatId, $logMsg, $bonusRate);
             }
 
             /**

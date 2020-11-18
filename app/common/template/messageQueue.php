@@ -21,7 +21,7 @@ define("RABBIT_MQ_QUEUE_PREFIX", "chat_queue:");
 define("REDIS_KEY_MQ_KEY_PREFIX", REDIS_KEY_PREFIX . "message_queue:");
 
 // 阻塞等待时长 30 秒
-define("REDIS_KEY_MQ_WAIT_TIME", 5);
+define("REDIS_KEY_MQ_WAIT_TIME", 30);
 
 /**
  * 通话状态检查队列

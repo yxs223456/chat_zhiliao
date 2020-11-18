@@ -78,11 +78,15 @@ class ChatStatusCheck2 extends Command
                 $chat = Db::name("chat")->where("id", $chatId)->lock(true)->find();
 
                 if ($chat["status"] == ChatStatusEnum::WAIT_ANSWER) {
+                    // 修改通话状态为发起通话失败
                     $chatUpdateData = [
                         "status" => ChatStatusEnum::NO_ANSWER,
                         "hang_up_id" => $chat["s_u_id"],
                     ];
                     Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
+
+                    // 删除临时数据：拨号状态通话，用于后期通话状态轮询
+                    Db::name("tmp_wait_answer_chat")->where("chat_id", $chatId)->delete();
                 }
 
                 Db::commit();

@@ -14,6 +14,7 @@ use app\common\enum\WalletAddEnum;
 use app\common\helper\RabbitMQ;
 use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
+use app\common\model\UserIncomeLogModel;
 use app\common\service\CharmService;
 use app\common\service\GuardService;
 use app\common\service\PrettyService;
@@ -167,8 +168,17 @@ class GuardCallback extends Command
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
                     'create_date' => date("Y-m-d"),
                     "log_msg" => $logMsg,
-                    "add_bonus_rate" => $bonusRate,
                 ]);
+
+                // 添加收入纪录
+                UserIncomeLogModel::addLog(
+                    $guardUser["u_id"],
+                    $addCoin,
+                    WalletAddEnum::ANGEL,
+                    $this->incomeUserId,
+                    $logMsg,
+                    $bonusRate
+                );
 
                 // 更新守护奖励总记录表
                 Db::name("guard_income")->where("u_id", $guardUser['u_id'])
@@ -245,8 +255,17 @@ class GuardCallback extends Command
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
                     'create_date' => date("Y-m-d"),
                     "log_msg" => $logMsg,
-                    "add_bonus_rate" => $bonusRate,
                 ]);
+
+                // 添加收入纪录
+                UserIncomeLogModel::addLog(
+                    $guardUser["u_id"],
+                    $addCoin,
+                    WalletAddEnum::ANGEL,
+                    $this->incomeUserId,
+                    $logMsg,
+                    $bonusRate
+                );
 
                 // 更新守护奖励总记录表
                 Db::name("guard_income")->where("u_id", $guardUser['u_id'])

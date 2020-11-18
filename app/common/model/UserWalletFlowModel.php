@@ -26,9 +26,8 @@ class UserWalletFlowModel extends Base
      * @param $bBalance
      * @param $aBalance
      * @param $logMsg
-     * @param string $addBonusRate
      */
-    public static function addFlow($userId, $amount, $addType, $sourceId, $bBalance, $aBalance, $logMsg, $addBonusRate = "")
+    public static function addFlow($userId, $amount, $addType, $sourceId, $bBalance, $aBalance, $logMsg)
     {
         Db::name("user_wallet_flow")->insert([
             "u_id" => $userId,
@@ -40,7 +39,6 @@ class UserWalletFlowModel extends Base
             "after_balance" => $aBalance,
             "create_date" => date("Y-m-d"),
             "log_msg" => $logMsg,
-            "add_bonus_rate" => $addBonusRate,
         ]);
     }
 

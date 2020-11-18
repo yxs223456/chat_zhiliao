@@ -18,6 +18,8 @@ use app\common\enum\WalletReduceEnum;
 use app\common\helper\Redis;
 use app\common\helper\ShengWang;
 use app\common\model\ChatModel;
+use app\common\model\UserIncomeLogModel;
+use app\common\model\UserSpendLogModel;
 use think\facade\Db;
 use think\facade\Log;
 
@@ -55,7 +57,10 @@ class IMService extends Base
         } else {
             $isFree = 0;
             $price = $tUSet["direct_message_price"];
-            $bonus = (int) round($price * Constant::MESSAGE_BONUS_RATE);
+            $bonusRate = Constant::MESSAGE_BONUS_RATE;
+            $bonus = (int) round($price * $bonusRate);
+            $userInfo = UserInfoService::getUserInfoById($user["id"], $redis);
+            $tUInfo = UserInfoService::getUserInfoById($tUId, $redis);
 
             // 消息接收者私聊收费判断消息发送者余额
             Db::startTrans();
@@ -84,10 +89,17 @@ class IMService extends Base
                 $tUWallet = Db::name("user_wallet")->where("u_id", $tUId)->find();
                 Db::name("user_wallet")->where("id", $tUWallet["id"])
                     ->inc("income_amount", $bonus)
+                    ->inc("income_total_amount", $bonus)
                     ->inc("total_balance", $bonus)
                     ->update();
 
                 // 纪录发送者、接收者余额流水
+                $uLogMsg = (config("app.api_language")=="zh-tw")?
+                    "向 ".$tUInfo["nickname"]." 發送消息":
+                    "向 ".$tUInfo["nickname"]." 发送消息";
+                $rULogMsg = (config("app.api_language")=="zh-tw")?
+                    "接收 ".$userInfo["nickname"]." 的消息":
+                    "接收 ".$userInfo["nickname"]." 的消息";
                 $uWalletFlowData = [
                     "u_id" => $user["id"],
                     "flow_type" => FlowTypeEnum::REDUCE,
@@ -97,7 +109,8 @@ class IMService extends Base
                     "object_source_id" => $tUId,
                     "before_balance" => $uWallet["total_balance"],
                     "after_balance" => $uWallet["total_balance"] - $price,
-                    "create_date" => date("Y-m-d")
+                    "create_date" => date("Y-m-d"),
+                    "log_msg" => $uLogMsg,
                 ];
                 $tUWalletFlowData = [
                     "u_id" => $tUId,
@@ -108,9 +121,29 @@ class IMService extends Base
                     "object_source_id" => $user["id"],
                     "before_balance" => $tUWallet["total_balance"],
                     "after_balance" => $tUWallet["total_balance"] + $bonus,
-                    "create_date" => date("Y-m-d")
+                    "create_date" => date("Y-m-d"),
+                    "log_msg" => $rULogMsg,
                 ];
                 Db::name("user_wallet_flow")->insertAll([$uWalletFlowData, $tUWalletFlowData]);
+
+                // 添加支出纪录
+                UserSpendLogModel::addLog(
+                    $user["id"],
+                    $price,
+                    WalletReduceEnum::DIRECT_MESSAGE,
+                    $tUId,
+                    $uLogMsg
+                );
+
+                // 添加收入纪录
+                UserIncomeLogModel::addLog(
+                    $tUId,
+                    $bonus,
+                    WalletAddEnum::DIRECT_MESSAGE,
+                    $tUId,
+                    $rULogMsg,
+                    $bonusRate
+                );
 
                 Db::commit();
 

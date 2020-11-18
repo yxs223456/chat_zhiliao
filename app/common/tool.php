@@ -228,6 +228,25 @@ function checkDateFormat($date)
     return false;
 }
 
+// 验证精确到月的日期格式
+function checkDateFormat2($date)
+{
+    if (empty($date)) {
+        return false;
+    }
+    if (!preg_match("/^\d{4}-\d{2}$/", $date)) {
+        return false;
+    }
+    $time = strtotime($date);
+    if (!$time) {
+        return false;
+    }
+    if ($date == date("Y-m", $time)) {
+        return true;
+    }
+    return false;
+}
+
 // 获取上周-
 function getLastWeekStartDate()
 {

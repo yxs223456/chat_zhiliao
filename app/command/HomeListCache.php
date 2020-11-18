@@ -24,8 +24,6 @@ class HomeListCache extends Command
 {
     use CommandTrait;
 
-    private $beginTime;
-
     protected function configure()
     {
         // setName 设置命令行名称
@@ -36,11 +34,8 @@ class HomeListCache extends Command
     {
 
         try {
-            $this->beginTime = time();
-            while(time() - $this->beginTime <= $this->maxAllowTime) {
-                $this->doWork();
-                sleep(60);
-            }
+            sleep(60);
+            $this->doWork();
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
@@ -62,7 +57,6 @@ class HomeListCache extends Command
         $redis = Redis::factory();
         $this->recommendList($redis);
         $this->newList($redis);
-        $redis->close();
     }
 
     private function recommendList($redis)

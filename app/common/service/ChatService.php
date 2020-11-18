@@ -138,6 +138,12 @@ class ChatService extends Base
                 "status" => ChatStatusEnum::WAIT_ANSWER,
             ];
             $chatId = Db::name("chat")->insertGetId($chatData);
+
+            // 纪录一条临时数据：拨号状态通话，用于后期通话状态轮询
+            Db::name("tmp_wait_answer_chat")->insert([
+                "chat_id" => $chatId,
+            ]);
+
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();
@@ -212,6 +218,10 @@ class ChatService extends Base
             if ($chat["status"] == ChatStatusEnum::CALLING) {
                 throw AppException::factory(AppException::CHAT_HANG_UP_CALLING);
             }
+
+            // 删除临时数据：拨号状态通话，用于后期通话状态轮询
+            Db::name("tmp_wait_answer_chat")->where("chat_id", $chatId)->delete();
+
             if ($chat["status"] == ChatStatusEnum::WAIT_ANSWER) {
                 $chatUpdateData = [
                     "status" => ChatStatusEnum::NO_ANSWER,
@@ -287,6 +297,9 @@ class ChatService extends Base
                 throw AppException::factory(AppException::CHAT_NOT_WAIT_ANSWER);
             }
 
+            // 删除临时数据：拨号状态通话，用于后期通话状态轮询
+            Db::name("tmp_wait_answer_chat")->where("chat_id", $chatId)->delete();
+
             // 计算允许通话时长
             $price = $chat["t_user_price"];     // 通话价格
             $isFree = $price == 0 ? 1 : 0;      // 通话是否免费
@@ -300,11 +313,17 @@ class ChatService extends Base
                 }
             }
 
+            // 修改通话状态
             $chatUpdateData = [
                 "status" => ChatStatusEnum::CALLING,
                 "chat_begin_time" => time()
             ];
             Db::name("chat")->where("id", $chatId)->update($chatUpdateData);
+
+            // 纪录一条临时数据：通话状态通话，用于后期通话状态轮询
+            Db::name("tmp_calling_chat")->insert([
+                "chat_id" => $chatId,
+            ]);
 
             Db::commit();
         } catch (\Throwable $e) {
@@ -342,6 +361,9 @@ class ChatService extends Base
                 throw AppException::factory(AppException::QUERY_INVALID);
             }
             if ($chat["status"] == ChatStatusEnum::CALLING) {
+                // 删除临时数据：通话状态通话，用于后期通话状态轮询
+                Db::name("tmp_calling_chat")->where("chat_id", $chatId)->delete();
+
                 // 修改通话纪录
                 $chatUpdateData = [
                     "status" => ChatStatusEnum::END,

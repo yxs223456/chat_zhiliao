@@ -62,24 +62,22 @@ class ChatStatusCheck extends Command
 
     private function checkDialChat($redis)
     {
-        $ids = Db::name("chat")
-            ->where("status", ChatStatusEnum::WAIT_ANSWER)
+        $chatIds = Db::name("tmp_wait_answer_chat")
             ->where("create_time", "<=", date("Y-m-d H:i:s", time()-10))
-            ->column("id");
+            ->column("chat_id");
 
-        foreach ($ids as $id) {
-            chatStatusCheckProduce($id, $redis);
+        foreach ($chatIds as $chatId) {
+            chatStatusCheckProduce($chatId, $redis);
         }
     }
 
     private function checkInCallChat($redis)
     {
-        $ids = Db::name("chat")
-            ->where("status", ChatStatusEnum::CALLING)
-            ->column("id");
+        $chatIds = Db::name("tmp_calling_chat")
+            ->column("chat_id");
 
-        foreach ($ids as $id) {
-            chatStatusCheckProduce($id,  $redis);
+        foreach ($chatIds as $chatId) {
+            chatStatusCheckProduce($chatId, $redis);
         }
     }
 }

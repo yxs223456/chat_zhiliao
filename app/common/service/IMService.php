@@ -97,8 +97,7 @@ class IMService extends Base
                     "object_source_id" => $tUId,
                     "before_balance" => $uWallet["total_balance"],
                     "after_balance" => $uWallet["total_balance"] - $price,
-                    "create_date" => date("Y-m-d"),
-                    "add_u_id" => 0
+                    "create_date" => date("Y-m-d")
                 ];
                 $tUWalletFlowData = [
                     "u_id" => $tUId,
@@ -109,8 +108,7 @@ class IMService extends Base
                     "object_source_id" => $user["id"],
                     "before_balance" => $tUWallet["total_balance"],
                     "after_balance" => $tUWallet["total_balance"] + $bonus,
-                    "create_date" => date("Y-m-d"),
-                    "add_u_id" => $user["id"]
+                    "create_date" => date("Y-m-d")
                 ];
                 Db::name("user_wallet_flow")->insertAll([$uWalletFlowData, $tUWalletFlowData]);
 

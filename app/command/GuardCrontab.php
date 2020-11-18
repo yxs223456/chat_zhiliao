@@ -12,6 +12,7 @@ use app\common\Constant;
 use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
 use app\common\enum\WalletAddEnum;
+use app\common\helper\Redis;
 use app\common\helper\WeChatWork;
 use app\common\service\UserService;
 use think\console\Command;
@@ -62,7 +63,7 @@ class GuardCrontab extends Command
      */
     protected function handle()
     {
-        $lastWeekStartEnd = getLastWeekEndDate() . "-" . getLastWeekEndDate();
+        $lastWeekStartEnd = getLastWeekStartDate() . "-" . getLastWeekEndDate();
         while (true) {
             $users = Db::name('guard_user_callback')->where("start_end_date", $lastWeekStartEnd)
                 ->field("id,u_id")
@@ -91,25 +92,20 @@ class GuardCrontab extends Command
                 return;
             }
 
-            // 只查询收入类型为3，4，5，6，7的数据
-            $addType = implode(",",
-                [WalletAddEnum::GIFT,
-                    WalletAddEnum::VIDEO_CHAT,
-                    WalletAddEnum::VOICE_CHAT,
-                    WalletAddEnum::RED_PACKAGE,
-                    WalletAddEnum::DIRECT_MESSAGE]);
-            $guard = Db::query("select add_u_id,sum(amount) as s from user_wallet_flow as uwf left join user as u on u.id = uwf.add_u_id where uwf.u_id = :uid and uwf.add_type in($addType) 
-and u.sex = :sex and uwf.create_date >= :start_date and uwf.create_date <= :end_date 
-GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
-                [
-                    'uid' => $user["u_id"],
-                    'sex' => UserSexEnum::MALE,
-                    'start_date' => getLastWeekStartDate(),
-                    'end_date' => getLastWeekEndDate(),
-                    's' => Constant::GUARD_MIN_AMOUNT
-                ]);
+            $redis = Redis::factory();
+            // 获取上周贡献第一的人
+            $firstContribute = getFemaleContributeSortSetLastWeek($user["u_id"], 0, 0, $redis);
+            // 如果不存在没有守护
+            if (empty($firstContribute)) {
+                Db::name("guard_user_callback")->where("id", $user['id'])->delete();
+                Db::commit();
+                return;
+            }
 
-            if (empty($guard)) { // 没有达到守护条件直接删除
+            $guid = key($firstContribute); // 守护的ID
+            $gamount = current($firstContribute);// 守护的贡献值
+            // 如果贡献值不达标不算守护
+            if ($gamount < Constant::GUARD_MIN_AMOUNT) {
                 Db::name("guard_user_callback")->where("id", $user['id'])->delete();
                 Db::commit();
                 return;
@@ -118,26 +114,26 @@ GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
             // 添加守护历史记录
             Db::name("guard_history")->insert([
                 'u_id' => $user['u_id'],
-                'guard_u_id' => $guard[0]['add_u_id'],
+                'guard_u_id' => $guid,
                 'sex_type' => InteractSexTypeEnum::FEMALE_TO_MALE,
-                'charm_amount' => $guard[0]['s'],
+                'charm_amount' => $gamount,
                 'start_date' => getLastWeekStartDate(),
                 'end_date' => getLastWeekEndDate()
             ]);
 
             // 添加守护总奖励记录
-            $exists = Db::name("guard_income")->where("u_id", $guard[0]['add_u_id'])->find();
+            $exists = Db::name("guard_income")->where("u_id", $guid)->find();
             if ($exists) {
-                Db::name("guard_income")->where("u_id", $guard[0]['add_u_id'])
+                Db::name("guard_income")->where("u_id", $guid)
                     ->inc('guard_count', 1)
-                    ->inc('total_amount', $guard[0]['s'])
+                    ->inc('total_amount', $gamount)
                     ->update();
             } else {
                 Db::name("guard_income")->insert([
                     'guard_count' => 1,
-                    'total_amount' => $guard[0]['s'],
+                    'total_amount' => $gamount,
                     'sex' => UserSexEnum::MALE,
-                    'u_id' => $guard[0]['add_u_id']
+                    'u_id' => $guid
                 ]);
             }
 

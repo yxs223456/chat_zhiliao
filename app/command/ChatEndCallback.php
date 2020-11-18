@@ -153,7 +153,6 @@ class ChatEndCallback extends Command
                     $chatId,
                     $tUWallet["total_balance"],
                     $tUWallet["total_balance"] + $income,
-                    $chat["s_u_id"],
                     $logMsg,
                     $bonusRate
                 );

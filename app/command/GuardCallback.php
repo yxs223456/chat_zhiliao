@@ -166,7 +166,6 @@ class GuardCallback extends Command
                     'before_balance' => $wallet["total_balance"] ?? 0,
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
                     'create_date' => date("Y-m-d"),
-                    'add_u_id' => $this->incomeUserId,
                     "log_msg" => $logMsg,
                     "add_bonus_rate" => $bonusRate,
                 ]);
@@ -245,7 +244,6 @@ class GuardCallback extends Command
                     'before_balance' => $wallet["total_balance"] ?? 0,
                     'after_balance' => empty($wallet['total_balance']) ? $addCoin : $wallet['total_balance'] + $addCoin,
                     'create_date' => date("Y-m-d"),
-                    'add_u_id' => $this->incomeUserId,
                     "log_msg" => $logMsg,
                     "add_bonus_rate" => $bonusRate,
                 ]);

@@ -11,9 +11,7 @@ namespace app\common\service;
 
 use app\common\AppException;
 use app\common\Constant;
-use app\common\enum\InteractSexTypeEnum;
 use app\common\enum\UserSexEnum;
-use app\common\enum\WalletAddEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -87,26 +85,18 @@ class GuardService extends Base
             return [];
         }
 
-        // 只查询收入类型为3，4，5，6，7的数据
-        $addType = implode(",",
-            [WalletAddEnum::GIFT,
-                WalletAddEnum::VIDEO_CHAT,
-                WalletAddEnum::VOICE_CHAT,
-                WalletAddEnum::RED_PACKAGE,
-                WalletAddEnum::DIRECT_MESSAGE]);
-        $guard = Db::query("select add_u_id,sum(amount) as s from user_wallet_flow as uwf left join user as u on u.id = uwf.add_u_id where uwf.u_id = :uid and uwf.add_type in($addType) 
-and u.sex = :sex and uwf.create_date >= :start_date and uwf.create_date <= :end_date 
-GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
-            [
-                'uid' => $userId,
-                'sex' => UserSexEnum::MALE,
-                'start_date' => getLastWeekStartDate(),
-                'end_date' => getLastWeekEndDate(),
-                's' => Constant::GUARD_MIN_AMOUNT
-            ]);
+        // 获取上周贡献第一的人
+        $firstContribute = getFemaleContributeSortSetLastWeek($userId, 0, 0, $redis);
+        // 如果不存在没有守护
+        if (empty($firstContribute)) {
+            cacheUserGuard($userId, ["data" => []], $redis);
+            return [];
+        }
 
-        // 没有达到守护条件直接返回
-        if (empty($guard)) {
+        $guid = key($firstContribute); // 守护的ID
+        $gamount = current($firstContribute);// 守护的贡献值
+        // 如果贡献值不达标不算守护
+        if ($gamount < Constant::GUARD_MIN_AMOUNT) {
             cacheUserGuard($userId, ["data" => []], $redis);
             return [];
         }
@@ -114,7 +104,7 @@ GROUP BY uwf.add_u_id having s >= :s ORDER by s desc limit 1",
         $data = Db::name("user_info")->alias("ui")
             ->leftJoin("user u", "ui.u_id = u.id")
             ->field("ui.*,u.sex")
-            ->where("ui.u_id", $guard[0]['add_u_id'])
+            ->where("ui.u_id", $guid)
             ->find();
 
         cacheUserGuard($userId, ["data" => $data], $redis);

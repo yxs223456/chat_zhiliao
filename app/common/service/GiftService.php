@@ -275,8 +275,7 @@ class GiftService extends Base
                 "object_source_id" => $giftGiveId,
                 "before_balance" => $userWallet["total_balance"],
                 "after_balance" => $userWallet["total_balance"] - $giftPrice,
-                "create_date" => date("Y-m-d"),
-                "add_u_id" => 0
+                "create_date" => date("Y-m-d")
             ],
             [
                 "u_id" => $rUId,
@@ -287,8 +286,7 @@ class GiftService extends Base
                 "object_source_id" => $giftGiveId,
                 "before_balance" => $rUserWallet["total_balance"],
                 "after_balance" => $rUserWallet["total_balance"] + $rUIncome,
-                "create_date" => date("Y-m-d"),
-                "add_u_id" => $user["id"]
+                "create_date" => date("Y-m-d")
             ]
         ]);
 
@@ -501,8 +499,7 @@ class GiftService extends Base
                 "object_source_id" => $rPGiveId,
                 "before_balance" => $userWallet["total_balance"],
                 "after_balance" => $userWallet["total_balance"] - $amount,
-                "create_date" => date("Y-m-d"),
-                "add_u_id" => 0,
+                "create_date" => date("Y-m-d")
             ],
             [
                 "u_id" => $rUId,
@@ -513,8 +510,7 @@ class GiftService extends Base
                 "object_source_id" => $rPGiveId,
                 "before_balance" => $rUserWallet["total_balance"],
                 "after_balance" => $rUserWallet["total_balance"] + $rUIncome,
-                "create_date" => date("Y-m-d"),
-                "add_u_id" => $user["id"]
+                "create_date" => date("Y-m-d")
             ]
         ]);
 

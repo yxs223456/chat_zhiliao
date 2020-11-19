@@ -65,6 +65,7 @@ class EarnService extends Base
         $rank = Db::name("guard_income")->where("total_amount", ">", $totalAmount)->count("id");
         $ret["total_amount"] = $totalAmount;
         $ret["rank"] = $rank + 1;
+        $ret["nickname"] = $userInfo["nickname"] ?? "";
         return $ret;
     }
 
@@ -81,7 +82,7 @@ class EarnService extends Base
         $data = Db::name("guard_income")->alias("gi")
             ->leftJoin("user u", "gi.u_id = u.id")
             ->leftJoin("user_info ui", "gi.u_id = ui.u_id")
-            ->field("gi.u_id,gi.total_amount,gi.guard_count,u.user_number,ui.portrait")
+            ->field("gi.u_id,gi.total_amount,gi.guard_count,u.user_number,ui.portrait,ui.nickname")
             ->order("gi.total_amount", "desc")
             ->limit(($pageNum - 1) * $pageSize, $pageSize)
             ->select()->toArray();
@@ -129,7 +130,8 @@ class EarnService extends Base
             "id" => $user["id"] ?? 0,
             "avatar" => $userInfo["portrait"] ?? "",
             "total_amount" => 0,
-            "rank" => 0
+            "rank" => 0,
+            "nickname" => $userInfo["nickname"] ?? '',
         ];
         $score = (int)getMaleGuardEarnSortSetWeekScore($user["id"], $redis);
         $rank = (int)getMaleGuardEarnSortSetWeekRank($user["id"], $redis);
@@ -168,7 +170,7 @@ class EarnService extends Base
         // 获取用户展示信息
         $userInfo = Db::name("user_info")->alias("ui")
             ->leftJoin("user u", "u.id = ui.u_id")
-            ->field("ui.portrait,u.user_number,u.id")
+            ->field("ui.portrait,u.user_number,u.id,ui.nickname")
             ->whereIn("u.id", $userIds)
             ->select()->toArray();
         $userIdToInfo = array_combine(array_column($userInfo, 'id'), $userInfo);

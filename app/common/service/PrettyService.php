@@ -212,7 +212,8 @@ class PrettyService extends Base
             'avatar' => $userInfo["portrait"] ?? "",
             'charm' => 0,
             'rank' => 0,
-            'user_number' => 0
+            'user_number' => 0,
+            'nickname' => $userInfo["nickname"] ?? ""
         ];
         $user = UserService::getUserById($currentId);
         $ret['user_number'] = $user['user_number'] ?? 0;

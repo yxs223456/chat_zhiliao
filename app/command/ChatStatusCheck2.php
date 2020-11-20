@@ -27,7 +27,6 @@ class ChatStatusCheck2 extends Command
     use CommandTrait;
 
     private $beginTime;
-    private $chatId = "";
 
     protected function configure()
     {
@@ -51,7 +50,6 @@ class ChatStatusCheck2 extends Command
         } catch (\Throwable $e) {
             $error = [
                 "script" => self::class,
-                "chat_id" => $this->chatId,
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),

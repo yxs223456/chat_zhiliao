@@ -46,7 +46,9 @@ class RechargeCallback extends Command
             while(time() - $this->beginTime <= $this->maxAllowTime) {
                 $data = rechargeCallbackConsumer($redis);
                 if (isset($data["u_id"])) {
+                    $this->userId = $data["u_id"];
                     $this->checkChat($data["u_id"]);
+                    $this->userId = "";
                 }
             }
 

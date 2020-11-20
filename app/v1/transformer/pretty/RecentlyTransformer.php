@@ -35,6 +35,7 @@ class RecentlyTransformer extends TransformerAbstract
             $tmp['avatar'] = $item["portrait"] ?? "";
             $tmp['nickname'] = $item['nickname'] ?? '';
             $tmp['charm'] = $this->getCharm($item['charm_amount']);
+            $tmp['is_enough'] = 1;
             $tmp['voice_chat_switch'] = $item['voice_chat_switch'] ?? 0;
             $tmp['voice_chat_price'] = $item['voice_chat_price'] ?? 0;
             $tmp['video_chat_switch'] = $item['video_chat_switch'] ?? 0;

@@ -24,7 +24,8 @@ class LastWeekTransformer extends TransformerAbstract
                 'avatar' => $user['avatar'] ?? "",
                 'charm' => bcdiv($user['charm'],100,2),
                 'rank' => 0,
-                'user_number' => $user['user_number'] ?? ''
+                'user_number' => $user['user_number'] ?? '',
+                'nickname' => $user['nickname'] ?? ''
             ],
             'list' => []
         ];
@@ -35,6 +36,7 @@ class LastWeekTransformer extends TransformerAbstract
             $tmp['u_id'] = $item['u_id'] ?? '';
             $tmp['avatar'] = $item['portrait'] ?? '';
             $tmp['user_number'] = $this->getHiddenUserNumber($item['user_number']);
+            $tmp["nickname"] = (string)$item['nickname'] ?? "";
             $tmp['charm'] = bcdiv($item['charm'],100,2) ?? "0.00";
             $tmp['rank'] = (int)$item['rank'];
             $ret[] = $tmp;

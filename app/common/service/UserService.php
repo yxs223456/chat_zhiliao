@@ -22,6 +22,7 @@ use app\common\model\InviteRewardModel;
 use app\common\model\SmsLogModel;
 use app\common\model\UserCommunityModel;
 use app\common\model\UserModel;
+use think\facade\App;
 use think\facade\Db;
 use think\facade\Log;
 
@@ -85,6 +86,14 @@ class UserService extends Base
      */
     public function register($areaCode, $mobilePhone, $password, $verifyCode, $inviteUserNumber, $deviceNo)
     {
+        // 判断手机号是否存在
+        $userModel = new UserModel();
+        $user = $userModel->findByMobilePhone($mobilePhone);
+        if ($user) {
+            throw AppException::factory(AppException::USER_PHONE_EXISTS_ALREADY);
+        }
+        var_dump($user);
+
         // 判断验证码是否正确
         $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;
         $redis = Redis::factory();

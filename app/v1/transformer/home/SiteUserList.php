@@ -27,6 +27,8 @@ class SiteUserList extends TransformerAbstract
         foreach ($data["list"] as $item) {
             $returnData["list"][] = [
                 "id" => (int) $item["id"],
+                "portrait" => (string) $item["portrait"],
+                "nickname" => (string) $item["nickname"],
                 "user_number" => (string) $item["user_number"],
                 "photo" => (string) $item["photo"],
                 "city" => (string) $item["city"],

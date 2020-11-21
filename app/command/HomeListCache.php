@@ -70,7 +70,7 @@ class HomeListCache extends Command
             ->where("ui.photos", "<>", "[]")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -104,7 +104,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "200")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -139,7 +139,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "350")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -174,7 +174,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "500")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -208,7 +208,7 @@ class HomeListCache extends Command
             ->where("ui.photos", "<>", "[]")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -243,7 +243,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "200")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -279,7 +279,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "350")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -315,7 +315,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "500")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -349,7 +349,7 @@ class HomeListCache extends Command
             ->where("ui.photos", "<>", "[]")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -384,7 +384,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "200")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -420,7 +420,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "350")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -456,7 +456,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "500")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -493,7 +493,7 @@ class HomeListCache extends Command
             ->where("ui.photos", "<>", "[]")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -528,7 +528,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "200")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -564,7 +564,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "350")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -600,7 +600,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "500")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -635,7 +635,7 @@ class HomeListCache extends Command
             ->where("ui.photos", "<>", "[]")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -671,7 +671,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "200")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -708,7 +708,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "350")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -745,7 +745,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "500")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -780,7 +780,7 @@ class HomeListCache extends Command
             ->whereTime("ui.create_time", ">=", date("Y-m-d", strtotime("- 2 weeks")))
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -816,7 +816,7 @@ class HomeListCache extends Command
             ->whereTime("ui.create_time", ">=", date("Y-m-d", strtotime("- 2 weeks")))
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -853,7 +853,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "350")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")
@@ -890,7 +890,7 @@ class HomeListCache extends Command
             ->where("uw.income_total_amount", "<", "500")
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->order("u.sex", "desc")
             ->order("uw.income_total_amount", "desc")

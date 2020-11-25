@@ -183,7 +183,7 @@ class EarnService extends Base
             $tmp["user_number"] = $userIdToInfo[$uid]["user_number"] ?? "";
             $tmp["portrait"] = $userIdToInfo[$uid]["portrait"] ?? "";
             $tmp["counts"] = $userIdToCounts[$uid] ?? 0;
-            $tmp["nickname"] = $userIdToCounts[$uid]['nickname'] ?? "";
+            $tmp["nickname"] = $userIdToInfo[$uid]['nickname'] ?? "";
             $allData[] = $tmp;
         }
 

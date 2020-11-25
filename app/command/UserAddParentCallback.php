@@ -44,7 +44,9 @@ class UserAddParentCallback extends Command
             while(time() - $this->beginTime <= $this->maxAllowTime) {
                 $data = userAddParentCallbackConsumer($redis);
                 if (isset($data["u_id"])) {
+                    $this->userId = $data["u_id"];
                     $this->addParentCallback($data["u_id"]);
+                    $this->userId = "";
                 }
             }
         } catch (\Throwable $e) {

@@ -52,7 +52,9 @@ class ChatEndCallback extends Command
                 $data = chatEndCallbackConsumer($redis);
                 if (isset($data["chat_id"])) {
                     $chatId = $data["chat_id"];
+                    $this->chatId = $data["chat_id"];
                     $this->doChatEnd($chatId, $redis);
+                    $this->chatId = "";
                 }
             }
         } catch (\Throwable $e) {

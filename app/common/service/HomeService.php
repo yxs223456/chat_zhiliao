@@ -159,7 +159,7 @@ class HomeService extends Base
             ->whereIn("ui.u_id", $userIds)
             ->field("u.id,u.user_number,
                 uss.total_score,uss.total_users,
-                ui.photos,ui.city,ui.signatures,
+                ui.photos,ui.city,ui.signatures,ui.portrait,ui.nickname,
                 us.video_chat_switch,us.video_chat_price,us.voice_chat_switch,us.voice_chat_price")
             ->select()->toArray();
         foreach ($users as $key => $user) {

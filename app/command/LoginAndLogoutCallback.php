@@ -52,6 +52,7 @@ class LoginAndLogoutCallback extends Command
                 $data = loginAndLogoutCallbackConsumer($redis);
                 if (isset($data["u_id"]) && isset($data["do"])) {
                     $userId = $data["u_id"];
+                    $this->userId = $data["u_id"];
                     $do = strtolower($data["do"]);
                     switch ($do) {
                         case "login":
@@ -61,6 +62,7 @@ class LoginAndLogoutCallback extends Command
                             $this->logoutCallback($userId);
                             break;
                     }
+                    $this->userId = "";
                 }
             }
         } catch (\Throwable $e) {

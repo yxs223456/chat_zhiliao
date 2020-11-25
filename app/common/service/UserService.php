@@ -92,7 +92,6 @@ class UserService extends Base
         if ($user) {
             throw AppException::factory(AppException::USER_PHONE_EXISTS_ALREADY);
         }
-        var_dump($user);
 
         // 判断验证码是否正确
         $apiMobile = $areaCode == 86 ? $mobilePhone : $areaCode . $mobilePhone;

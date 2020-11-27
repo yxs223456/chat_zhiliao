@@ -171,7 +171,7 @@ class IMService extends Base
         return [
             "is_free" => $isFree,
             "price" => $price,
-            "bonus" => $bonus,
+            "r_u_income" => $bonus,
         ];
     }
 
@@ -215,7 +215,7 @@ class IMService extends Base
         return [
             "is_free" => 1,
             "price" => 0,
-            "bonus" => 0,
+            "r_u_income" => 0,
         ];
     }
 

@@ -23,7 +23,7 @@ class SendMessage extends TransformerAbstract
         $returnData = [
             "is_free" => (int) $data["is_free"],
             "price" => (int) $data["price"],
-            "bonus" => (int) $data["bonus"],
+            "r_u_income" => (int) $data["r_u_income"],
         ];
 
         return $returnData;

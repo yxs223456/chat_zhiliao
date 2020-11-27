@@ -156,10 +156,15 @@ class IMService extends Base
             }
         }
 
-        $messageArray = json_decode($message, true);
-        $message["price"] = $price;
-        $message["r_u_income"] = $bonus;
-        $message = json_encode($messageArray);
+        if (is_array($message)) {
+            $message["price"] = $price;
+            $message["r_u_income"] = $bonus;
+        } else {
+            $message = json_decode($message, true);
+            $message["price"] = $price;
+            $message["r_u_income"] = $bonus;
+        }
+        $message = json_encode($message);
         $response = ShengWang::sendMessage($user["id"], $tUId, $message);
         Log::write(json_encode($response));
 

@@ -156,6 +156,10 @@ class IMService extends Base
             }
         }
 
+        $messageArray = json_decode($message, true);
+        $message["price"] = $price;
+        $message["r_u_income"] = $bonus;
+        $message = json_encode($messageArray);
         $response = ShengWang::sendMessage($user["id"], $tUId, $message);
         Log::write(json_encode($response));
 
@@ -197,6 +201,10 @@ class IMService extends Base
             $tUId = $chat["t_u_id"];
         }
 
+        $messageArray = json_decode($message, true);
+        $message["price"] = 0;
+        $message["r_u_income"] = 0;
+        $message = json_encode($messageArray);
         ShengWang::sendMessage($user["id"], $tUId, $message);
 
         return [
@@ -223,21 +231,14 @@ class IMService extends Base
         return $returnData;
     }
 
-    public static function sendGiftImMessage($user, $rUId, $gift)
+    public static function sendGiftImMessage($user, $rUId, $gift, $rUIncome)
     {
         $giftMessage = json_encode([
             "type" => ImMessageTypeEnum::GIFT,
-            "message" => "",
-            "image" => [
-                "image_url" => "",
-            ],
-            "gift" => [
-                "image_url" => $gift["image_url"],
-            ],
-            "sound" => [
-                "length" => 0,
-                "link" => "",
-            ],
+            "gift_name" => $gift["name"],
+            "gift_image_url" => $gift["image_url"],
+            "price" => $gift["price"],
+            "r_u_income" => $rUIncome,
         ]);
         ShengWang::sendMessage($user["id"], $rUId, $giftMessage);
     }

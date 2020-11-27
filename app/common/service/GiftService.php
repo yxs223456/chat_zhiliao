@@ -114,7 +114,7 @@ class GiftService extends Base
         }
 
         // 向声网发送消息
-        IMService::sendGiftImMessage($user, $rUId, $gift);
+        IMService::sendGiftImMessage($user, $rUId, $gift, $rUIncome);
 
         return [
             "gift_name" => $gift["name"],
@@ -186,7 +186,7 @@ class GiftService extends Base
         }
 
         // 向声网发送消息
-        IMService::sendGiftImMessage($user, $giftRUId, $gift);
+        IMService::sendGiftImMessage($user, $giftRUId, $gift, $rUIncome);
 
         // 再次计算通话时长
         $price = $chat["t_user_price"];     // 通话价格

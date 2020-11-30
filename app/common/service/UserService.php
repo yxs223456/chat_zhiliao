@@ -611,6 +611,7 @@ class UserService extends Base
             cacheUserInfoByToken($user->toArray(), $redis);
             cacheUserInfoById($user->toArray(), $redis);
             deleteUserInfoDataByUId($userBase["id"], $redis);
+            deleteUserSetByUId($userBase["id"], $redis);
         } catch (\Throwable $e) {
             Db::rollback();
             throw $e;

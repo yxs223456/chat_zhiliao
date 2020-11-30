@@ -26,6 +26,7 @@ class AllInfoTransformer extends TransformerAbstract
         $user = $data["user"] ?? [];
         $userInfo = $data["user_info"] ?? [];
         $userSet = $data["user_set"] ?? [];
+        $ext = $data["ext"] ?? [];
         return [
             "user" => [ // 用户数据
                 'id' => $user["id"] ?? 0,
@@ -62,6 +63,7 @@ class AllInfoTransformer extends TransformerAbstract
                 'direct_message_free' => $userSet['direct_message_free'] ?? UserSwitchEnum::OFF,
                 'direct_message_price' => $userSet['direct_message_price'] ?? 0,
                 'is_stealth' => $userSet['is_stealth'] ?? UserIsStealthEnum::NO,
+                'total_balance' => isset($ext["total_balance"]) ? $ext["total_balance"] : 0
             ]
         ];
     }

@@ -877,7 +877,9 @@ class UserService extends Base
         if (empty($info)) {
             throw AppException::factory(AppException::USER_NOT_EXISTS);
         }
-        return self::getUserAllInfo($user['id']);
+        $amount = Db::name("user_wallet")->where("u_id", $user["id"])->value("total_balance");
+        $ext = ["total_balance" => $amount];
+        return self::getUserAllInfo($user['id'],$ext);
     }
 
     /**
@@ -1033,9 +1035,10 @@ class UserService extends Base
      * 用户数据获取
      *
      * @param $uid
+     * @param $ext array
      * @return array
      */
-    public static function getUserAllInfo($uid)
+    public static function getUserAllInfo($uid, array $ext = [])
     {
         $redis = Redis::factory();
 
@@ -1045,7 +1048,8 @@ class UserService extends Base
         return [
             'user' => $user ?? [],
             'user_info' => $userInfo ?? [],
-            'user_set' => $userSet ?? []
+            'user_set' => $userSet ?? [],
+            'ext' => $ext
         ];
     }
 }

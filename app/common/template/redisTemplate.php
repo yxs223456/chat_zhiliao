@@ -138,21 +138,21 @@ define("REDIS_KEY_HOME_SITE_LIST", REDIS_KEY_PREFIX . "homeSiteList:");
 // 将用户放入首页对应地区用户集合
 function addUserToHomeSiteList($userId, $site, $condition, $score, \Redis $redis)
 {
-    $key = REDIS_KEY_HOME_SITE_LIST . $site . $condition;
+    $key = REDIS_KEY_HOME_SITE_LIST . $site . ":" . $condition;
     $redis->zAdd($key, $score, $userId);
 }
 
 // 首页对应地区用户集合删除用户
 function deleteUserFromHomeSiteList($userId, $site, $condition, \Redis $redis)
 {
-    $key = REDIS_KEY_HOME_SITE_LIST . $site . $condition;
+    $key = REDIS_KEY_HOME_SITE_LIST . $site . ":" . $condition;
     $redis->zRem($key, $userId);
 }
 
 // 首页对应地区用户集合获取分页数据
 function getUserListFromHomeSiteList($site, $condition, $pageNum, $pageSize, \Redis $redis)
 {
-    $key = REDIS_KEY_HOME_SITE_LIST . $site . $condition;
+    $key = REDIS_KEY_HOME_SITE_LIST . $site . ":" . $condition;
     return $redis->zRange($key, ($pageNum-1)*$pageSize, $pageSize);
 }
 

@@ -818,19 +818,20 @@ class UserService extends Base
             // 删除用户坐标缓存，不出现在附近
             deleteUserLongLatInfoByUserId($user["id"], $redis);
 
-            if (!empty($userInfo["city"])) {
-                homeSetCacheCallbackProduce($user["id"], "popCity", $redis, $userInfo["city"]);
-            }
-
-        } else {
-            if (!empty($userInfo["city"])) {
-                homeSetCacheCallbackProduce($user["id"], "addCity", $redis);
-            }
         }
         // 关闭逻辑直接关闭
         // 开启关闭的修改数据库操作
         Db::name("user_set")->where("u_id", $user["id"])->update(["is_stealth" => $switch]);
         deleteUserSetByUId($user["id"], Redis::factory());
+        if ($switch == UserSwitchEnum::ON) {
+            if (!empty($userInfo["city"])) {
+                homeSetCacheCallbackProduce($user["id"], "popCity", $redis, $userInfo["city"]);
+            }
+        } else {
+            if (!empty($userInfo["city"])) {
+                homeSetCacheCallbackProduce($user["id"], "addCity", $redis);
+            }
+        }
         return;
     }
 

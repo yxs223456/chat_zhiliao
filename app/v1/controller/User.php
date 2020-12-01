@@ -345,7 +345,7 @@ class User extends Base
         $avatar = $request["avatar"] ?? null;
         $nickname = $request["nickname"] ?? null;
         $birthday = $request["birthday"] ?? null;
-        $occupation = $request["occupation"] ?? 0;
+        $occupation = $request["occupation"] ?? null;
         $city = $request["city"] ?? null;
         $sex = $request["sex"] ?? null;
         $photo = $request["photos"] ?? null;

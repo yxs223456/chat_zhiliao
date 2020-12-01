@@ -33,8 +33,12 @@ class NearService extends Base
             ];
         }
         $redis = Redis::factory();
-        // 缓存当前用户坐标
-        cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        $userSet = UserSetService::getUserSetByUId($userId, $redis);
+        // 不隐身 缓存当前用户坐标
+        if ($userSet["is_stealth"] == UserIsStealthEnum::NO) {
+            cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        }
+
         // 需要刷新更新缓存内容
         if ($isFlush) {
             return $this->userUpdate($pageSize, $userId);

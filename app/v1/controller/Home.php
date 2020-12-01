@@ -9,9 +9,11 @@
 namespace app\v1\controller;
 
 use app\common\AppException;
+use app\common\enum\UserIsStealthEnum;
 use app\common\helper\Redis;
 use app\common\service\HomeService;
 use app\common\service\ToolService;
+use app\common\service\UserSetService;
 use app\v1\transformer\home\NewUserList;
 use app\v1\transformer\home\RecommendUserList;
 use app\v1\transformer\home\SiteUserList;
@@ -144,8 +146,13 @@ class Home extends Base
         $long = $request["long"] ?? 0; // 经度
         $lat = $request["lat"] ?? 0; // 纬度
         $userId = $this->query["user"]['id'];
-        // 缓存当前用户坐标
-        cacheUserLongLatInfo($userId, $lat, $long, Redis::factory());
+
+        $redis = Redis::factory();
+        $userSet = UserSetService::getUserSetByUId($userId, $redis);
+        // 不隐身 缓存当前用户坐标
+        if ($userSet["is_stealth"] == UserIsStealthEnum::NO) {
+            cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        }
         return $this->jsonResponse(new \stdClass());
     }
 

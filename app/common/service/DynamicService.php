@@ -11,6 +11,7 @@ namespace app\common\service;
 use app\common\AppException;
 use app\common\enum\DbDataIsDeleteEnum;
 use app\common\enum\DynamicIsReportEnum;
+use app\common\enum\UserIsStealthEnum;
 use app\common\helper\Redis;
 use think\facade\Db;
 
@@ -537,8 +538,12 @@ class DynamicService extends Base
             return [];
         }
         $redis = Redis::factory();
-        // 缓存当前用户坐标
-        cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        $userSet = UserSetService::getUserSetByUId($userId, $redis);
+        // 不隐身 缓存当前用户坐标
+        if ($userSet["is_stealth"] == UserIsStealthEnum::NO) {
+            cacheUserLongLatInfo($userId, $lat, $long, $redis);
+        }
+
         // 需要更新
         if ($isFlush) {
             // 更新缓存

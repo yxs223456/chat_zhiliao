@@ -342,27 +342,34 @@ class User extends Base
     public function editInfo()
     {
         $request = $this->query["content"];
-        $avatar = $request["avatar"] ?? "";
-        $nickname = $request["nickname"] ?? "";
-        $birthday = $request["birthday"] ?? "";
+        $avatar = $request["avatar"] ?? null;
+        $nickname = $request["nickname"] ?? null;
+        $birthday = $request["birthday"] ?? null;
         $occupation = $request["occupation"] ?? 0;
-        $city = $request["city"] ?? "";
+        $city = $request["city"] ?? null;
         $sex = $request["sex"] ?? null;
         $photo = $request["photos"] ?? null;
         $signatures = $request["signatures"] ?? null;
 
-        if (!empty($birthday) && !checkDateFormat($birthday)) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        $update = [];
+        if (isset($birthday)) {
+            if (!checkDateFormat($birthday)) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
+            $update["birthday"] = $birthday;
         }
-        if (!empty($occupation) && !in_array($occupation, UserOccupationEnum::getAllValues())) {
-            throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+        if (isset($occupation)) {
+            if (!in_array($occupation, UserOccupationEnum::getAllValues())) {
+                throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
+            }
+            $update["occupation"] = $occupation;
         }
+        isset($avatar) && $update["portrait"] = $avatar;
+        isset($nickname) && $update["nickname"] = $nickname;
+        isset($city) && $update["city"] = $city;
 
         $user = $this->query["user"];
         $service = new UserService();
-        $update = ["portrait" => $avatar, "nickname" => $nickname,
-            "birthday" => $birthday, "occupation" => $occupation,
-            "city" => $city];
 
         if (isset($photo)) {
             if (!is_string($photo)) {
@@ -383,7 +390,7 @@ class User extends Base
             $update["signatures"] = json_encode($signatures);
         }
 
-        if (empty(array_filter($update))) {
+        if (empty($update)) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
 
@@ -403,7 +410,7 @@ class User extends Base
         }
 
         // 修改用户头像，昵称，生日，照片，城市
-        $service->editInfo($user, array_filter($update));
+        $service->editInfo($user, $update);
 
         $userInfo = UserService::getUserAllInfo($user['id']);
         return $this->jsonResponse($userInfo, new AllInfoTransformer());

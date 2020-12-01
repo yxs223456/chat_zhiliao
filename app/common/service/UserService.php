@@ -800,13 +800,14 @@ class UserService extends Base
     public function setStealth($switch, $user)
     {
         $redis = Redis::factory();
+        $userInfo = Db::name("user_info")->where("u_id", $user["id"])->find();
+        if (empty($userInfo)) {
+            throw AppException::factory(AppException::USER_NOT_EXISTS);
+        }
+
         // 开启逻辑 （删除用户坐标缓存,判断VIP）
         if ($switch == UserSwitchEnum::ON) {
             // 判断是否是vip
-            $userInfo = Db::name("user_info")->where("u_id", $user["id"])->find();
-            if (empty($userInfo)) {
-                throw AppException::factory(AppException::USER_NOT_EXISTS);
-            }
             $today = date("Y-m-d");
             $vipDeadline = empty($userInfo["vip_deadline"]) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["vip_deadline"];
             $svipDeadline = empty($userInfo['svip_deadline']) ? date("Y-m-d", strtotime("-1 day")) : $userInfo["svip_deadline"];

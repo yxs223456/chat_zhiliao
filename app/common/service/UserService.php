@@ -816,6 +816,15 @@ class UserService extends Base
             }
             // 删除用户坐标缓存，不出现在附近
             deleteUserLongLatInfoByUserId($user["id"], $redis);
+
+            if (!empty($userInfo["city"])) {
+                homeSetCacheCallbackProduce($_SESSION["user"]["id"], "popCity", $redis, $userInfo["city"]);
+            }
+
+        } else {
+            if (!empty($userInfo["city"])) {
+                homeSetCacheCallbackProduce($_SESSION["user"]["id"], "addCity", $redis);
+            }
         }
         // 关闭逻辑直接关闭
         // 开启关闭的修改数据库操作
@@ -903,6 +912,26 @@ class UserService extends Base
 //        }
         // 删除用户info数据
         deleteUserInfoDataByUId($user["id"], $redis);
+
+        $oldPhotos = json_decode($userInfo["photos"], true);
+        $newPhotos = !empty($info["photos"]) ? json_decode($info["photos"], true) : $oldPhotos;
+        if (empty($oldPhotos) && $newPhotos) {
+            homeSetCacheCallbackProduce($_SESSION["user"]["id"], "add", $redis);
+        } else if ($oldPhotos && empty($newPhotos)) {
+            homeSetCacheCallbackProduce($_SESSION["user"]["id"], "pop", $redis);
+        }
+
+        $oldCity = $userInfo["city"];
+        $newCity = isset($info["city"]) ? $info["city"] : $oldCity;
+        if (empty($oldCity) && $newCity) {
+            homeSetCacheCallbackProduce($_SESSION["user"]["id"], "addCity", $redis);
+        } else if ($oldCity && empty($newCity)) {
+            homeSetCacheCallbackProduce($_SESSION["user"]["id"], "popCity", $redis, $oldCity);
+        } else if ($oldCity && $newCity && $oldCity != $newCity) {
+            homeSetCacheCallbackProduce($_SESSION["user"]["id"], "addCity", $redis);
+            homeSetCacheCallbackProduce($_SESSION["user"]["id"], "popCity", $redis, $oldCity);
+        }
+
         return;
     }
 

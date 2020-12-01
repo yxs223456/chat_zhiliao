@@ -88,6 +88,34 @@ function rechargeCallbackConsumer(\Redis $redis)
 }
 
 /**
+ * 首页用户列表在线用户集合
+ */
+define("REDIS_MQ_KEY_HOME_SET_CACHE", REDIS_KEY_MQ_KEY_PREFIX . "homeSetCache");
+
+function homeSetCacheCallbackProduce($userId, $do, \Redis $redis, $city = "")
+{
+    $key = REDIS_MQ_KEY_HOME_SET_CACHE;
+    $data = json_encode([
+        "u_id" => $userId,
+        "do" => $do,
+        "city" => $city,
+    ]);
+    $redis->rPush($key, $data);
+}
+
+function homeSetCacheCallbackConsumer(\Redis $redis)
+{
+    $key = REDIS_MQ_KEY_HOME_SET_CACHE;
+    $data = $redis->blPop([$key], REDIS_KEY_MQ_WAIT_TIME);
+
+    if ($data == null || empty($data[1])) {
+        return null;
+    }
+    $arr = json_decode($data[1], true);
+    return $arr;
+}
+
+/**
  * 用户登录、退出后回调
  */
 define("REDIS_MQ_KEY_LOGIN_AND_LOGOUT", REDIS_KEY_MQ_KEY_PREFIX . "loginAndLogout");

@@ -386,8 +386,6 @@ class User extends Base
         if (empty(array_filter($update))) {
             throw AppException::factory(AppException::QUERY_PARAMS_ERROR);
         }
-        // 修改用户头像，昵称，生日，照片，城市
-        $service->editInfo($user, array_filter($update));
 
         // 如果提交性别信息，修改用户性别
         if (isset($sex)) {
@@ -403,6 +401,10 @@ class User extends Base
             }
             $service->setSex($sex, $user);
         }
+
+        // 修改用户头像，昵称，生日，照片，城市
+        $service->editInfo($user, array_filter($update));
+
         $userInfo = UserService::getUserAllInfo($user['id']);
         return $this->jsonResponse($userInfo, new AllInfoTransformer());
     }

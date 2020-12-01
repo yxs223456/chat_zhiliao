@@ -102,7 +102,10 @@ class BusinessWorkerCallback
                     $responseJson = self::jsonData($scene, $returnData);
                     Gateway::sendToClient($client_id, $responseJson);
 
-                    loginAndLogoutCallbackProduce($user["id"], "login", Redis::factory());
+                    $redis = Redis::factory();
+                    loginAndLogoutCallbackProduce($user["id"], "login", $redis);
+                    homeSetCacheCallbackProduce($user["id"], "add", $redis);
+                    $redis->close();
                 }
             }
         } catch (\Throwable $e) {
@@ -138,8 +141,16 @@ class BusinessWorkerCallback
      */
     public static function onClose($client_id)
     {
-        if (isset($_SESSION["user"])) {
-            loginAndLogoutCallbackProduce($_SESSION["user"]["id"], "logout", Redis::factory());
+        try {
+            if (isset($_SESSION["user"])) {
+                $redis = Redis::factory();
+                loginAndLogoutCallbackProduce($_SESSION["user"]["id"], "logout", $redis);
+                homeSetCacheCallbackProduce($_SESSION["user"]["id"], "pop", $redis);
+                $redis->close();
+            }
+
+        } catch (\Throwable $e) {
+
         }
     }
 

@@ -32,7 +32,6 @@ class HomeListCache extends Command
 
     protected function execute(Input $input, Output $output)
     {
-
         try {
             sleep(60);
             $this->doWork();
@@ -81,7 +80,7 @@ class HomeListCache extends Command
             $recommendList1[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList1[$key]["photos"]);
 
-            $recommendList1[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList1[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList1[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -115,7 +114,7 @@ class HomeListCache extends Command
             $recommendList2[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList2[$key]["photos"]);
 
-            $recommendList2[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList2[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList2[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -150,7 +149,7 @@ class HomeListCache extends Command
             $recommendList3[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList3[$key]["photos"]);
 
-            $recommendList3[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList3[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList3[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -185,7 +184,7 @@ class HomeListCache extends Command
             $recommendList4[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList4[$key]["photos"]);
 
-            $recommendList4[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList4[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList4[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -219,7 +218,7 @@ class HomeListCache extends Command
             $recommendList5[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList5[$key]["photos"]);
 
-            $recommendList5[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList5[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList5[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -254,7 +253,7 @@ class HomeListCache extends Command
             $recommendList6[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList6[$key]["photos"]);
 
-            $recommendList6[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList6[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList6[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -290,7 +289,7 @@ class HomeListCache extends Command
             $recommendList7[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList7[$key]["photos"]);
 
-            $recommendList7[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList7[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList7[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -326,7 +325,7 @@ class HomeListCache extends Command
             $recommendList8[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList8[$key]["photos"]);
 
-            $recommendList8[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList8[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList8[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -360,7 +359,7 @@ class HomeListCache extends Command
             $recommendList9[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList9[$key]["photos"]);
 
-            $recommendList9[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList9[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList9[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -395,7 +394,7 @@ class HomeListCache extends Command
             $recommendList10[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList10[$key]["photos"]);
 
-            $recommendList10[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList10[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList10[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -431,7 +430,7 @@ class HomeListCache extends Command
             $recommendList11[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList11[$key]["photos"]);
 
-            $recommendList11[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList11[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList11[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -467,7 +466,7 @@ class HomeListCache extends Command
             $recommendList12[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList12[$key]["photos"]);
 
-            $recommendList12[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList12[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList12[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -504,7 +503,7 @@ class HomeListCache extends Command
             $recommendList1[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList1[$key]["photos"]);
 
-            $recommendList1[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList1[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList1[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -539,7 +538,7 @@ class HomeListCache extends Command
             $recommendList2[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList2[$key]["photos"]);
 
-            $recommendList2[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList2[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList2[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -575,7 +574,7 @@ class HomeListCache extends Command
             $recommendList3[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList3[$key]["photos"]);
 
-            $recommendList3[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList3[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList3[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -611,7 +610,7 @@ class HomeListCache extends Command
             $recommendList4[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList4[$key]["photos"]);
 
-            $recommendList4[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList4[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList4[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -646,7 +645,7 @@ class HomeListCache extends Command
             $recommendList5[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList5[$key]["photos"]);
 
-            $recommendList5[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList5[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList5[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -682,7 +681,7 @@ class HomeListCache extends Command
             $recommendList6[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList6[$key]["photos"]);
 
-            $recommendList6[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList6[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList6[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -719,7 +718,7 @@ class HomeListCache extends Command
             $recommendList7[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList7[$key]["photos"]);
 
-            $recommendList7[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList7[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList7[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -756,7 +755,7 @@ class HomeListCache extends Command
             $recommendList8[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList8[$key]["photos"]);
 
-            $recommendList8[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList8[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList8[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -791,7 +790,7 @@ class HomeListCache extends Command
             $recommendList9[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList9[$key]["photos"]);
 
-            $recommendList9[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList9[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList9[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -827,7 +826,7 @@ class HomeListCache extends Command
             $recommendList10[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList10[$key]["photos"]);
 
-            $recommendList10[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList10[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList10[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -864,7 +863,7 @@ class HomeListCache extends Command
             $recommendList11[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList11[$key]["photos"]);
 
-            $recommendList11[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList11[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList11[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";
@@ -901,7 +900,7 @@ class HomeListCache extends Command
             $recommendList12[$key]["photo"] = isset($photos[0]) ? $photos[0] : "";
             unset($recommendList12[$key]["photos"]);
 
-            $recommendList12[$key]["city"] = CityService::getCityByCode($user["city"]);
+            $recommendList12[$key]["city"] = $user["city"] ? CityService::getCityByCode($user["city"]) : "";
 
             $signatures = json_decode($user["signatures"], true);
             $recommendList12[$key]["signature"] = isset($signatures[0]) ? $signatures[0] : "";

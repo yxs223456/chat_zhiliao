@@ -28,7 +28,7 @@ class JPush
     /**
      * 给某个设备推送消息
      *
-     * @param $deviceId string 设备注册ID
+     * @param $tag string 设备用户绑定标签
      * @param $content string 内容
      * @param $title string 标题
      * @param $extra array 业务数据
@@ -36,22 +36,24 @@ class JPush
      * @throws Exception
      * @throws JPushException
      */
-    public static function pushOne($deviceId, $content, $title, $extra = [])
+    public static function pushOne($tag, $content, $title, $extra = [])
     {
-        if (empty($deviceId)) {
-            throw new Exception("device id not empty");
+        if (empty($tag)) {
+            throw new Exception("tag  not empty");
         }
-        if (empty($message)) {
-            throw new Exception("message not empty");
+        if (empty($content) || empty($title)) {
+            throw new Exception("content and title not empty");
         }
         self::getConfig();
         $client = new Client(self::$key, self::$secret);
         $pusher = $client->push();
         $pusher->setPlatform("all");
-        $pusher->addRegistrationId($deviceId);
-        $pusher->setMessage($content, $title, null, $extra);
+        $pusher->addAlias($tag);
+        $pusher->setNotificationAlert($title);
+        $pusher->message($content, ["title" => $title, "extras" => $extra]);
+
         try {
-            $pusher->send();
+            return $pusher->send();
         } catch (JPushException $e) {
             // try something else here
             throw $e;

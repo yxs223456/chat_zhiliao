@@ -13,6 +13,7 @@ use app\common\enum\ChatStatusEnum;
 use app\common\enum\ChatTypeEnum;
 use app\common\enum\UserSwitchEnum;
 use app\common\enum\WalletReduceEnum;
+use app\common\helper\JPush;
 use app\common\helper\Redis;
 use app\common\helper\ShengWang;
 use app\common\model\UserSpendLogModel;
@@ -158,6 +159,19 @@ class ChatService extends Base
             "chat_id" => $chatId,
             "sw_token_info" => $swTokenInfo,
         ];
+
+        // 用户不在线推送消息
+        if (!GatewayClient::isUidOnline($tUId)) {
+            $sUserInfo = UserInfoService::getUserInfoById($user["id"]);
+            $extra = [];
+            $extra["avatar"] = $sUserInfo["portrait"] ?? "";
+            $extra["nickname"] = $sUserInfo["nickname"] ?? "";
+            $extra["s_u_id"] = $user["id"] ?? 0;
+            $extra["chat_id"] = $chatId;
+            $title = $chatType == ChatTypeEnum::VIDEO ? "视频呼叫" : "语音呼叫";
+            $content = "来自{$sUserInfo['nickname']}的" . $title;
+            JPush::pushOne($tUId, $content, $title, $extra);
+        }
 
         return $returnData;
     }

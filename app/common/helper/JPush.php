@@ -47,7 +47,7 @@ class JPush
             throw new Exception("content and title not empty");
         }
         self::getConfig();
-        $client = new Client(self::$key, self::$secret, self::$logPath);
+        $client = new Client(self::$key, self::$secret, null);
 
         $iosN = ['title' => $title, 'subtitle' => $content];
         try {

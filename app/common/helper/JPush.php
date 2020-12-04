@@ -32,7 +32,7 @@ class JPush
      * @param $content string 内容
      * @param $title string 标题
      * @param $extra array 业务数据
-     * @return bool
+     * @return array|bool
      * @throws Exception
      * @throws JPushException
      */
@@ -46,14 +46,16 @@ class JPush
         }
         self::getConfig();
         $client = new Client(self::$key, self::$secret);
-        $pusher = $client->push();
-        $pusher->setPlatform("all");
-        $pusher->addAlias($tag);
-        $pusher->setNotificationAlert($title);
-        $pusher->message($content, ["title" => $title, "extras" => $extra]);
 
+        $iosN = ['title' => $title, 'subtitle' => $content];
         try {
-            return $pusher->send();
+            $pusher = $client->push();
+            return $pusher->setPlatform("all")
+                ->addAlias($tag)
+                ->setNotificationAlert($title)
+                ->iosNotification($iosN, ['content-available' => true, 'mutable-content' => true, "extras" => $extra])
+                ->androidNotification($title, ["title" => $content, 'extras' => $extra])
+                ->send();
         } catch (JPushException $e) {
             // try something else here
             throw $e;

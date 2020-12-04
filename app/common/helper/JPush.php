@@ -17,12 +17,14 @@ class JPush
 {
     protected static $key = "";
     protected static $secret = "";
+    protected static $logPath = "";
 
     private static function getConfig()
     {
         $config = config("account.jpush");
         self::$key = $config["key"];
         self::$secret = $config["secret"];
+        self::$logPath = $config["logpath"];
     }
 
     /**
@@ -45,7 +47,7 @@ class JPush
             throw new Exception("content and title not empty");
         }
         self::getConfig();
-        $client = new Client(self::$key, self::$secret);
+        $client = new Client(self::$key, self::$secret, self::$logPath);
 
         $iosN = ['title' => $title, 'subtitle' => $content];
         try {

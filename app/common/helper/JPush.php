@@ -39,7 +39,7 @@ class JPush
     public static function pushOne($tag, $content, $title, $extra = [])
     {
         if (empty($tag)) {
-            throw new Exception("tag  not empty");
+            throw new Exception("tag  not empty"); 
         }
         if (empty($content) || empty($title)) {
             throw new Exception("content and title not empty");
@@ -51,7 +51,7 @@ class JPush
         try {
             $pusher = $client->push();
             return $pusher->setPlatform("all")
-                ->addAlias($tag)
+                ->addAlias((string)$tag)
                 ->setNotificationAlert($title)
                 ->iosNotification($iosN, ['content-available' => true, 'mutable-content' => true, "extras" => $extra])
                 ->androidNotification($title, ["title" => $content, 'extras' => $extra])

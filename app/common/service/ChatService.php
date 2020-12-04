@@ -162,15 +162,19 @@ class ChatService extends Base
 
         // 用户不在线推送消息
         if (!GatewayClient::isUidOnline($tUId)) {
-            $sUserInfo = UserInfoService::getUserInfoById($user["id"]);
-            $extra = [];
-            $extra["avatar"] = $sUserInfo["portrait"] ?? "";
-            $extra["nickname"] = $sUserInfo["nickname"] ?? "";
-            $extra["s_u_id"] = $user["id"] ?? 0;
-            $extra["chat_id"] = $chatId;
-            $title = $chatType == ChatTypeEnum::VIDEO ? "视频呼叫" : "语音呼叫";
-            $content = "来自{$sUserInfo['nickname']}的" . $title;
-            JPush::pushOne($tUId, $content, $title, $extra);
+            try {
+                $sUserInfo = UserInfoService::getUserInfoById($user["id"]);
+                $extra = [];
+                $extra["avatar"] = $sUserInfo["portrait"] ?? "";
+                $extra["nickname"] = $sUserInfo["nickname"] ?? "";
+                $extra["s_u_id"] = $user["id"] ?? 0;
+                $extra["chat_id"] = $chatId;
+                $title = $chatType == ChatTypeEnum::VIDEO ? "视频呼叫" : "语音呼叫";
+                $content = "来自{$sUserInfo['nickname']}的" . $title;
+                JPush::pushOne($tUId, $content, $title, $extra);
+            } catch (\Throwable $e) {
+
+            }
         }
 
         return $returnData;
